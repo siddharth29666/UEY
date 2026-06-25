@@ -1020,3 +1020,623 @@ Returned when input fields fail to meet specified validation rules.
     3.  Frontend submits POST with status.
     4.  Refreshing admin listing on success.
 *   **Example Use Case:** Bob's driving license is approved. Because his vehicle registration and insurance were already approved, Bob is automatically marked active and can immediately slide to online in UEY.
+
+---
+
+## Module 3: Driver Availability & Live Location
+
+### 16. Toggle Driver Status
+*   **API Name:** Toggle Driver Status
+*   **Purpose:** Enables an active, verified driver to toggle their availability online or offline.
+*   **Endpoint URL:** `/driver/status`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload (JSON):**
+    ```json
+    {
+      "is_online": true
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Driver status updated successfully.",
+      "is_online": true
+    }
+    ```
+*   **Error Response (403 Forbidden):**
+    ```json
+    {
+      "success": false,
+      "message": "Only active approved drivers can go online."
+    }
+    ```
+*   **Validation Rules:**
+    *   `is_online`: Required, Boolean.
+*   **Business Logic Explanation:**
+    *   Restricted to drivers only (requires `role:driver` Sanctum token ability).
+    *   Checks if the driver's user status is `active` (e.g. they have passed all onboarding document checks). If they are still `pending_approval` or `suspended`, the API returns a 403 error.
+    *   If `is_online` is `true`, the driver's ID and coordinates are indexed in Redis GEO under key `drivers:locations`.
+    *   If `is_online` is `false`, the driver's entry is removed from the Redis GEO index.
+*   **Database Tables Affected:** `driver_profiles` (updates `is_online`, `last_seen_at`)
+*   **Frontend Flow:**
+    1.  Driver toggles the online/offline switch on the main map.
+    2.  Frontend makes a POST call to `/driver/status` with `is_online` status.
+    3.  If successful, transitions app UI state and starts/stops background location tracking. If 403 is received, shows verification checklist dialog.
+*   **Example Use Case:** Bob slides the status toggle to online. The app POSTs to `/driver/status`, updating Bob's status in Redis so riders can locate him.
+
+---
+
+### 17. Update Driver Location
+*   **API Name:** Update Driver Location
+*   **Purpose:** Updates the live location coordinates (latitude, longitude, bearing) for the authenticated driver. Synchronizes with Redis if the driver is online.
+*   **Endpoint URL:** `/driver/location`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload (JSON):**
+    ```json
+    {
+      "current_latitude": 51.5204,
+      "current_longitude": -0.1482,
+      "bearing": 120.5
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Driver location updated successfully."
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "The given data was invalid.",
+      "errors": {
+        "current_latitude": [
+          "The current latitude must be between -90 and 90."
+        ]
+      }
+    }
+    ```
+*   **Validation Rules:**
+    *   `current_latitude`: Required, Numeric, must be between -90 and 90.
+    *   `current_longitude`: Required, Numeric, must be between -180 and 180.
+    *   `bearing`: Optional, Numeric, must be between 0 and 360.
+*   **Business Logic Explanation:**
+    *   Restricted to drivers only.
+    *   Updates the driver's `current_latitude`, `current_longitude`, `bearing`, `last_located_at`, and `last_seen_at` fields in the database.
+    *   If the driver is online (`is_online` is true), the updated coordinates are automatically synchronized with the Redis GEO index (`drivers:locations`) using `GEOADD`.
+    *   If the driver is offline, updates are only saved to MySQL, and Redis syncing is skipped.
+*   **Database Tables Affected:** `driver_profiles`
+*   **Frontend Flow:**
+    1.  App runs a background location service that tracks device GPS.
+    2.  Every N seconds (e.g. 10s), if coordinates change significantly, frontend calls `/driver/location` with current lat, lng, and bearing.
+*   **Example Use Case:** Bob drives down a street. The background service sends his coordinates to UEY, keeping his live pin location fresh on the rider's map.
+
+---
+
+### 18. Get Driver Dashboard
+*   **API Name:** Get Driver Dashboard
+*   **Purpose:** Retrieves driver dashboard details including profile summary, ratings, online status, and completed rides.
+*   **Endpoint URL:** `/driver/dashboard`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:** None
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "dashboard": {
+        "driver_profile_id": 1,
+        "is_online": true,
+        "rating": 4.85,
+        "acceptance_rate": 97.2,
+        "ontime_rate": 98.9,
+        "completed_rides_count": 0,
+        "earnings_summary": {
+          "today": 0.0,
+          "this_week": 0.0,
+          "total": 0.0
+        },
+        "profile": {
+          "name": "Bob Driver",
+          "email": "bob.driver@example.com",
+          "phone": "+447911999999",
+          "avatar_url": null
+        },
+        "last_seen_at": "2026-06-23T19:12:00+00:00"
+      }
+    }
+    ```
+*   **Error Response (401 Unauthorized):**
+    ```json
+    {
+      "message": "Unauthenticated."
+    }
+    ```
+*   **Validation Rules:** None.
+*   **Business Logic Explanation:**
+    *   Restricted to drivers only.
+    *   Returns base statistics (`rating`, `acceptance_rate`, `ontime_rate`) alongside user details.
+    *   `completed_rides_count` and `earnings_summary` represent placeholders that default to 0 and will be integrated with ride-hailing modules in future phases.
+*   **Database Tables Affected:** `users`, `driver_profiles` (reads)
+*   **Frontend Flow:**
+    1.  Driver opens the main dashboard tab.
+    2.  App sends a GET call to `/driver/dashboard`.
+    3.  Renders performance stats, name, avatar, and placeholder earnings widgets.
+*   **Example Use Case:** Bob checks his dashboard to see his rating (4.85) and check his current weekly earnings progress.
+
+---
+
+## Module 4: Ride Booking & Matching Engine
+
+### 19. Estimate Fare
+*   **API Name:** Estimate Fare
+*   **Purpose:** Retrieves estimated distance, duration, and fare across all active vehicle types for a proposed ride.
+*   **Endpoint URL:** `/rides/estimate`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Rider Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload (JSON):**
+    ```json
+    {
+      "pickup_latitude": 51.5074,
+      "pickup_longitude": -0.1278,
+      "destination_latitude": 51.5204,
+      "destination_longitude": -0.1482
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "estimates": [
+        {
+          "vehicle_type_id": 1,
+          "name": "Standard",
+          "capacity": 4,
+          "estimated_distance": 2.02,
+          "estimated_duration": 4,
+          "estimated_fare": 10.03
+        },
+        {
+          "vehicle_type_id": 2,
+          "name": "SUV",
+          "capacity": 6,
+          "estimated_distance": 2.02,
+          "estimated_duration": 4,
+          "estimated_fare": 19.05
+        }
+      ]
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "The given data was invalid.",
+      "errors": {
+        "pickup_latitude": [
+          "The pickup latitude field is required."
+        ]
+      }
+    }
+    ```
+*   **Validation Rules:**
+    *   `pickup_latitude`: Required, Numeric, must be between -90 and 90.
+    *   `pickup_longitude`: Required, Numeric, must be between -180 and 180.
+    *   `destination_latitude`: Required, Numeric, must be between -90 and 90.
+    *   `destination_longitude`: Required, Numeric, must be between -180 and 180.
+*   **Business Logic Explanation:**
+    *   Computes straight-line Haversine distance.
+    *   Estimates duration using distance-based multiplier (e.g. 1.5 minutes per KM).
+    *   Applies pricing factors (`base_fare`, `per_km_rate`, `per_minute_rate`, `minimum_fare`) defined on active `VehicleType` models to calculate estimated fare.
+*   **Database Tables Affected:** `vehicle_types` (read)
+*   **Frontend Flow:**
+    1.  Rider enters pickup and destination addresses on screen.
+    2.  Frontend gets coordinates via Google Places SDK/Map SDK.
+    3.  Frontend invokes `/rides/estimate` with the coordinates.
+    4.  Renders the list of vehicle categories, capacities, and pricing cards to let rider choose.
+*   **Example Use Case:** Jane sets destination to Regent's Park. The app presents pricing: Standard (£10.03) and SUV (£19.05).
+
+---
+
+### 20. Request Ride
+*   **API Name:** Request Ride
+*   **Purpose:** Submits a new ride request, calculates estimated fare, creates a 6-digit OTP, and triggers geospatial matching with nearby online drivers.
+*   **Endpoint URL:** `/rides/request`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Rider Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload (JSON):**
+    ```json
+    {
+      "pickup_latitude": 51.5074,
+      "pickup_longitude": -0.1278,
+      "pickup_address": "London Eye, London",
+      "destination_latitude": 51.5204,
+      "destination_longitude": -0.1482,
+      "destination_address": "Regent's Park, London",
+      "vehicle_type_id": 1
+    }
+    ```
+*   **Success Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride requested successfully.",
+      "ride": {
+        "id": 1,
+        "rider_id": 10,
+        "driver_profile_id": null,
+        "vehicle_type_id": 1,
+        "pickup_address": "London Eye, London",
+        "pickup_latitude": 51.5074,
+        "pickup_longitude": -0.1278,
+        "destination_address": "Regent's Park, London",
+        "destination_latitude": 51.5204,
+        "destination_longitude": -0.1482,
+        "status": "pending",
+        "otp": "483920",
+        "estimated_distance": 2.02,
+        "estimated_duration": 4,
+        "estimated_fare": 10.03,
+        "created_at": "2026-06-24T01:45:00+00:00",
+        "updated_at": "2026-06-24T01:45:00+00:00"
+      }
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "The given data was invalid.",
+      "errors": {
+        "vehicle_type_id": [
+          "The selected vehicle type id is invalid."
+        ]
+      }
+    }
+    ```
+*   **Validation Rules:**
+    *   `pickup_latitude`, `pickup_longitude`: Required, Numeric, valid boundaries.
+    *   `pickup_address`: Required, String.
+    *   `destination_latitude`, `destination_longitude`: Required, Numeric, valid boundaries.
+    *   `destination_address`: Required, String.
+    *   `vehicle_type_id`: Required, exists in `vehicle_types` table.
+*   **Business Logic Explanation:**
+    *   Executes in a DB transaction.
+    *   Finds target vehicle type, calculates distance/duration/fare estimates, and generates a random 6-digit OTP code.
+    *   Creates a `Ride` row in status `pending`.
+    *   Invokes the matching engine, which fetches drivers within matching radius (default 5.0 KM) from Redis GEO index (or database-based fallback).
+    *   Creates a `RideRequest` in status `pending` with a 30-second expiry for every eligible nearby online driver who is not already on an active trip and has an approved vehicle matching the category.
+*   **Database Tables Affected:** `rides`, `ride_requests`, `ride_status_logs`
+*   **Frontend Flow:**
+    1.  Rider selects a vehicle category and taps "Confirm Booking".
+    2.  Frontend fires `POST /rides/request`.
+    3.  On 201 response, shows a loader screen with "Finding a Driver...".
+*   **Example Use Case:** Jane requests a Standard ride. The backend generates matching requests for nearby drivers Bob and Alice.
+
+---
+
+### 21. Cancel Ride
+*   **API Name:** Cancel Ride
+*   **Purpose:** Rider or driver cancels a ride before the trip has officially started.
+*   **Endpoint URL:** `/rides/{ride}/cancel`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload (JSON):**
+    ```json
+    {
+      "cancel_reason": "Decided to take the train instead"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride cancelled successfully.",
+      "ride": {
+        "id": 1,
+        "status": "cancelled",
+        "cancelled_by": "rider",
+        "cancel_reason": "Decided to take the train instead",
+        "cancelled_at": "2026-06-24T01:47:00+00:00"
+      }
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "Cancellation is forbidden once the ride has started, completed, or is already cancelled."
+    }
+    ```
+*   **Validation Rules:**
+    *   `cancel_reason`: Optional, String, max 255.
+*   **Business Logic Explanation:**
+    *   Cancellations are allowed only when status is `pending`, `accepted`, `arriving`, or `arrived`.
+    *   Once a ride status is `in_progress` (passenger on board), `completed`, or already `cancelled`, cancellation is rejected.
+    *   Marks all pending `RideRequest` rows for this ride as `expired` so that drivers no longer see the offers.
+*   **Database Tables Affected:** `rides`, `ride_requests`, `ride_status_logs`
+*   **Frontend Flow:**
+    1.  Rider taps "Cancel Ride" in active map view.
+    2.  App asks for cancellation reason.
+    3.  Frontend submits POST.
+    4.  App resets map back to the main booking screen.
+*   **Example Use Case:** Jane cancels the ride 1 minute after booking because she realized she forgot her keys.
+
+---
+
+### 22. Get Ride Details
+*   **API Name:** Get Ride Details
+*   **Purpose:** Fetches the full profile, status, and pricing details of a specific ride.
+*   **Endpoint URL:** `/rides/{ride}`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:** None
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "ride": {
+        "id": 1,
+        "status": "accepted",
+        "otp": "483920",
+        "estimated_fare": 9.48,
+        "pickup_address": "London Eye, London",
+        "destination_address": "Regent's Park, London",
+        "driver_profile_id": 3
+      }
+    }
+    ```
+*   **Error Response (404 Not Found):**
+    ```json
+    {
+      "message": "Record not found."
+    }
+    ```
+*   **Validation Rules:** None.
+*   **Business Logic Explanation:**
+    *   Retrieves specific ride log information, including nested rider and driver profile records.
+*   **Database Tables Affected:** `rides`
+*   **Frontend Flow:**
+    1.  User clicks on notification about a ride status update.
+    2.  Frontend fetches details from `/rides/{id}`.
+    3.  Updates maps, driver badges, and OTP widgets.
+*   **Example Use Case:** Jane opens her active trip screen. The app fetches ride details to show the assigned driver's profile (name, rating, vehicle details).
+
+---
+
+### 23. Rider Ride History
+*   **API Name:** Rider Ride History
+*   **Purpose:** Returns a list of past and active rides requested by the authenticated rider.
+*   **Endpoint URL:** `/rides`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Rider Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:** None
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "rides": [
+        {
+          "id": 1,
+          "pickup_address": "London Eye",
+          "destination_address": "Regent Park",
+          "status": "cancelled",
+          "estimated_fare": 9.48,
+          "created_at": "2026-06-24T01:45:00+00:00"
+        }
+      ]
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Queries rides table where `rider_id = user_id`, ordered newest first.
+*   **Database Tables Affected:** `rides`
+*   **Frontend Flow:**
+    1.  Rider navigates to "My Rides" / "Trip History".
+    2.  Queries `GET /rides`.
+    3.  Renders listing cards.
+*   **Example Use Case:** Jane opens history to review her travel expenditures.
+
+---
+
+### 24. Get Rider Active Ride
+*   **API Name:** Get Rider Active Ride
+*   **Purpose:** Retrieves details of the rider's current active trip (status is not completed or cancelled).
+*   **Endpoint URL:** `/rides/active`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Rider Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "ride": {
+        "id": 1,
+        "status": "accepted",
+        "driver_profile_id": 3
+      }
+    }
+    ```
+*   **Error Response (404 Not Found):**
+    ```json
+    {
+      "success": false,
+      "message": "No active ride found."
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Queries the `rides` table for the rider's latest record with a status other than `completed` or `cancelled`.
+*   **Database Tables Affected:** `rides`
+*   **Example Use Case:** Jane restarts her phone during a trip. Upon launching the UEY app, it calls `/rides/active` to instantly restore her active trip map view.
+
+---
+
+### 25. Get Pending Ride Requests
+*   **API Name:** Get Pending Ride Requests
+*   **Purpose:** Retrieves active, pending trip offers broadcasted to the online driver.
+*   **Endpoint URL:** `/driver/ride-requests`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "requests": [
+        {
+          "id": 1,
+          "ride_id": 1,
+          "driver_profile_id": 3,
+          "status": "pending",
+          "expires_at": "2026-06-24T01:45:30+00:00",
+          "ride": {
+            "id": 1,
+            "pickup_address": "London Eye",
+            "destination_address": "Regent Park",
+            "estimated_fare": 9.48
+          }
+        }
+      ]
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Expires any pending offers whose `expires_at` timestamp is in the past.
+    *   Returns only active `pending` requests assigned to this driver.
+*   **Database Tables Affected:** `ride_requests`
+*   **Frontend Flow:**
+    1.  Driver app is online.
+    2.  Polls `/driver/ride-requests` or receives a push notification.
+    3.  Renders matching offer overlay on map with a circular countdown timer.
+*   **Example Use Case:** Bob receives a popup on screen indicating a customer wants standard transport 1.2 KM away.
+
+---
+
+### 26. Accept Ride Request
+*   **API Name:** Accept Ride Request
+*   **Purpose:** Driver accepts a trip request. Row locks protect against race conditions.
+*   **Endpoint URL:** `/driver/ride-requests/{request}/accept`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride request accepted successfully.",
+      "ride": {
+        "id": 1,
+        "status": "accepted",
+        "driver_profile_id": 3,
+        "accepted_at": "2026-06-24T01:45:10+00:00"
+      }
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "Ride request is no longer available."
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Executes in a DB transaction with **`lockForUpdate()`** on the `Ride` row.
+    *   Verifies that the ride status is still `pending` (i.e. not already accepted by another driver).
+    *   Updates request status to `accepted`, sets other drivers' matching requests to `expired`, assigns driver profile ID, and sets ride status to `accepted`.
+*   **Database Tables Affected:** `rides`, `ride_requests`, `ride_status_logs`
+*   **Example Use Case:** Bob taps "Accept". Because he was first, he is assigned the ride. When Alice (who received the same broadcast) tries to accept a second later, she gets a 422 error informing her the ride is gone.
+
+---
+
+### 27. Decline Ride Request
+*   **API Name:** Decline Ride Request
+*   **Purpose:** Driver declines a matching offer, removing it from their queue.
+*   **Endpoint URL:** `/driver/ride-requests/{request}/decline`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride request declined successfully."
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Sets the status of this driver's request offer to `declined`.
+*   **Database Tables Affected:** `ride_requests`
+*   **Example Use Case:** Bob declines the ride because he wants to take a break.
+
+---
+
+### 28. Get Driver Active Ride
+*   **API Name:** Get Driver Active Ride
+*   **Purpose:** Fetches the driver's current assigned active trip.
+*   **Endpoint URL:** `/driver/active-ride`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "ride": {
+        "id": 1,
+        "status": "accepted",
+        "driver_profile_id": 3
+      }
+    }
+    ```
+*   **Error Response (404 Not Found):**
+    ```json
+    {
+      "success": false,
+      "message": "No active ride found."
+    }
+    ```
+*   **Database Tables Affected:** `rides`
+*   **Example Use Case:** Bob opens the navigation dashboard. The app queries `/driver/active-ride` to render navigation instructions and passenger details.
+
+

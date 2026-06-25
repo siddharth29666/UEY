@@ -1558,10 +1558,1017 @@
                     }
                 ]
             }
+        },
+        "/driver/status": {
+            "post": {
+                "tags": [
+                    "Driver Availability"
+                ],
+                "summary": "Toggle Driver Status",
+                "description": "Enables an active, verified driver to toggle their availability online or offline.",
+                "operationId": "25610f633578a0cd0d1ea737e11dca8f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateDriverStatusRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Driver status updated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Driver status updated successfully."
+                                        },
+                                        "is_online": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Only active approved drivers can go online.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Only active approved drivers can go online."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/location": {
+            "post": {
+                "tags": [
+                    "Driver Availability"
+                ],
+                "summary": "Update Driver Location",
+                "description": "Updates the live location coordinates (latitude, longitude, bearing) for the authenticated driver. Synchronizes with Redis if the driver is online.",
+                "operationId": "46751fe0e52241e32ffb1e72f17977ad",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateDriverLocationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Driver location updated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Driver location updated successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/dashboard": {
+            "get": {
+                "tags": [
+                    "Driver Availability"
+                ],
+                "summary": "Get Driver Dashboard",
+                "description": "Retrieves driver dashboard details including profile summary, ratings, online status, and completed rides.",
+                "operationId": "eb3fe905b63d4f90a66e194060c48268",
+                "responses": {
+                    "200": {
+                        "description": "Driver dashboard details retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "dashboard": {
+                                            "properties": {
+                                                "driver_profile_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_online": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "rating": {
+                                                    "type": "number",
+                                                    "example": 5
+                                                },
+                                                "acceptance_rate": {
+                                                    "type": "number",
+                                                    "example": 98.5
+                                                },
+                                                "ontime_rate": {
+                                                    "type": "number",
+                                                    "example": 99.1
+                                                },
+                                                "completed_rides_count": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "earnings_summary": {
+                                                    "properties": {
+                                                        "today": {
+                                                            "type": "number",
+                                                            "example": 0
+                                                        },
+                                                        "this_week": {
+                                                            "type": "number",
+                                                            "example": 0
+                                                        },
+                                                        "total": {
+                                                            "type": "number",
+                                                            "example": 0
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "profile": {
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Bob Driver"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "bob.driver@example.com"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string",
+                                                            "example": "+447911999999"
+                                                        },
+                                                        "avatar_url": {
+                                                            "type": "string",
+                                                            "example": null,
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/ride-requests": {
+            "get": {
+                "tags": [
+                    "Driver Matching"
+                ],
+                "summary": "Get Pending Ride Requests",
+                "description": "Retrieve a list of active, pending ride requests offered to the authenticated driver.",
+                "operationId": "f101eaa154b46982d0101f6e3525b741",
+                "responses": {
+                    "200": {
+                        "description": "Pending ride requests list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "requests": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RideRequest"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/ride-requests/{request}/accept": {
+            "post": {
+                "tags": [
+                    "Driver Matching"
+                ],
+                "summary": "Accept Ride Request",
+                "description": "Accept a pending ride request. Assigns the driver and locks the ride to prevent race conditions.",
+                "operationId": "6863a154651b11510f2d216d92f4f535",
+                "parameters": [
+                    {
+                        "name": "request",
+                        "in": "path",
+                        "description": "ID of the RideRequest",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ride request accepted successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ride request accepted successfully."
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "422": {
+                        "description": "Ride request is no longer available.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ride request is no longer available."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/ride-requests/{request}/decline": {
+            "post": {
+                "tags": [
+                    "Driver Matching"
+                ],
+                "summary": "Decline Ride Request",
+                "description": "Decline a pending ride request.",
+                "operationId": "62ca9df55cc6af4d000705c15f945bc4",
+                "parameters": [
+                    {
+                        "name": "request",
+                        "in": "path",
+                        "description": "ID of the RideRequest",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ride request declined successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ride request declined successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/active-ride": {
+            "get": {
+                "tags": [
+                    "Driver Matching"
+                ],
+                "summary": "Get Driver Active Ride",
+                "description": "Retrieve the current active, non-completed, non-cancelled ride assigned to the authenticated driver.",
+                "operationId": "4585e5441723997a9ae97fadfbc998c0",
+                "responses": {
+                    "200": {
+                        "description": "Active ride details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "No active ride found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No active ride found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides/estimate": {
+            "post": {
+                "tags": [
+                    "Ride Booking"
+                ],
+                "summary": "Estimate Fare",
+                "description": "Get fare estimates for all active vehicle types between pickup and destination.",
+                "operationId": "a3eb936892224415e6525b099bb7fde5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EstimateRideRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Fare estimates retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "estimates": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "vehicle_type_id": {
+                                                        "type": "integer",
+                                                        "example": 1
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Standard"
+                                                    },
+                                                    "capacity": {
+                                                        "type": "integer",
+                                                        "example": 4
+                                                    },
+                                                    "estimated_distance": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 2.34
+                                                    },
+                                                    "estimated_duration": {
+                                                        "type": "integer",
+                                                        "example": 4
+                                                    },
+                                                    "estimated_fare": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 8.5
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides/request": {
+            "post": {
+                "tags": [
+                    "Ride Booking"
+                ],
+                "summary": "Request Ride",
+                "description": "Create a new ride request and find nearby drivers.",
+                "operationId": "5a3bb80f73c0bcb61b2c1ddf93c99251",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RequestRideRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Ride requested successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ride requested successfully."
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides/{ride}/cancel": {
+            "post": {
+                "tags": [
+                    "Ride Booking"
+                ],
+                "summary": "Cancel Ride",
+                "description": "Cancel an active ride request. Allowed only before trip starts (statuses: pending, accepted, arriving, arrived).",
+                "operationId": "193b00dbacbeade2bfbd26d0b008c58d",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "ID of the Ride",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CancelRideRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ride cancelled successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ride cancelled successfully."
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides/{ride}": {
+            "get": {
+                "tags": [
+                    "Ride Booking"
+                ],
+                "summary": "Get Ride Details",
+                "description": "Get details of a specific ride by ID.",
+                "operationId": "0df9dc743bddfe5f3436b49b60ae47fd",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "ID of the Ride",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ride details retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "Ride not found."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides": {
+            "get": {
+                "tags": [
+                    "Ride Booking"
+                ],
+                "summary": "Rider Ride History",
+                "description": "Retrieve a list of past and active rides requested by the authenticated rider.",
+                "operationId": "cd4dd887dd8a8cbdc176651994266f7e",
+                "responses": {
+                    "200": {
+                        "description": "Ride history retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "rides": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Ride"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides/active": {
+            "get": {
+                "tags": [
+                    "Ride Booking"
+                ],
+                "summary": "Get Active Ride",
+                "description": "Get the current active (non-completed and non-cancelled) ride for the rider.",
+                "operationId": "ec4d34d92bfa2746633fb8332a291765",
+                "responses": {
+                    "200": {
+                        "description": "Active ride details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "404": {
+                        "description": "No active ride found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No active ride found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
         }
     },
     "components": {
         "schemas": {
+            "Ride": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "rider_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "driver_profile_id": {
+                        "type": "integer",
+                        "example": 3,
+                        "nullable": true
+                    },
+                    "vehicle_type_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "pickup_address": {
+                        "type": "string",
+                        "example": "London Eye, London"
+                    },
+                    "pickup_latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5074
+                    },
+                    "pickup_longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1278
+                    },
+                    "destination_address": {
+                        "type": "string",
+                        "example": "Regent's Park, London"
+                    },
+                    "destination_latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5204
+                    },
+                    "destination_longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1482
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "otp": {
+                        "type": "string",
+                        "example": "123456"
+                    },
+                    "estimated_distance": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.34
+                    },
+                    "estimated_duration": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "estimated_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 8.5
+                    },
+                    "actual_distance": {
+                        "type": "number",
+                        "format": "float",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "actual_duration": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "actual_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "accepted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "arrived_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "cancelled_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "cancelled_by": {
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "cancel_reason": {
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-06-24T00:58:13+05:30"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-06-24T00:58:13+05:30"
+                    }
+                },
+                "type": "object"
+            },
+            "RideRequest": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "ride_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "driver_profile_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-06-24T01:28:13+05:30"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-06-24T00:58:13+05:30"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-06-24T00:58:13+05:30"
+                    }
+                },
+                "type": "object"
+            },
             "SendOtpRequest": {
                 "required": [
                     "phone",
@@ -1819,6 +2826,128 @@
                     }
                 },
                 "type": "object"
+            },
+            "UpdateDriverStatusRequest": {
+                "required": [
+                    "is_online"
+                ],
+                "properties": {
+                    "is_online": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateDriverLocationRequest": {
+                "required": [
+                    "current_latitude",
+                    "current_longitude"
+                ],
+                "properties": {
+                    "current_latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5074
+                    },
+                    "current_longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1278
+                    },
+                    "bearing": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 180.5
+                    }
+                },
+                "type": "object"
+            },
+            "EstimateRideRequest": {
+                "required": [
+                    "pickup_latitude",
+                    "pickup_longitude",
+                    "destination_latitude",
+                    "destination_longitude"
+                ],
+                "properties": {
+                    "pickup_latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5074
+                    },
+                    "pickup_longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1278
+                    },
+                    "destination_latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5204
+                    },
+                    "destination_longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1482
+                    }
+                },
+                "type": "object"
+            },
+            "RequestRideRequest": {
+                "required": [
+                    "pickup_latitude",
+                    "pickup_longitude",
+                    "pickup_address",
+                    "destination_latitude",
+                    "destination_longitude",
+                    "destination_address",
+                    "vehicle_type_id"
+                ],
+                "properties": {
+                    "pickup_latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5074
+                    },
+                    "pickup_longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1278
+                    },
+                    "pickup_address": {
+                        "type": "string",
+                        "example": "London Eye, London"
+                    },
+                    "destination_latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5204
+                    },
+                    "destination_longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1482
+                    },
+                    "destination_address": {
+                        "type": "string",
+                        "example": "Regent's Park, London"
+                    },
+                    "vehicle_type_id": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "CancelRideRequest": {
+                "properties": {
+                    "cancel_reason": {
+                        "type": "string",
+                        "example": "Plans changed"
+                    }
+                },
+                "type": "object"
             }
         },
         "responses": {
@@ -1920,6 +3049,18 @@
         {
             "name": "Bank Account",
             "description": "Bank Account"
+        },
+        {
+            "name": "Driver Availability",
+            "description": "Driver Availability"
+        },
+        {
+            "name": "Driver Matching",
+            "description": "Driver Matching"
+        },
+        {
+            "name": "Ride Booking",
+            "description": "Ride Booking"
         }
     ]
 }

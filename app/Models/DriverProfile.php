@@ -33,10 +33,11 @@ class DriverProfile extends Model
         'total_online_hours',
         'default_navigation',
         'auto_accept',
-        'current_lat',
-        'current_lng',
+        'current_latitude',
+        'current_longitude',
         'bearing',
         'last_located_at',
+        'last_seen_at',
     ];
 
     /**
@@ -55,10 +56,11 @@ class DriverProfile extends Model
             'acceptance_rate' => 'decimal:2',
             'ontime_rate' => 'decimal:2',
             'total_online_hours' => 'integer',
-            'current_lat' => 'decimal:8',
-            'current_lng' => 'decimal:8',
+            'current_latitude' => 'decimal:8',
+            'current_longitude' => 'decimal:8',
             'bearing' => 'decimal:2',
             'last_located_at' => 'datetime',
+            'last_seen_at' => 'datetime',
         ];
     }
 

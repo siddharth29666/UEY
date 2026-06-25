@@ -24,11 +24,12 @@ class DriverProfileResource extends JsonResource
                 'auto_accept' => $this->auto_accept,
             ],
             'coordinates' => [
-                'latitude' => $this->current_lat ? (float) $this->current_lat : null,
-                'longitude' => $this->current_lng ? (float) $this->current_lng : null,
+                'latitude' => $this->current_latitude ? (float) $this->current_latitude : null,
+                'longitude' => $this->current_longitude ? (float) $this->current_longitude : null,
                 'bearing' => $this->bearing ? (float) $this->bearing : null,
             ],
             'last_located_at' => $this->last_located_at?->toIso8601String(),
+            'last_seen_at' => $this->last_seen_at?->toIso8601String(),
             'vehicles' => VehicleResource::collection($this->whenLoaded('vehicles')),
         ];
     }

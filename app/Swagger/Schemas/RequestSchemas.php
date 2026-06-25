@@ -99,4 +99,54 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: "rejection_reason", type: "string", example: "The document image is blurry.")
     ]
 )]
+
+#[OA\Schema(
+    schema: "UpdateDriverStatusRequest",
+    required: ["is_online"],
+    properties: [
+        new OA\Property(property: "is_online", type: "boolean", example: true)
+    ]
+)]
+
+#[OA\Schema(
+    schema: "UpdateDriverLocationRequest",
+    required: ["current_latitude", "current_longitude"],
+    properties: [
+        new OA\Property(property: "current_latitude", type: "number", format: "float", example: 51.5074),
+        new OA\Property(property: "current_longitude", type: "number", format: "float", example: -0.1278),
+        new OA\Property(property: "bearing", type: "number", format: "float", example: 180.5)
+    ]
+)]
+
+#[OA\Schema(
+    schema: "EstimateRideRequest",
+    required: ["pickup_latitude", "pickup_longitude", "destination_latitude", "destination_longitude"],
+    properties: [
+        new OA\Property(property: "pickup_latitude", type: "number", format: "float", example: 51.5074),
+        new OA\Property(property: "pickup_longitude", type: "number", format: "float", example: -0.1278),
+        new OA\Property(property: "destination_latitude", type: "number", format: "float", example: 51.5204),
+        new OA\Property(property: "destination_longitude", type: "number", format: "float", example: -0.1482)
+    ]
+)]
+
+#[OA\Schema(
+    schema: "RequestRideRequest",
+    required: ["pickup_latitude", "pickup_longitude", "pickup_address", "destination_latitude", "destination_longitude", "destination_address", "vehicle_type_id"],
+    properties: [
+        new OA\Property(property: "pickup_latitude", type: "number", format: "float", example: 51.5074),
+        new OA\Property(property: "pickup_longitude", type: "number", format: "float", example: -0.1278),
+        new OA\Property(property: "pickup_address", type: "string", example: "London Eye, London"),
+        new OA\Property(property: "destination_latitude", type: "number", format: "float", example: 51.5204),
+        new OA\Property(property: "destination_longitude", type: "number", format: "float", example: -0.1482),
+        new OA\Property(property: "destination_address", type: "string", example: "Regent's Park, London"),
+        new OA\Property(property: "vehicle_type_id", type: "integer", example: 1)
+    ]
+)]
+
+#[OA\Schema(
+    schema: "CancelRideRequest",
+    properties: [
+        new OA\Property(property: "cancel_reason", type: "string", example: "Plans changed")
+    ]
+)]
 class RequestSchemas {}

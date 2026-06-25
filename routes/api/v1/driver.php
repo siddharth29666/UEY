@@ -12,9 +12,10 @@ Route::middleware(['auth:sanctum', 'ability:role:driver'])->prefix('driver')->gr
     Route::get('/bank-account', [DriverController::class, 'getBankAccount']);
     Route::post('/bank-account', [DriverController::class, 'saveBankAccount']);
     
-    // Stubs for other actions
-    Route::put('/status', [DriverController::class, 'toggleOnlineStatus']);
+    // Availability & Live Location
+    Route::post('/status', [DriverController::class, 'toggleOnlineStatus']);
     Route::post('/location', [DriverController::class, 'updateLocation']);
+    Route::get('/dashboard', [DriverController::class, 'dashboard']);
     Route::put('/settings', [DriverController::class, 'updateSettings']);
     Route::get('/requests', [DriverController::class, 'activeRequests']);
     Route::get('/earnings/summary', [DriverController::class, 'earningsSummary']);
