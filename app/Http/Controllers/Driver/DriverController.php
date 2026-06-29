@@ -15,6 +15,8 @@ use App\Http\Resources\DriverOnboardingStatusResource;
 use App\Http\Resources\DriverDashboardResource;
 use App\Services\DriverVerificationService;
 use App\Services\DriverLocationService;
+use App\Services\RideLifecycleService;
+use App\Http\Requests\UpdateRideStatusRequest;
 use App\Enums\UserStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,7 +26,8 @@ class DriverController extends Controller
 {
     public function __construct(
         protected DriverVerificationService $verificationService,
-        protected DriverLocationService $locationService
+        protected DriverLocationService $locationService,
+        protected RideLifecycleService $lifecycleService
     ) {}
 
     /**
@@ -544,9 +547,237 @@ class DriverController extends Controller
     public function activeRequests(Request $request) {}
     public function acceptRequest(Request $request, $requestId) {}
     public function declineRequest(Request $request, $requestId) {}
-    public function arriveAtPickup(Request $request, $ride) {}
-    public function startRide(Request $request, $ride) {}
-    public function completeRide(Request $request, $ride) {}
+    /**
+     * Retrieve details of a ride (accessible only to assigned driver).
+     */
+    #[OA\Get(
+        path: '/driver/rides/{ride}',
+        summary: 'Get Ride Details (Driver)',
+        description: 'Retrieves the details of a ride. Only accessible by the assigned driver.',
+        security: [['bearerAuth' => []]],
+        tags: ['Driver Ride Lifecycle'],
+        parameters: [
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Ride details retrieved successfully.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+            new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
+            new OA\Response(
+                response: 404,
+                description: 'Ride not found.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: false),
+                        new OA\Property(property: 'message', type: 'string', example: 'Record not found.')
+                    ]
+                )
+            )
+        ]
+    )]
+    public function showRide(Request $request, \App\Models\Ride $ride): JsonResponse
+    {
+        $driverProfile = $request->user()->driverProfile;
+        if (!$driverProfile || $ride->driver_profile_id !== $driverProfile->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You are not authorized to view this ride.',
+            ], 403);
+        }
+
+        return response()->json([
+            'success' => true,
+            'ride' => new \App\Http\Resources\RideResource($ride->load(['rider', 'driverProfile.user'])),
+        ]);
+    }
+
+    /**
+     * Mark that the driver is arriving at the pickup location.
+     */
+    #[OA\Post(
+        path: '/driver/rides/{ride}/arriving',
+        summary: 'Mark Ride as Arriving',
+        description: 'Transition the ride status from accepted to arriving. Accessible only to the assigned driver.',
+        security: [['bearerAuth' => []]],
+        tags: ['Driver Ride Lifecycle'],
+        parameters: [
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Ride marked as arriving.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: 'Ride status updated to arriving.'),
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+            new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+        ]
+    )]
+    public function markArriving(UpdateRideStatusRequest $request, \App\Models\Ride $ride): JsonResponse
+    {
+        $updatedRide = $this->lifecycleService->updateStatus($ride, 'arriving', $request->validated(), $request->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ride status updated to arriving.',
+            'ride' => new \App\Http\Resources\RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
+        ]);
+    }
+
+    /**
+     * Mark that the driver has arrived at the pickup location.
+     */
+    #[OA\Post(
+        path: '/driver/rides/{ride}/arrived',
+        summary: 'Mark Ride as Arrived',
+        description: 'Transition the ride status from arriving to arrived. Sets the arrived_at timestamp. Accessible only to the assigned driver.',
+        security: [['bearerAuth' => []]],
+        tags: ['Driver Ride Lifecycle'],
+        parameters: [
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Ride marked as arrived.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: 'Ride status updated to arrived.'),
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+            new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+        ]
+    )]
+    public function markArrived(UpdateRideStatusRequest $request, \App\Models\Ride $ride): JsonResponse
+    {
+        $updatedRide = $this->lifecycleService->updateStatus($ride, 'arrived', $request->validated(), $request->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ride status updated to arrived.',
+            'ride' => new \App\Http\Resources\RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
+        ]);
+    }
+
+    /**
+     * Start the ride (verifies OTP provided by the rider).
+     */
+    #[OA\Post(
+        path: '/driver/rides/{ride}/start',
+        summary: 'Start Ride',
+        description: 'Transition the ride status from arrived to in_progress. Verifies the rider\'s 6-digit OTP. Sets started_at and otp_verified_at. Accessible only to the assigned driver.',
+        security: [['bearerAuth' => []]],
+        tags: ['Driver Ride Lifecycle'],
+        parameters: [
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['otp'],
+                properties: [
+                    new OA\Property(property: 'otp', type: 'string', example: '123456', description: 'The 6-digit OTP provided by the rider.')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Ride started successfully.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: 'Ride started successfully.'),
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+            new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+        ]
+    )]
+    public function startRide(UpdateRideStatusRequest $request, \App\Models\Ride $ride): JsonResponse
+    {
+        $updatedRide = $this->lifecycleService->updateStatus($ride, 'in_progress', $request->validated(), $request->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ride started successfully.',
+            'ride' => new \App\Http\Resources\RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
+        ]);
+    }
+
+    /**
+     * Complete the ride (saves actual distance/duration and calculates final fare).
+     */
+    #[OA\Post(
+        path: '/driver/rides/{ride}/complete',
+        summary: 'Complete Ride',
+        description: 'Transition the ride status from in_progress to completed. Computes actual fare and stores actual trip metrics and fare breakdown. Accessible only to the assigned driver.',
+        security: [['bearerAuth' => []]],
+        tags: ['Driver Ride Lifecycle'],
+        parameters: [
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['actual_distance', 'actual_duration'],
+                properties: [
+                    new OA\Property(property: 'actual_distance', type: 'number', format: 'float', example: 5.2, description: 'Actual trip distance in kilometers.'),
+                    new OA\Property(property: 'actual_duration', type: 'integer', example: 12, description: 'Actual trip duration in minutes.')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Ride completed successfully.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: 'Ride completed successfully.'),
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+            new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+        ]
+    )]
+    public function completeRide(UpdateRideStatusRequest $request, \App\Models\Ride $ride): JsonResponse
+    {
+        $updatedRide = $this->lifecycleService->updateStatus($ride, 'completed', $request->validated(), $request->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Ride completed successfully.',
+            'ride' => new \App\Http\Resources\RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
+        ]);
+    }
     public function rideHistory(Request $request) {}
     public function earningsSummary(Request $request) {}
     public function reviewRider(Request $request, $ride) {}

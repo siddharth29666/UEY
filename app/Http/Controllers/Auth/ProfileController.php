@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Requests\DeleteAccountRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
@@ -147,5 +148,69 @@ class ProfileController extends Controller
             'message' => 'Profile updated successfully.',
             'user' => new UserResource($updatedUser),
         ]);
+    }
+
+    /**
+     * Delete user account permanently.
+     */
+    #[OA\Delete(
+        path: '/profile/delete-account',
+        summary: 'Delete User Account',
+        description: 'Permanently deletes the authenticated user\'s account. Performs cleanup of related data.',
+        security: [['bearerAuth' => []]],
+        tags: ['User Profile'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['password'],
+                properties: [
+                    new OA\Property(property: 'password', type: 'string', example: 'CurrentPassword123!', description: 'The user\'s current password for confirmation.')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Account deleted successfully.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: 'Account deleted successfully.')
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Invalid password or validation error.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: false),
+                        new OA\Property(property: 'message', type: 'string', example: 'Invalid password.')
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 401,
+                ref: '#/components/responses/UnauthorizedResponse'
+            )
+        ]
+    )]
+    public function deleteAccount(DeleteAccountRequest $request): JsonResponse
+    {
+        $user = $request->user();
+
+        try {
+            $this->authService->deleteAccount($user, $request->input('password'));
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Account deleted successfully.',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid password.',
+            ], 422);
+        }
     }
 }

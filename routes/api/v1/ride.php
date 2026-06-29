@@ -24,6 +24,15 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/active-ride', [DriverController::class, 'activeRide']);
     });
 
+    // Phase 6 Driver Ride Lifecycle Execution Actions
+    Route::middleware('ability:role:driver')->prefix('driver/rides/{ride}')->group(function () {
+        Route::get('/', [DriverController::class, 'showRide']);
+        Route::post('/arriving', [DriverController::class, 'markArriving']);
+        Route::post('/arrived', [DriverController::class, 'markArrived']);
+        Route::post('/start', [DriverController::class, 'startRide']);
+        Route::post('/complete', [DriverController::class, 'completeRide']);
+    });
+
     // Rider Ride Actions (Legacy Stubs)
     Route::middleware('ability:role:rider')->prefix('rider/rides')->group(function () {
         Route::post('/', [RiderController::class, 'requestRide']);

@@ -669,6 +669,145 @@ Returned when input fields fail to meet specified validation rules.
 
 ---
 
+### 9a. Request Password Reset OTP
+*   **API Name:** Request Password Reset OTP
+*   **Purpose:** Requests a 6-digit password reset OTP code. Sends the code to the user's email.
+*   **Endpoint URL:** `/auth/forgot-password`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** No
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+*   **Request Payload:**
+    ```json
+    {
+      "email": "user@example.com"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Password reset OTP sent successfully."
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "The given data was invalid.",
+      "errors": {
+        "email": [
+          "The selected email is invalid."
+        ]
+      }
+    }
+    ```
+*   **Validation Rules:**
+    *   `email`: Required, Email format, must exist in `users.email`.
+*   **Business Logic Explanation:**
+    *   Validates that the email belongs to a registered user.
+    *   Generates a 6-digit OTP code, hashes it, and stores/updates it in `password_reset_tokens` table.
+    *   Dispatches an email notification containing the OTP.
+*   **Database Tables Affected:** `password_reset_tokens`
+*   **Example Use Case:** A user forgot their password and inputs their email to receive a recovery code.
+
+---
+
+### 9b. Verify OTP & Reset Password
+*   **API Name:** Verify OTP & Reset Password
+*   **Purpose:** Verifies the 6-digit recovery OTP code and updates the user's password.
+*   **Endpoint URL:** `/auth/reset-password`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** No
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+*   **Request Payload:**
+    ```json
+    {
+      "email": "user@example.com",
+      "otp": "123456",
+      "password": "NewPassword123!",
+      "password_confirmation": "NewPassword123!"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Password reset successfully."
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "The given data was invalid.",
+      "errors": {
+        "otp": [
+          "The provided OTP is invalid."
+        ]
+      }
+    }
+    ```
+*   **Validation Rules:**
+    *   `email`: Required, Email format, must exist in `users`.
+    *   `otp`: Required, String, exactly 6 characters.
+    *   `password`: Required, String, minimum 8 characters, must match `password_confirmation`.
+*   **Business Logic Explanation:**
+    *   Validates the OTP code against the record in `password_reset_tokens`.
+    *   Verifies that the OTP is not older than 10 minutes (expiry check).
+    *   Updates the user's password securely using Hash::make().
+    *   Invalidates the OTP and deletes the reset token record.
+    *   Revokes all active Sanctum tokens for the user to ensure all active sessions are logged out.
+*   **Database Tables Affected:** `users`, `password_reset_tokens`, `personal_access_tokens`
+*   **Example Use Case:** A user receives the 6-digit code via email, enters it with their new password, and resets it.
+
+---
+
+### 9c. Delete User Account
+*   **API Name:** Delete User Account
+*   **Purpose:** Permanently deletes (soft-deletes) the authenticated user's account and cleans up sensitive related profile data.
+*   **Endpoint URL:** `/profile/delete-account`
+*   **HTTP Method:** `DELETE`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:**
+    ```json
+    {
+      "password": "CurrentPassword123!"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Account deleted successfully."
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "Invalid password."
+    }
+    ```
+*   **Validation Rules:**
+    *   `password`: Required, String.
+*   **Business Logic Explanation:**
+    *   Authenticates user and confirms password matches via `Hash::check()`.
+    *   If correct, deletes all active Sanctum tokens.
+    *   If the user is a Driver, turns their status to offline (removing them from Redis coordinates) and deletes related driver profile data (documents, vehicles, bank accounts).
+    *   Deletes saved addresses and wallets.
+    *   Soft-deletes the `users` row. The global soft deletion scope prevents any future login attempts.
+*   **Database Tables Affected:** `users`, `driver_profiles`, `driver_documents`, `driver_bank_accounts`, `vehicles`, `wallets`, `personal_access_tokens`
+*   **Example Use Case:** Bob wants to stop using UEY. He inputs his password in the Account settings and deletes his account.
+
+---
+
 ## Module 2: Driver Verification & Onboarding
 
 ### 10. Upload Driver Document
@@ -1638,5 +1777,235 @@ Returned when input fields fail to meet specified validation rules.
     ```
 *   **Database Tables Affected:** `rides`
 *   **Example Use Case:** Bob opens the navigation dashboard. The app queries `/driver/active-ride` to render navigation instructions and passenger details.
+
+---
+
+## Module 6: Ride Lifecycle Management & Trip Execution
+
+### 29. Get Ride Details (Driver)
+*   **API Name:** Get Ride Details (Driver)
+*   **Purpose:** Retrieves details of a ride. Accessible only by the assigned driver.
+*   **Endpoint URL:** `/driver/rides/{ride}`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "ride": {
+        "id": 2,
+        "rider_id": 1,
+        "driver_profile_id": 3,
+        "vehicle_type_id": 1,
+        "pickup_address": "London Eye",
+        "pickup_latitude": 51.5074,
+        "pickup_longitude": -0.1278,
+        "destination_address": "Regent Park",
+        "destination_latitude": 51.5204,
+        "destination_longitude": -0.1482,
+        "status": "accepted",
+        "otp": "123456",
+        "estimated_distance": 2.0,
+        "estimated_duration": 5,
+        "estimated_fare": 10.0,
+        "actual_distance": null,
+        "actual_duration": null,
+        "actual_fare": null,
+        "accepted_at": "2026-06-26T13:19:32+05:30",
+        "arrived_at": null,
+        "started_at": null,
+        "completed_at": null,
+        "cancelled_at": null,
+        "otp_verified_at": null,
+        "otp_verified_by": null,
+        "fare_breakdown": null
+      }
+    }
+    ```
+*   **Error Response (403 Forbidden):**
+    ```json
+    {
+      "success": false,
+      "message": "You are not authorized to view this ride."
+    }
+    ```
+*   **Database Tables Affected:** `rides`
+*   **Example Use Case:** Bob opens the details page for his accepted ride to check coordinates, passenger name, and route details.
+
+---
+
+### 30. Mark Ride as Arriving
+*   **API Name:** Mark Ride as Arriving
+*   **Purpose:** Transition the ride status from accepted to arriving.
+*   **Endpoint URL:** `/driver/rides/{ride}/arriving`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride status updated to arriving.",
+      "ride": {
+        "id": 2,
+        "status": "arriving"
+      }
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "The given data was invalid.",
+      "errors": {
+        "status": [
+          "Invalid transition from pending to arriving."
+        ]
+      }
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Ensures that only the assigned driver is updating the status.
+    *   Enforces sequence transitions. Transitions are only valid if the current status is `accepted`.
+*   **Database Tables Affected:** `rides`, `ride_status_logs`
+
+---
+
+### 31. Mark Ride as Arrived
+*   **API Name:** Mark Ride as Arrived
+*   **Purpose:** Transition the ride status from arriving to arrived. Sets the arrived_at timestamp.
+*   **Endpoint URL:** `/driver/rides/{ride}/arrived`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride status updated to arrived.",
+      "ride": {
+        "id": 2,
+        "status": "arrived",
+        "arrived_at": "2026-06-26T13:22:00+05:30"
+      }
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Ensures that only the assigned driver is updating the status.
+    *   Transitions are only valid if the current status is `arriving`. Sets the `arrived_at` timestamp to the current time.
+*   **Database Tables Affected:** `rides`, `ride_status_logs`
+
+---
+
+### 32. Start Ride (Verify OTP)
+*   **API Name:** Start Ride
+*   **Purpose:** Transition the ride status from arrived to in_progress. Verifies the rider's 6-digit OTP. Sets started_at and otp_verified_at.
+*   **Endpoint URL:** `/driver/rides/{ride}/start`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:**
+    ```json
+    {
+      "otp": "123456"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride started successfully.",
+      "ride": {
+        "id": 2,
+        "status": "in_progress",
+        "started_at": "2026-06-26T13:24:00+05:30",
+        "otp_verified_at": "2026-06-26T13:24:00+05:30",
+        "otp_verified_by": 3
+      }
+    }
+    ```
+*   **Error Response (422 Unprocessable Content - Wrong OTP):**
+    ```json
+    {
+      "success": false,
+      "message": "The given data was invalid.",
+      "errors": {
+        "otp": [
+          "The provided OTP is invalid."
+        ]
+      }
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Verifies that the provided OTP matches the ride's generated OTP.
+    *   Sets `otp_verified_at` and `started_at` to the current timestamp.
+    *   Sets `otp_verified_by` to the ID of the verifying driver.
+    *   Transitions status from `arrived` to `in_progress`.
+*   **Database Tables Affected:** `rides`, `ride_status_logs`
+
+---
+
+### 33. Complete Ride
+*   **API Name:** Complete Ride
+*   **Purpose:** Transition the ride status from in_progress to completed. Computes actual fare and stores actual trip metrics and fare breakdown.
+*   **Endpoint URL:** `/driver/rides/{ride}/complete`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:**
+    ```json
+    {
+      "actual_distance": 3.5,
+      "actual_duration": 10
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride completed successfully.",
+      "ride": {
+        "id": 2,
+        "status": "completed",
+        "actual_distance": 3.5,
+        "actual_duration": 10,
+        "actual_fare": 15.25,
+        "completed_at": "2026-06-26T13:34:00+05:30",
+        "fare_breakdown": {
+          "base_fare": 5.00,
+          "distance": 3.5,
+          "per_km_rate": 1.50,
+          "distance_fare": 5.25,
+          "duration": 10,
+          "per_minute_rate": 0.50,
+          "duration_fare": 5.00,
+          "calculated_fare": 15.25,
+          "minimum_fare": 7.00,
+          "applied_minimum_fare": false,
+          "final_fare": 15.25
+        }
+      }
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Validates input values (distance >= 0, duration >= 0).
+    *   Calculates final fare: `base_fare + per_km_rate * actual_distance + per_minute_rate * actual_duration`, capped at the category's `minimum_fare`.
+    *   Saves the detailed invoice items under `fare_breakdown` JSON column.
+    *   Updates the driver's location coordinate fields and coordinates inside Redis to the destination of the ride to mark availability nearby.
+*   **Database Tables Affected:** `rides`, `driver_profiles`, `ride_status_logs`
+
 
 

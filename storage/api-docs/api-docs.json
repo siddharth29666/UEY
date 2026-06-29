@@ -367,6 +367,135 @@
                 ]
             }
         },
+        "/auth/forgot-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Forgot Password Request OTP",
+                "description": "Requests a 6-digit password reset OTP code. Sends the code to the user's email.",
+                "operationId": "9b2df2ffa308e587d0b93bf28895bf7f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "description": "The registered email address.",
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset OTP sent successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password reset OTP sent successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                }
+            }
+        },
+        "/auth/reset-password": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Reset Password with OTP",
+                "description": "Verifies the 6-digit OTP code and updates the user's password. Revokes all active tokens.",
+                "operationId": "0dc0db5a58863a6c9810afee0eab9628",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "otp",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "otp": {
+                                        "description": "The 6-digit OTP code received via email.",
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword123!"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "NewPassword123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password reset successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                }
+            }
+        },
         "/profile": {
             "get": {
                 "tags": [
@@ -566,6 +695,86 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/profile/delete-account": {
+            "delete": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "Delete User Account",
+                "description": "Permanently deletes the authenticated user's account. Performs cleanup of related data.",
+                "operationId": "66bf522e99030f2b023904abda8eb04d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "password"
+                                ],
+                                "properties": {
+                                    "password": {
+                                        "description": "The user's current password for confirmation.",
+                                        "type": "string",
+                                        "example": "CurrentPassword123!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Account deleted successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Account deleted successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid password or validation error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Invalid password."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
                     }
                 },
                 "security": [
@@ -1784,6 +1993,366 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/rides/{ride}": {
+            "get": {
+                "tags": [
+                    "Driver Ride Lifecycle"
+                ],
+                "summary": "Get Ride Details (Driver)",
+                "description": "Retrieves the details of a ride. Only accessible by the assigned driver.",
+                "operationId": "03a668072c38eeeccccc39b77ec6bdf4",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "ID of the Ride",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ride details retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "description": "Ride not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Record not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/rides/{ride}/arriving": {
+            "post": {
+                "tags": [
+                    "Driver Ride Lifecycle"
+                ],
+                "summary": "Mark Ride as Arriving",
+                "description": "Transition the ride status from accepted to arriving. Accessible only to the assigned driver.",
+                "operationId": "d120acc077def53494a93ea4246fc414",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "ID of the Ride",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ride marked as arriving.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ride status updated to arriving."
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/rides/{ride}/arrived": {
+            "post": {
+                "tags": [
+                    "Driver Ride Lifecycle"
+                ],
+                "summary": "Mark Ride as Arrived",
+                "description": "Transition the ride status from arriving to arrived. Sets the arrived_at timestamp. Accessible only to the assigned driver.",
+                "operationId": "571e4a8880f785300251c51185b818b3",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "ID of the Ride",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ride marked as arrived.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ride status updated to arrived."
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/rides/{ride}/start": {
+            "post": {
+                "tags": [
+                    "Driver Ride Lifecycle"
+                ],
+                "summary": "Start Ride",
+                "description": "Transition the ride status from arrived to in_progress. Verifies the rider's 6-digit OTP. Sets started_at and otp_verified_at. Accessible only to the assigned driver.",
+                "operationId": "a5d00f8e91c7719105249c45eb13e502",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "ID of the Ride",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "otp": {
+                                        "description": "The 6-digit OTP provided by the rider.",
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ride started successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ride started successfully."
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/rides/{ride}/complete": {
+            "post": {
+                "tags": [
+                    "Driver Ride Lifecycle"
+                ],
+                "summary": "Complete Ride",
+                "description": "Transition the ride status from in_progress to completed. Computes actual fare and stores actual trip metrics and fare breakdown. Accessible only to the assigned driver.",
+                "operationId": "6693df950316ef2cf2ac108483ecb436",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "ID of the Ride",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "actual_distance",
+                                    "actual_duration"
+                                ],
+                                "properties": {
+                                    "actual_distance": {
+                                        "description": "Actual trip distance in kilometers.",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5.2
+                                    },
+                                    "actual_duration": {
+                                        "description": "Actual trip duration in minutes.",
+                                        "type": "integer",
+                                        "example": 12
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ride completed successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ride completed successfully."
+                                        },
+                                        "ride": {
+                                            "$ref": "#/components/schemas/Ride"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
                     }
                 },
                 "security": [
@@ -3053,6 +3622,10 @@
         {
             "name": "Driver Availability",
             "description": "Driver Availability"
+        },
+        {
+            "name": "Driver Ride Lifecycle",
+            "description": "Driver Ride Lifecycle"
         },
         {
             "name": "Driver Matching",

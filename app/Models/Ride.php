@@ -46,6 +46,9 @@ class Ride extends Model
         'cancelled_at',
         'cancelled_by',
         'cancel_reason',
+        'otp_verified_at',
+        'otp_verified_by',
+        'fare_breakdown',
     ];
 
     /**
@@ -75,6 +78,9 @@ class Ride extends Model
             'started_at' => 'datetime',
             'completed_at' => 'datetime',
             'cancelled_at' => 'datetime',
+            'otp_verified_at' => 'datetime',
+            'otp_verified_by' => 'integer',
+            'fare_breakdown' => 'array',
         ];
     }
 
@@ -92,6 +98,14 @@ class Ride extends Model
     public function driverProfile(): BelongsTo
     {
         return $this->belongsTo(DriverProfile::class, 'driver_profile_id');
+    }
+
+    /**
+     * Get the driver who verified the OTP.
+     */
+    public function otpVerifiedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'otp_verified_by');
     }
 
     /**

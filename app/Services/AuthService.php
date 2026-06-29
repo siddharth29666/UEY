@@ -16,6 +16,8 @@ use App\Models\Wallet;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use App\Notifications\PasswordResetNotification;
+use App\Services\DriverLocationService;
 
 class AuthService
 {
@@ -180,5 +182,140 @@ class AuthService
         }
 
         return $user->load('driverProfile');
+    }
+
+    /**
+     * Send password reset OTP via email.
+     *
+     * @param string $email
+     * @return string Returns generated OTP
+     * @throws ValidationException
+     */
+    public function sendPasswordResetOtp(string $email): string
+    {
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => ['User with this email does not exist.'],
+            ]);
+        }
+
+        // Generate 6-digit OTP
+        $otp = (string) random_int(100000, 999999);
+
+        // Store OTP in database table (hashed for security)
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $email],
+            [
+                'token' => Hash::make($otp),
+                'created_at' => now(),
+            ]
+        );
+
+        // Send OTP notification
+        $user->notify(new PasswordResetNotification($otp));
+
+        return $otp;
+    }
+
+    /**
+     * Verify OTP and reset password.
+     *
+     * @param string $email
+     * @param string $otp
+     * @param string $password
+     * @return void
+     * @throws ValidationException
+     */
+    public function resetPassword(string $email, string $otp, string $password): void
+    {
+        $user = User::where('email', $email)->first();
+        if (!$user) {
+            throw ValidationException::withMessages([
+                'email' => ['User with this email does not exist.'],
+            ]);
+        }
+
+        $record = DB::table('password_reset_tokens')->where('email', $email)->first();
+        if (!$record) {
+            throw ValidationException::withMessages([
+                'otp' => ['No active password reset request found for this email.'],
+            ]);
+        }
+
+        // Check expiry (10 minutes)
+        if (\Carbon\Carbon::parse($record->created_at)->addMinutes(10)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+            throw ValidationException::withMessages([
+                'otp' => ['Password reset OTP has expired.'],
+            ]);
+        }
+
+        // Verify OTP code
+        if (!Hash::check($otp, $record->token)) {
+            throw ValidationException::withMessages([
+                'otp' => ['The provided OTP is invalid.'],
+            ]);
+        }
+
+        // Update password securely
+        $user->update([
+            'password' => Hash::make($password),
+        ]);
+
+        // Invalidate OTP after successful use
+        DB::table('password_reset_tokens')->where('email', $email)->delete();
+
+        // Revoke all existing Sanctum tokens for security
+        $user->tokens()->delete();
+    }
+
+    /**
+     * Permanently/soft delete user account.
+     *
+     * @param User $user
+     * @param string $password
+     * @return void
+     * @throws ValidationException
+     */
+    public function deleteAccount(User $user, string $password): void
+    {
+        // Require password confirmation before deletion
+        if (!Hash::check($password, $user->password)) {
+            throw ValidationException::withMessages([
+                'password' => ['Invalid password.'],
+            ]);
+        }
+
+        // Revoke all active Sanctum tokens
+        $user->tokens()->delete();
+
+        // Cleanup related data
+        if ($user->isDriver() && $user->driverProfile) {
+            // Toggle offline in DriverLocationService to clean up Redis GEO index
+            $locationService = app(DriverLocationService::class);
+            $locationService->toggleOnlineStatus($user->driverProfile, false);
+
+            // Delete sensitive details: documents, bank accounts, vehicles, and profile
+            $user->driverProfile->documents()->delete();
+            if ($user->driverProfile->bankAccount) {
+                $user->driverProfile->bankAccount->delete();
+            }
+            $user->driverProfile->vehicles()->delete();
+            $user->driverProfile->delete();
+        }
+
+        // Delete saved addresses
+        if (\Illuminate\Support\Facades\Schema::hasTable('saved_addresses')) {
+            $user->savedAddresses()->delete();
+        }
+
+        // Delete wallet
+        if ($user->wallet) {
+            $user->wallet->delete();
+        }
+
+        // Soft delete user record
+        $user->delete();
     }
 }

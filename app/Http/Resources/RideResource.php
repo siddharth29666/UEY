@@ -38,6 +38,9 @@ class RideResource extends JsonResource
             'cancelled_at' => $this->cancelled_at ? $this->cancelled_at->toIso8601String() : null,
             'cancelled_by' => $this->cancelled_by,
             'cancel_reason' => $this->cancel_reason,
+            'otp_verified_at' => $this->otp_verified_at ? $this->otp_verified_at->toIso8601String() : null,
+            'otp_verified_by' => $this->otp_verified_by,
+            'fare_breakdown' => $this->fare_breakdown,
             'created_at' => $this->created_at ? $this->created_at->toIso8601String() : null,
             'updated_at' => $this->updated_at ? $this->updated_at->toIso8601String() : null,
             

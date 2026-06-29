@@ -419,3 +419,367 @@ sequenceDiagram
 1. Call `GET {{base_url}}/rides/active` using `rider_token` and verify it return the accepted ride.
 2. Call `GET {{base_url}}/driver/active-ride` using `driver1_token` and verify it returns the same ride.
 3. Call `GET {{base_url}}/driver/active-ride` using `driver2_token` and verify it returns **404 Not Found** (since Driver 2 was not assigned).
+
+---
+
+## 6. Phase 6: Ride Lifecycle Management & Trip Execution Reference
+
+### 1. Retrieve Ride Details (Driver)
+*   **Method / Route:** `GET {{base_url}}/driver/rides/{ride_id}`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{driver_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "ride": {
+        "id": 2,
+        "rider_id": 1,
+        "driver_profile_id": 3,
+        "vehicle_type_id": 1,
+        "pickup_address": "London Eye",
+        "pickup_latitude": 51.5074,
+        "pickup_longitude": -0.1278,
+        "destination_address": "Regent Park",
+        "destination_latitude": 51.5204,
+        "destination_longitude": -0.1482,
+        "status": "accepted",
+        "otp": "123456",
+        "estimated_distance": 2.0,
+        "estimated_duration": 5,
+        "estimated_fare": 10.0,
+        "actual_distance": null,
+        "actual_duration": null,
+        "actual_fare": null,
+        "accepted_at": "2026-06-26T13:19:32+05:30",
+        "arrived_at": null,
+        "started_at": null,
+        "completed_at": null,
+        "cancelled_at": null
+      }
+    }
+    ```
+
+### 2. Mark Ride as Arriving (Driver)
+*   **Method / Route:** `POST {{base_url}}/driver/rides/{ride_id}/arriving`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{driver_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride status updated to arriving.",
+      "ride": {
+        "id": 2,
+        "status": "arriving"
+      }
+    }
+    ```
+
+### 3. Mark Ride as Arrived (Driver)
+*   **Method / Route:** `POST {{base_url}}/driver/rides/{ride_id}/arrived`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{driver_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride status updated to arrived.",
+      "ride": {
+        "id": 2,
+        "status": "arrived",
+        "arrived_at": "2026-06-26T13:22:00+05:30"
+      }
+    }
+    ```
+
+### 4. Start Ride (Driver)
+*   **Method / Route:** `POST {{base_url}}/driver/rides/{ride_id}/start`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{driver_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "otp": "123456"
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride started successfully.",
+      "ride": {
+        "id": 2,
+        "status": "in_progress",
+        "started_at": "2026-06-26T13:24:00+05:30",
+        "otp_verified_at": "2026-06-26T13:24:00+05:30",
+        "otp_verified_by": 3
+      }
+    }
+    ```
+
+### 5. Complete Ride (Driver)
+*   **Method / Route:** `POST {{base_url}}/driver/rides/{ride_id}/complete`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{driver_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "actual_distance": 3.5,
+      "actual_duration": 10
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride completed successfully.",
+      "ride": {
+        "id": 2,
+        "status": "completed",
+        "actual_distance": 3.5,
+        "actual_duration": 10,
+        "actual_fare": 15.25,
+        "completed_at": "2026-06-26T13:34:00+05:30",
+        "fare_breakdown": {
+          "base_fare": 5.00,
+          "distance": 3.5,
+          "per_km_rate": 1.50,
+          "distance_fare": 5.25,
+          "duration": 10,
+          "per_minute_rate": 0.50,
+          "duration_fare": 5.00,
+          "calculated_fare": 15.25,
+          "minimum_fare": 7.00,
+          "applied_minimum_fare": false,
+          "final_fare": 15.25
+        }
+      }
+    }
+    ```
+
+---
+
+## 7. End-to-End Trip Execution Testing Flow (Step-by-Step)
+
+Follow this sequence to test a complete ride trip execution from start to finish:
+
+```mermaid
+sequenceDiagram
+    participant Rider as Rider App
+    participant Server as Backend Server
+    participant Driver as Driver App
+
+    Note over Rider, Driver: Ride has been Accepted (Status: accepted)
+    Driver->>Server: GET /driver/rides/{ride_id} (View Ride Details)
+    Server-->>Driver: 200 OK (Returns ride details & 6-digit OTP)
+    
+    Driver->>Server: POST /driver/rides/{ride_id}/arriving (En route)
+    Server-->>Driver: 200 OK (Status becomes 'arriving')
+
+    Driver->>Server: POST /driver/rides/{ride_id}/arrived (At pickup)
+    Server-->>Driver: 200 OK (Status becomes 'arrived', arrived_at is set)
+
+    Note over Rider, Driver: Rider shares 6-digit OTP with Driver
+    
+    rect rgba(255, 0, 0, .1)
+        Note over Driver: Incorrect OTP Boundary Check
+        Driver->>Server: POST /driver/rides/{ride_id}/start (otp: "654321")
+        Server-->>Driver: 422 Unprocessable Content (OTP invalid error)
+    end
+
+    Driver->>Server: POST /driver/rides/{ride_id}/start (otp: "123456")
+    Server-->>Driver: 200 OK (Status becomes 'in_progress', started_at set, otp_verified_at set)
+
+    Driver->>Server: POST /driver/rides/{ride_id}/complete (distance: 3.5, duration: 10)
+    Server-->>Driver: 200 OK (Status becomes 'completed', completes calculations & logs breakdown)
+    
+    Note over Driver: Driver location updated to destination in Redis
+```
+
+### Step 1: Start from an Accepted Ride
+1. Ensure you have an active ride with status `accepted` (e.g. following Step 6 of the matching flow).
+
+### Step 2: Fetch Ride Details
+1. Call `GET {{base_url}}/driver/rides/{ride_id}` using `driver_token`.
+2. Verify you get the ride details, and note the `otp` value.
+
+### Step 3: Transition to Arriving
+1. Call `POST {{base_url}}/driver/rides/{ride_id}/arriving` using `driver_token`.
+2. Verify response status is **200 OK** and status transitions to `arriving`.
+3. Try calling `/start` or `/complete` at this stage, verify it fails with **422 Unprocessable Content** (state sequence validation).
+
+### Step 4: Transition to Arrived
+1. Call `POST {{base_url}}/driver/rides/{ride_id}/arrived` using `driver_token`.
+2. Verify response status is **200 OK**, status transitions to `arrived`, and `arrived_at` timestamp is populated.
+
+### Step 5: Start the Ride with OTP Verification
+1. Attempt `POST {{base_url}}/driver/rides/{ride_id}/start` with an incorrect 6-digit OTP. Verify it returns **422 Validation Error**.
+2. Call `POST {{base_url}}/driver/rides/{ride_id}/start` with the correct OTP retrieved in Step 2.
+3. Verify it returns **200 OK**, status transitions to `in_progress`, and `otp_verified_at`, `otp_verified_by` and `started_at` are populated.
+
+### Step 6: Complete the Ride & Fare Calculation
+1. Call `POST {{base_url}}/driver/rides/{ride_id}/complete` using `driver_token` with `actual_distance` and `actual_duration` parameters.
+2. Verify it returns **200 OK**, status transitions to `completed`, and `completed_at` is set.
+3. Check the `actual_fare` and verify the math conforms to standard/category pricing formulas.
+4. Check the `fare_breakdown` JSON matches the calculated values.
+5. Verify in DB/Redis that the driver's location is automatically updated to the ride's destination coordinates.
+
+---
+
+## 8. Phase 6.5: Forgot Password & User Account Deletion Reference
+
+### 1. Request Password Reset OTP
+*   **Method / Route:** `POST {{base_url}}/auth/forgot-password`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+*   **Body (JSON):**
+    ```json
+    {
+      "email": "alice@example.com"
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Password reset OTP sent successfully."
+    }
+    ```
+
+### 2. Verify OTP & Reset Password
+*   **Method / Route:** `POST {{base_url}}/auth/reset-password`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+*   **Body (JSON):**
+    ```json
+    {
+      "email": "alice@example.com",
+      "otp": "123456",
+      "password": "newpassword123",
+      "password_confirmation": "newpassword123"
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Password reset successfully."
+    }
+    ```
+
+### 3. Delete Account
+*   **Method / Route:** `DELETE {{base_url}}/profile/delete-account`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "password": "newpassword123"
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Account deleted successfully."
+    }
+    ```
+*   **Expected Response (422 Unprocessable Content - Incorrect Password):**
+    ```json
+    {
+      "success": false,
+      "message": "Invalid password."
+    }
+    ```
+
+---
+
+## 9. End-to-End Account Management Testing Flow
+
+Follow this sequence to test password recovery and profile deletion:
+
+```mermaid
+sequenceDiagram
+    participant User as Client App
+    participant Server as Backend Server
+    participant Mail as Mail Log
+
+    Note over User, Server: Password Recovery Flow
+    User->>Server: POST /auth/forgot-password (email: "alice@example.com")
+    Server->>Mail: Write OTP email to laravel.log
+    Server-->>User: 200 OK (OTP Sent successfully)
+    
+    Note over User: User fetches 6-digit OTP code from log file
+
+    rect rgba(255, 0, 0, .1)
+        Note over User: Incorrect OTP Boundary Check
+        User->>Server: POST /auth/reset-password (wrong OTP)
+        Server-->>User: 422 Unprocessable Content (OTP invalid error)
+    end
+
+    User->>Server: POST /auth/reset-password (correct OTP & password)
+    Server-->>User: 200 OK (Password reset successfully, revokes tokens)
+
+    Note over User, Server: Account Deletion Flow
+    User->>Server: POST /login (with new password)
+    Server-->>User: 200 OK (Returns new bearer token)
+
+    rect rgba(255, 0, 0, .1)
+        Note over User: Incorrect Password Confirmation
+        User->>Server: DELETE /profile/delete-account (password: "wrong")
+        Server-->>User: 422 Unprocessable Content ("Invalid password.")
+    end
+
+    User->>Server: DELETE /profile/delete-account (password: "newpassword123")
+    Server-->>User: 200 OK (Account soft-deleted, Redis cleaned, tokens revoked)
+
+    Note over User: Attempt Login after Deletion
+    User->>Server: POST /login (with same credentials)
+    Server-->>User: 422 Unprocessable Content (Login blocked)
+```
+
+### Step 1: Request Recovery OTP
+1. Call `POST {{base_url}}/auth/forgot-password` with your registered email (e.g. `alice@example.com`).
+2. Verify you receive a **200 OK** response.
+3. Open `storage/logs/laravel.log` and find the latest mail notification containing your 6-digit OTP code (e.g., `123456`).
+
+### Step 2: Test Verification Expiry & Validation
+1. Send `POST {{base_url}}/auth/reset-password` with an incorrect OTP. Confirm it returns a **422 Validation Error**.
+2. Send `POST {{base_url}}/auth/reset-password` with the correct OTP and a password shorter than 8 characters. Confirm it fails with validation rules.
+
+### Step 3: Complete Reset Password
+1. Call `POST {{base_url}}/auth/reset-password` with the correct OTP, email, and matching password (e.g. `newpassword123`).
+2. Verify you get **200 OK** and password is reset.
+3. Try calling an authenticated profile route using any old bearer token. Verify it returns **401 Unauthorized** (confirming token revocation).
+
+### Step 4: Login with New Password
+1. Call `POST {{base_url}}/login` with your phone number and your new password `newpassword123`.
+2. Save the returned bearer token to your environments `auth_token` variable.
+
+### Step 5: Test Delete Account Password Validation
+1. Call `DELETE {{base_url}}/profile/delete-account` using the new token and password `wrongpassword`.
+2. Confirm the response status is **422 Unprocessable Content** and matches:
+   ```json
+   {
+     "success": false,
+     "message": "Invalid password."
+   }
+   ```
+
+### Step 6: Complete Account Deletion
+1. Call `DELETE {{base_url}}/profile/delete-account` with the correct password `newpassword123`.
+2. Confirm response returns **200 OK** and `"Account deleted successfully."`.
+3. Try calling `/profile` using that token. Confirm it returns **401 Unauthorized** (revoked).
+4. Try logging in again via `/login`. Confirm it fails with a **422 Validation Error** (user is soft-deleted and cannot be found).
+
