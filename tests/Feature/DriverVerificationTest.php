@@ -395,4 +395,206 @@ class DriverVerificationTest extends TestCase
         $this->assertEquals(UserStatus::ACTIVE, $this->driverUser->status);
         $this->assertEquals(VehicleStatus::APPROVED, $this->vehicle->status);
     }
+
+    /**
+     * Test a driver can view their own document.
+     */
+    public function test_driver_can_view_own_document()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        // Create mock file in faked storage
+        Storage::disk('local')->put('driver_documents/test_license.pdf', 'pdf-content');
+
+        $document = DriverDocument::create([
+            'driver_profile_id' => $this->driverProfile->id,
+            'document_type' => DriverDocumentType::DRIVING_LICENSE,
+            'document_path' => 'driver_documents/test_license.pdf',
+            'status' => DocumentStatus::PENDING,
+        ]);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson("/api/v1/driver/documents/{$document->id}/view");
+
+        $response->assertStatus(200);
+        $this->assertEquals('pdf-content', $response->streamedContent());
+    }
+
+    /**
+     * Test a driver can download their own document.
+     */
+    public function test_driver_can_download_own_document()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        // Create mock file in faked storage
+        Storage::disk('local')->put('driver_documents/test_license.pdf', 'pdf-content');
+
+        $document = DriverDocument::create([
+            'driver_profile_id' => $this->driverProfile->id,
+            'document_type' => DriverDocumentType::DRIVING_LICENSE,
+            'document_path' => 'driver_documents/test_license.pdf',
+            'status' => DocumentStatus::PENDING,
+        ]);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson("/api/v1/driver/documents/{$document->id}/download");
+
+        $response->assertStatus(200);
+        $response->assertHeader('Content-Disposition', 'attachment; filename=test_license.pdf');
+    }
+
+    /**
+     * Test a driver cannot view another driver's document.
+     */
+    public function test_driver_cannot_view_other_driver_document()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        // Create another driver and profile
+        $otherDriver = User::create([
+            'name' => 'Charlie Driver',
+            'phone' => '+447911777777',
+            'password' => Hash::make('password123'),
+            'role' => UserRole::DRIVER,
+            'status' => UserStatus::PENDING_APPROVAL,
+        ]);
+
+        $otherProfile = DriverProfile::create([
+            'user_id' => $otherDriver->id,
+            'license_number' => 'DL-777777',
+            'license_expiry' => Carbon::now()->addYear(),
+        ]);
+
+        // Create mock file in faked storage
+        Storage::disk('local')->put('driver_documents/other_license.pdf', 'pdf-content');
+
+        $document = DriverDocument::create([
+            'driver_profile_id' => $otherProfile->id,
+            'document_type' => DriverDocumentType::DRIVING_LICENSE,
+            'document_path' => 'driver_documents/other_license.pdf',
+            'status' => DocumentStatus::PENDING,
+        ]);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token, // Bob trying to view Charlie's document
+        ])->getJson("/api/v1/driver/documents/{$document->id}/view");
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ]);
+    }
+
+    /**
+     * Test a driver cannot download another driver's document.
+     */
+    public function test_driver_cannot_download_other_driver_document()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        // Create another driver and profile
+        $otherDriver = User::create([
+            'name' => 'Charlie Driver',
+            'phone' => '+447911777777',
+            'password' => Hash::make('password123'),
+            'role' => UserRole::DRIVER,
+            'status' => UserStatus::PENDING_APPROVAL,
+        ]);
+
+        $otherProfile = DriverProfile::create([
+            'user_id' => $otherDriver->id,
+            'license_number' => 'DL-777777',
+            'license_expiry' => Carbon::now()->addYear(),
+        ]);
+
+        Storage::disk('local')->put('driver_documents/other_license.pdf', 'pdf-content');
+
+        $document = DriverDocument::create([
+            'driver_profile_id' => $otherProfile->id,
+            'document_type' => DriverDocumentType::DRIVING_LICENSE,
+            'document_path' => 'driver_documents/other_license.pdf',
+            'status' => DocumentStatus::PENDING,
+        ]);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson("/api/v1/driver/documents/{$document->id}/download");
+
+        $response->assertStatus(403)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ]);
+    }
+
+    /**
+     * Test validation fails with 404 when physical file does not exist on disk.
+     */
+    public function test_secure_document_missing_file_returns_404()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        $document = DriverDocument::create([
+            'driver_profile_id' => $this->driverProfile->id,
+            'document_type' => DriverDocumentType::DRIVING_LICENSE,
+            'document_path' => 'driver_documents/non_existent.pdf', // does not exist in Storage
+            'status' => DocumentStatus::PENDING,
+        ]);
+
+        // 1. Check view
+        $response1 = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson("/api/v1/driver/documents/{$document->id}/view");
+
+        $response1->assertStatus(404)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Document file not found.',
+            ]);
+
+        // 2. Check download
+        $response2 = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->getJson("/api/v1/driver/documents/{$document->id}/download");
+
+        $response2->assertStatus(404)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Document file not found.',
+            ]);
+    }
+
+    /**
+     * Test DriverDocumentResource outputs fully qualified absolute URLs.
+     */
+    public function test_resource_returns_absolute_urls()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        $file = UploadedFile::fake()->create('license.pdf', 500);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->postJson('/api/v1/driver/onboarding/documents', [
+            'document_type' => 'driving_license',
+            'document' => $file,
+            'expires_at' => Carbon::now()->addYear()->toDateString(),
+        ]);
+
+        $response->assertStatus(201);
+
+        // Assert view_url and download_url are absolute URLs
+        $viewUrl = $response->json('document.view_url');
+        $downloadUrl = $response->json('document.download_url');
+
+        $this->assertStringStartsWith(rtrim(config('app.url'), '/') . '/api/v1/driver/documents/', $viewUrl);
+        $this->assertStringEndsWith('/view', $viewUrl);
+
+        $this->assertStringStartsWith(rtrim(config('app.url'), '/') . '/api/v1/driver/documents/', $downloadUrl);
+        $this->assertStringEndsWith('/download', $downloadUrl);
+    }
 }

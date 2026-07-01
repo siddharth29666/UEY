@@ -2600,6 +2600,154 @@
                 ]
             }
         },
+        "/driver/documents/{document}/view": {
+            "get": {
+                "tags": [
+                    "Driver Documents"
+                ],
+                "summary": "View Driver Document",
+                "description": "Streams the driver document directly to the browser (inline) for previewing.",
+                "operationId": "7fdede4e8e1abc60eb688032cb91c8ec",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "The ID of the driver document.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document file preview stream."
+                    },
+                    "403": {
+                        "description": "Unauthorized access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Document or physical file not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document file not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/documents/{document}/download": {
+            "get": {
+                "tags": [
+                    "Driver Documents"
+                ],
+                "summary": "Download Driver Document",
+                "description": "Initiates a file download for the requested driver document.",
+                "operationId": "9f61c9bf09096a7814e9b01542a1864c",
+                "parameters": [
+                    {
+                        "name": "document",
+                        "in": "path",
+                        "description": "The ID of the driver document.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document file download stream."
+                    },
+                    "403": {
+                        "description": "Unauthorized access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Document or physical file not found.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Document file not found."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/rides/estimate": {
             "post": {
                 "tags": [
@@ -3630,6 +3778,10 @@
         {
             "name": "Driver Matching",
             "description": "Driver Matching"
+        },
+        {
+            "name": "Driver Documents",
+            "description": "Driver Documents"
         },
         {
             "name": "Ride Booking",

@@ -832,8 +832,9 @@ Returned when input fields fail to meet specified validation rules.
       "document": {
         "id": 1,
         "document_type": "driving_license",
-        "document_path": "documents/driving_license_123.jpg",
-        "document_url": "http://uey.test/storage/documents/driving_license_123.jpg",
+        "document_path": "driver_documents/PXIgMLGNcVZjFYbatUaRbb5rXRi46imbwkfji9EF.pdf",
+        "view_url": "https://api.domain.com/api/v1/driver/documents/1/view",
+        "download_url": "https://api.domain.com/api/v1/driver/documents/1/download",
         "status": "pending",
         "rejection_reason": null,
         "expires_at": "2028-12-31",
@@ -896,8 +897,9 @@ Returned when input fields fail to meet specified validation rules.
           {
             "id": 1,
             "document_type": "driving_license",
-            "document_path": "documents/driving_license_123.jpg",
-            "document_url": "http://uey.test/storage/documents/driving_license_123.jpg",
+            "document_path": "driver_documents/PXIgMLGNcVZjFYbatUaRbb5rXRi46imbwkfji9EF.pdf",
+            "view_url": "https://api.domain.com/api/v1/driver/documents/1/view",
+            "download_url": "https://api.domain.com/api/v1/driver/documents/1/download",
             "status": "pending",
             "rejection_reason": null,
             "expires_at": "2028-12-31"
@@ -1062,8 +1064,9 @@ Returned when input fields fail to meet specified validation rules.
         {
           "id": 1,
           "document_type": "driving_license",
-          "document_path": "documents/driving_license_123.jpg",
-          "document_url": "http://uey.test/storage/documents/driving_license_123.jpg",
+          "document_path": "driver_documents/PXIgMLGNcVZjFYbatUaRbb5rXRi46imbwkfji9EF.pdf",
+          "view_url": "https://api.domain.com/api/v1/driver/documents/1/view",
+          "download_url": "https://api.domain.com/api/v1/driver/documents/1/download",
           "status": "pending",
           "rejection_reason": null,
           "expires_at": "2028-12-31",
@@ -1127,8 +1130,9 @@ Returned when input fields fail to meet specified validation rules.
       "document": {
         "id": 1,
         "document_type": "driving_license",
-        "document_path": "documents/driving_license_123.jpg",
-        "document_url": "http://uey.test/storage/documents/driving_license_123.jpg",
+        "document_path": "driver_documents/PXIgMLGNcVZjFYbatUaRbb5rXRi46imbwkfji9EF.pdf",
+        "view_url": "https://api.domain.com/api/v1/driver/documents/1/view",
+        "download_url": "https://api.domain.com/api/v1/driver/documents/1/download",
         "status": "approved",
         "rejection_reason": null,
         "expires_at": "2028-12-31",
@@ -1159,6 +1163,82 @@ Returned when input fields fail to meet specified validation rules.
     3.  Frontend submits POST with status.
     4.  Refreshing admin listing on success.
 *   **Example Use Case:** Bob's driving license is approved. Because his vehicle registration and insurance were already approved, Bob is automatically marked active and can immediately slide to online in UEY.
+
+---
+
+### 15a. View Driver Document
+*   **API Name:** View Driver Document
+*   **Purpose:** Streams a driver onboarding document directly inline to the browser/app. Only the document owner may access it.
+*   **Endpoint URL:** `/driver/documents/{document}/view`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Parameters:**
+    *   `document`: (Path parameter, Integer) The ID of the document to view.
+*   **Request Payload:** None
+*   **Success Response (200 OK):**
+    *   *Streams file data inline with corresponding Content-Type headers (e.g. `application/pdf`).*
+*   **Error Response (403 Forbidden - Unauthorized Access):**
+    ```json
+    {
+      "success": false,
+      "message": "Unauthorized."
+    }
+    ```
+*   **Error Response (404 Not Found - File Missing):**
+    ```json
+    {
+      "success": false,
+      "message": "Document file not found."
+    }
+    ```
+*   **Validation Rules:** None.
+*   **Business Logic Explanation:**
+    *   Authenticates driver and confirms they are the owner of the document.
+    *   Checks if the physical document is stored on the local disk storage root.
+    *   Streams the file inline using Symfony binary file response.
+*   **Database Tables Affected:** `driver_documents` (reads)
+*   **Example Use Case:** Bob taps on "View License" on his profile page to view his uploaded document.
+
+---
+
+### 15b. Download Driver Document
+*   **API Name:** Download Driver Document
+*   **Purpose:** Downloads a driver onboarding document. Only the document owner may access it.
+*   **Endpoint URL:** `/driver/documents/{document}/download`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Driver Only)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Parameters:**
+    *   `document`: (Path parameter, Integer) The ID of the document to download.
+*   **Request Payload:** None
+*   **Success Response (200 OK):**
+    *   *Downloads file data with attachment header and file name.*
+*   **Error Response (403 Forbidden - Unauthorized Access):**
+    ```json
+    {
+      "success": false,
+      "message": "Unauthorized."
+    }
+    ```
+*   **Error Response (404 Not Found - File Missing):**
+    ```json
+    {
+      "success": false,
+      "message": "Document file not found."
+    }
+    ```
+*   **Validation Rules:** None.
+*   **Business Logic Explanation:**
+    *   Authenticates driver and confirms they are the owner of the document.
+    *   Checks if the physical document is stored on the local disk storage root.
+    *   Downloads the file using Laravel's storage download response.
+*   **Database Tables Affected:** `driver_documents` (reads)
+*   **Example Use Case:** Bob wants to save a backup of his uploaded vehicle registration on his local device.
 
 ---
 

@@ -783,3 +783,123 @@ sequenceDiagram
 3. Try calling `/profile` using that token. Confirm it returns **401 Unauthorized** (revoked).
 4. Try logging in again via `/login`. Confirm it fails with a **422 Validation Error** (user is soft-deleted and cannot be found).
 
+---
+
+## 10. Phase 6.6: Secure Driver Document View & Download Reference
+
+### 1. View Document (Inline Preview)
+*   **Method / Route:** `GET {{base_url}}/driver/documents/{document_id}/view`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{driver_token}}`
+*   **Expected Response (200 OK):**
+    *   *Streams the PDF file directly inline with `Content-Type: application/pdf` header (renders in browser or mobile view).*
+*   **Expected Response (403 Forbidden - Unauthorized Driver):**
+    ```json
+    {
+      "success": false,
+      "message": "Unauthorized."
+    }
+    ```
+*   **Expected Response (404 Not Found - Missing Physical File):**
+    ```json
+    {
+      "success": false,
+      "message": "Document file not found."
+    }
+    ```
+
+### 2. Download Document (Attachment)
+*   **Method / Route:** `GET {{base_url}}/driver/documents/{document_id}/download`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{driver_token}}`
+*   **Expected Response (200 OK):**
+    *   *Downloads the file as an attachment with header `Content-Disposition: attachment; filename=...`.*
+*   **Expected Response (403 Forbidden - Unauthorized Driver):**
+    ```json
+    {
+      "success": false,
+      "message": "Unauthorized."
+    }
+    ```
+*   **Expected Response (404 Not Found - Missing Physical File):**
+    ```json
+    {
+      "success": false,
+      "message": "Document file not found."
+    }
+    ```
+
+---
+
+## 11. End-to-End Secure Driver Document Testing Flow
+
+Follow this sequence to verify the secure view & download endpoints, ownership validation, and file checks:
+
+```mermaid
+sequenceDiagram
+    participant Driver1 as Driver 1 App
+    participant Driver2 as Driver 2 App
+    participant Server as Backend Server
+    
+    Driver1->>Server: POST /driver/onboarding/documents (Uploads license.pdf)
+    Server-->>Driver1: 201 Created (Returns view_url & download_url)
+
+    rect rgba(0, 255, 0, .1)
+        Note over Driver1: Authorized View & Download
+        Driver1->>Server: GET /driver/documents/{id}/view
+        Server-->>Driver1: 200 OK (Streams file content)
+        Driver1->>Server: GET /driver/documents/{id}/download
+        Server-->>Driver1: 200 OK (Downloads attachment)
+    end
+
+    rect rgba(255, 0, 0, .1)
+        Note over Driver2: Unauthorized Access Check (403)
+        Driver2->>Server: GET /driver/documents/{id}/view
+        Server-->>Driver2: 403 Forbidden ("Unauthorized.")
+        Driver2->>Server: GET /driver/documents/{id}/download
+        Server-->>Driver2: 403 Forbidden ("Unauthorized.")
+    end
+
+    rect rgba(255, 0, 0, .1)
+        Note over Driver1: Physical File Missing Check (404)
+        Note over Server: Physical file is deleted from private folder
+        Driver1->>Server: GET /driver/documents/{id}/view
+        Server-->>Driver1: 404 Not Found ("Document file not found.")
+    end
+```
+
+### Step 1: Upload a Document
+1. Log in as Driver 1 and save the bearer token to `driver1_token`.
+2. Send a `POST {{base_url}}/driver/onboarding/documents` with a document type and file payload.
+3. Confirm the response returns **201 Created** containing absolute URLs for `view_url` and `download_url`.
+4. Store the returned `document.id` to test access.
+
+### Step 2: Test Authorized Document Access
+1. Call `GET {{base_url}}/driver/documents/{id}/view` using `driver1_token`. Confirm it returns the file content (200 OK).
+2. Call `GET {{base_url}}/driver/documents/{id}/download` using `driver1_token`. Confirm it initiates the file download (200 OK) with the file attachment header.
+
+### Step 3: Test Ownership Validation (403 Forbidden)
+1. Log in as Driver 2 and save the bearer token to `driver2_token`.
+2. Call `GET {{base_url}}/driver/documents/{id}/view` (pointing to Driver 1's document ID) using `driver2_token`.
+3. Verify the server rejects the request with **403 Forbidden** and matches:
+   ```json
+   {
+     "success": false,
+     "message": "Unauthorized."
+   }
+   ```
+
+### Step 4: Test Missing File Check (404 Not Found)
+1. Delete the physical file from `storage/app/private/driver_documents/...` (or simulate it in tests by calling `/view` on a record with a non-existent path).
+2. Call `GET {{base_url}}/driver/documents/{id}/view` using `driver1_token`.
+3. Verify the server returns **404 Not Found** and matches:
+   ```json
+   {
+     "success": false,
+     "message": "Document file not found."
+   }
+   ```
+
+
