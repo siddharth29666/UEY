@@ -106,6 +106,7 @@ class RideService
                 'estimated_distance' => round($distance, 2),
                 'estimated_duration' => $duration,
                 'estimated_fare' => round($fare, 2),
+                'payment_method' => $data['payment_method'] ?? 'cash',
             ]);
 
             // Match with nearby drivers

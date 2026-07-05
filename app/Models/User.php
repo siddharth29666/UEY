@@ -32,6 +32,8 @@ class User extends Authenticatable
         'email_notifications',
         'sms_notifications',
         'push_notifications',
+        'rating',
+        'total_reviews',
     ];
 
     /**
@@ -59,6 +61,8 @@ class User extends Authenticatable
             'email_notifications' => 'boolean',
             'sms_notifications' => 'boolean',
             'push_notifications' => 'boolean',
+            'rating' => 'decimal:2',
+            'total_reviews' => 'integer',
         ];
     }
 
@@ -108,5 +112,21 @@ class User extends Authenticatable
     public function savedAddresses(): HasMany
     {
         return $this->hasMany(SavedAddress::class, 'user_id');
+    }
+
+    /**
+     * Get reviews submitted to this user.
+     */
+    public function reviewsReceived(): HasMany
+    {
+        return $this->hasMany(RideReview::class, 'reviewee_id');
+    }
+
+    /**
+     * Get reviews submitted by this user.
+     */
+    public function reviewsSubmitted(): HasMany
+    {
+        return $this->hasMany(RideReview::class, 'reviewer_id');
     }
 }

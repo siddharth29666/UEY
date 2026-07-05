@@ -902,4 +902,240 @@ sequenceDiagram
    }
    ```
 
+---
+
+## 12. Phase 7: Payment Processing, Receipts & Driver Earnings Reference
+
+### 1. View Ride Payment Details
+*   **Method / Route:** `GET {{base_url}}/payments/{ride_id}`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "payment": {
+        "id": 1,
+        "ride_id": 12,
+        "rider_id": 1,
+        "driver_profile_id": 3,
+        "payment_method": "wallet",
+        "payment_status": "paid",
+        "transaction_reference": "PAY-20260704-000001",
+        "subtotal": 20.00,
+        "tax": 0.00,
+        "discount": 0.00,
+        "platform_commission": 3.00,
+        "driver_earning": 17.00,
+        "total": 20.00,
+        "paid_at": "2026-07-04T00:30:00+05:30"
+      }
+    }
+    ```
+
+### 2. View Ride Invoice Details (Rider & Driver Receipt)
+*   **Method / Route:** `GET {{base_url}}/payments/invoice/{ride_id}`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "invoice": {
+        "ride_id": 12,
+        "pickup_address": "London Eye",
+        "destination_address": "Regents Park",
+        "distance": 5.0,
+        "duration": 15,
+        "payment_method": "wallet",
+        "payment_status": "paid",
+        "transaction_reference": "PAY-20260704-000001",
+        "completed_at": "2026-07-04T00:30:00+05:30",
+        "rider": {
+          "id": 1,
+          "name": "Alice Rider"
+        },
+        "driver": {
+          "id": 3,
+          "name": "Bob Driver"
+        },
+        "fare_breakdown": {
+          "subtotal": 20.00,
+          "tax": 0.00,
+          "discount": 0.00,
+          "platform_commission": 3.00,
+          "driver_earning": 17.00,
+          "total": 20.00
+        },
+        "paid_at": "2026-07-04T00:30:00+05:30"
+      }
+    }
+    ```
+
+### 3. View Payment History
+*   **Method / Route:** `GET {{base_url}}/payments/history`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Expected Response (200 OK):**
+    *   *Returns a list of payments in descending order for the rider (trips paid) or the driver (earnings and commissions).*
+
+---
+
+## 13. End-to-End Payment Testing Flow
+
+```mermaid
+flowchart TD
+    A[Rider Requests Ride with Payment Method] --> B[Driver Accepts & Arrives]
+    B --> C[Driver Starts Ride with OTP]
+    C --> D[Driver Completes Ride with Metrics]
+    D --> E{Payment Gateway Resolved}
+    E -->|Wallet| F[Validate Balance & Debit Rider, Credit Driver]
+    E -->|Cash| G[Debit Commission from Driver Wallet]
+    E -->|Stripe| H[Charge Card & Credit Driver Wallet]
+    F --> I[Complete Ride & Persist PAID Status]
+    G --> I
+    H --> I
+    F -- Insufficient Balance --> J[Rollback & Mark Payment FAILED]
+```
+
+### Step 1: Booking a Ride with Payment Method
+1. Create a ride using `POST {{base_url}}/rides/request` with `payment_method: "wallet"` or `"cash"`.
+2. Progress the ride lifecycle through:
+   *   `POST {{base_url}}/driver/ride-requests/{id}/accept`
+   *   `POST {{base_url}}/driver/rides/{id}/arriving`
+   *   `POST {{base_url}}/driver/rides/{id}/arrived`
+   *   `POST {{base_url}}/driver/rides/{id}/start` (Enter 6-digit OTP)
+
+### Step 2: Test Wallet Payment Processing (Success)
+1. Ensure the Rider's wallet has a high enough balance.
+2. Complete the ride: `POST {{base_url}}/driver/rides/{id}/complete` with actual metrics.
+3. Verify response status is **200 OK** and `"payment_status": "paid"` in the returned ride object.
+4. Verify Rider's wallet balance has been debited by the ride fare.
+5. Verify Driver's wallet balance has been credited with the ride earnings.
+
+### Step 3: Test Wallet Payment Processing (Failure - Insufficient Funds)
+1. Create a new ride request with `payment_method: "wallet"`.
+2. Progress the ride to `in_progress`.
+3. Set the Rider's wallet balance to a low amount (e.g. `0.00`).
+4. Attempt to complete the ride: `POST {{base_url}}/driver/rides/{id}/complete`.
+5. Verify the server returns **422 Unprocessable Content** with `"Insufficient wallet balance."` and `success: false`.
+6. Verify the database transaction was rolled back (ride status remains `in_progress`).
+7. Verify a payment record has been created with status `"failed"`.
+
+### Step 4: Test Cash Payment Platform Settlement
+1. Create a new ride request with `payment_method: "cash"`.
+2. Progress the ride to `in_progress` and call `/complete`.
+3. Verify the ride is completed successfully (200 OK).
+4. Verify the platform commission has been debited from the Driver's wallet balance (representing the commission collected from cash fares).
+
+### Step 5: Verify Invoices & History
+1. Call `GET {{base_url}}/payments/invoice/{ride_id}` using Rider's or Driver's token and verify the complete breakdown.
+2. Call `GET {{base_url}}/payments/history` for both users to ensure history lists the entries properly.
+
+---
+
+## 14. Phase 8: Ratings, Reviews & Ride Feedback Reference
+
+### 1. Submit Ride Review
+*   **Method / Route:** `POST {{base_url}}/rides/{ride_id}/review`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:**
+    ```json
+    {
+      "rating": 5,
+      "review": "Polite driver and clean vehicle.",
+      "review_tags": ["polite", "clean_car"],
+      "is_anonymous": false
+    }
+    ```
+*   **Expected Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": "Review submitted successfully.",
+      "review": {
+        "id": 1,
+        "ride_id": 12,
+        "reviewer_id": 1,
+        "reviewee_id": 3,
+        "rating": 5,
+        "review": "Polite driver and clean vehicle.",
+        "review_tags": ["polite", "clean_car"],
+        "is_anonymous": false
+      },
+      "reviewee_stats": {
+        "average_rating": 4.85,
+        "total_reviews": 12
+      }
+    }
+    ```
+
+### 2. View Ride Reviews
+*   **Method / Route:** `GET {{base_url}}/rides/{ride_id}/review`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "rider_review": {
+        "id": 1,
+        "rating": 5,
+        "review": "Polite driver and clean vehicle."
+      },
+      "driver_review": null
+    }
+    ```
+
+### 3. View Driver/Rider Public Reviews
+*   **Method / Route:** `GET {{base_url}}/drivers/{driver_id}/reviews?per_page=5&sort=highest_rating`
+*   *Or:* `GET {{base_url}}/riders/{rider_id}/reviews?per_page=5&sort=latest`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "reviews": [...],
+      "meta": {
+        "current_page": 1,
+        "per_page": 5,
+        "total": 23,
+        "last_page": 5
+      }
+    }
+    ```
+
+---
+
+## 15. End-to-End Rating & Review Testing Flow
+
+### Step 1: Submitting Rider Review
+1. Progress a ride to `completed` state.
+2. Authenticate as the Rider.
+3. Call `POST {{base_url}}/rides/{ride_id}/review` with rating `5`.
+4. Verify response is **201 Created** containing the nested `review` and `reviewee_stats`.
+5. Check that the driver's cached profile rating increases.
+
+### Step 2: Test Double Review Block
+1. Attempt to resubmit the rating: `POST {{base_url}}/rides/{ride_id}/review`.
+2. Verify response is **422 Unprocessable Content** with error message `"You have already reviewed this ride."`.
+
+### Step 3: Test Uninvolved User Review Block
+1. Authenticate as a different Rider/Driver who was not part of the ride.
+2. Call `POST {{base_url}}/rides/{ride_id}/review`.
+3. Verify response is **403 Forbidden** with message `"You are not authorized to review this ride."`.
+
+### Step 4: Test Pagination & Sorting
+1. Request the driver's reviews history: `GET {{base_url}}/drivers/{driver_id}/reviews?per_page=2&sort=lowest_rating`.
+2. Verify page size conforms to requested query parameter.
+3. Verify reviews are sorted ascendingly by rating.
+
+
+
 

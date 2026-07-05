@@ -38,6 +38,7 @@ class DriverProfile extends Model
         'bearing',
         'last_located_at',
         'last_seen_at',
+        'total_reviews',
     ];
 
     /**
@@ -61,6 +62,7 @@ class DriverProfile extends Model
             'bearing' => 'decimal:2',
             'last_located_at' => 'datetime',
             'last_seen_at' => 'datetime',
+            'total_reviews' => 'integer',
         ];
     }
 

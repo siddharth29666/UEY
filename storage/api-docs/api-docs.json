@@ -2748,6 +2748,737 @@
                 ]
             }
         },
+        "/payments/{ride}": {
+            "get": {
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Get Ride Payment Details",
+                "description": "Retrieves payment information for a specific ride. Access is restricted to the rider or driver of the ride.",
+                "operationId": "347cd25e76eec2b9bceb52ce7b45ba02",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "The ID of the ride.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment details retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "payment": {
+                                            "$ref": "#/components/schemas/Payment"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/payments/history": {
+            "get": {
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Get Payment History",
+                "description": "Retrieves payment history logs. For Riders, returns rides they paid for. For Drivers, returns their earnings and commission logs.",
+                "operationId": "c5fb48f487ffd8156f1233ce6c7c660d",
+                "responses": {
+                    "200": {
+                        "description": "Payment history list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "payments": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Payment"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/payments/invoice/{ride}": {
+            "get": {
+                "tags": [
+                    "Payments"
+                ],
+                "summary": "Get Ride Invoice details",
+                "description": "Generates a structured receipt/invoice breakdown for a completed ride.",
+                "operationId": "d91f74a4f4c762342e49056886ad53fc",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "The ID of the ride.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Invoice details retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "invoice": {
+                                            "properties": {
+                                                "ride_id": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                },
+                                                "pickup_address": {
+                                                    "type": "string",
+                                                    "example": "London Eye"
+                                                },
+                                                "destination_address": {
+                                                    "type": "string",
+                                                    "example": "Regents Park"
+                                                },
+                                                "distance": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 3.5
+                                                },
+                                                "duration": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "payment_method": {
+                                                    "type": "string",
+                                                    "example": "wallet"
+                                                },
+                                                "payment_status": {
+                                                    "type": "string",
+                                                    "example": "paid"
+                                                },
+                                                "transaction_reference": {
+                                                    "type": "string",
+                                                    "example": "PAY-20260704-000001"
+                                                },
+                                                "completed_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "rider": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Alice Rider"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "driver": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 3
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Bob Driver"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "fare_breakdown": {
+                                                    "properties": {
+                                                        "subtotal": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 15
+                                                        },
+                                                        "tax": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 0
+                                                        },
+                                                        "discount": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 0
+                                                        },
+                                                        "platform_commission": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 2.25
+                                                        },
+                                                        "driver_earning": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 12.75
+                                                        },
+                                                        "total": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 15
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "paid_at": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides/{ride}/review": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get Ride Reviews",
+                "description": "Retrieves reviews (rider-to-driver and driver-to-rider) associated with a ride. Restricted to the ride participants.",
+                "operationId": "a09775722dd844b0d0b134c90455b5ba",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "The ID of the ride.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reviews retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "rider_review": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/RideReview"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        },
+                                        "driver_review": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/RideReview"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized access.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You are not authorized to view reviews for this ride."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Submit Ride Review",
+                "description": "Submits a rating (1-5 stars) and optional review text for a completed ride. Only participants of the ride (rider or driver) can review it once.",
+                "operationId": "867c2e8c2828c02378de59eda2a844f1",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "description": "The ID of the ride.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "rating": {
+                                        "type": "integer",
+                                        "example": 5,
+                                        "maximum": 5,
+                                        "minimum": 1
+                                    },
+                                    "review": {
+                                        "type": "string",
+                                        "example": "Great driver! Very polite.",
+                                        "nullable": true,
+                                        "maxLength": 1000
+                                    },
+                                    "review_tags": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "polite",
+                                            "clean_car"
+                                        ],
+                                        "nullable": true
+                                    },
+                                    "is_anonymous": {
+                                        "type": "boolean",
+                                        "example": false,
+                                        "default": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Review submitted successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Review submitted successfully."
+                                        },
+                                        "review": {
+                                            "$ref": "#/components/schemas/Payment"
+                                        },
+                                        "reviewee_stats": {
+                                            "properties": {
+                                                "average_rating": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 4.85
+                                                },
+                                                "total_reviews": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed (e.g. invalid rating or duplicate submission).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The given data was invalid."
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden. User is not a participant of this ride or user is soft deleted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You are not authorized to review this ride."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/drivers/{driver}/reviews": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get Driver Reviews",
+                "description": "Retrieves public review history for a specific driver user.",
+                "operationId": "929c327d9e6f2189d60e939fa7e422e3",
+                "parameters": [
+                    {
+                        "name": "driver",
+                        "in": "path",
+                        "description": "The User ID of the driver.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "highest_rating",
+                                "lowest_rating"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver reviews retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "reviews": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RideReview"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/riders/{rider}/reviews": {
+            "get": {
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Get Rider Reviews",
+                "description": "Retrieves review history for a specific rider user.",
+                "operationId": "759435ce41af1500057756bca3226336",
+                "parameters": [
+                    {
+                        "name": "rider",
+                        "in": "path",
+                        "description": "The User ID of the rider.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "highest_rating",
+                                "lowest_rating"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rider reviews retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "reviews": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RideReview"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/rides/estimate": {
             "post": {
                 "tags": [
@@ -3286,6 +4017,137 @@
                 },
                 "type": "object"
             },
+            "Payment": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 7
+                    },
+                    "ride_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "rider_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "driver_profile_id": {
+                        "type": "integer",
+                        "example": 3,
+                        "nullable": true
+                    },
+                    "payment_method": {
+                        "type": "string",
+                        "example": "wallet"
+                    },
+                    "payment_status": {
+                        "type": "string",
+                        "example": "paid"
+                    },
+                    "transaction_reference": {
+                        "type": "string",
+                        "example": "PAY-20260704-000007"
+                    },
+                    "subtotal": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 15
+                    },
+                    "tax": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0
+                    },
+                    "discount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0
+                    },
+                    "platform_commission": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.25
+                    },
+                    "driver_earning": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 12.75
+                    },
+                    "total": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 15
+                    },
+                    "paid_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "RideReview": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "ride_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "reviewer_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "reviewee_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "review": {
+                        "type": "string",
+                        "example": "Excellent trip, clean vehicle!",
+                        "nullable": true
+                    },
+                    "review_tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "polite",
+                            "safe_driver"
+                        ],
+                        "nullable": true
+                    },
+                    "is_anonymous": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "SendOtpRequest": {
                 "required": [
                     "phone",
@@ -3782,6 +4644,14 @@
         {
             "name": "Driver Documents",
             "description": "Driver Documents"
+        },
+        {
+            "name": "Payments",
+            "description": "Payments"
+        },
+        {
+            "name": "Reviews",
+            "description": "Reviews"
         },
         {
             "name": "Ride Booking",

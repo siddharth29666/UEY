@@ -52,35 +52,98 @@ class RideLifecycleService
             ]);
         }
 
-        return DB::transaction(function () use ($ride, $status, $data, $driverUser, $driverProfile) {
-            // Reload with lock for update to prevent concurrent updates
-            $ride = Ride::where('id', $ride->id)->lockForUpdate()->firstOrFail();
+        try {
+            return DB::transaction(function () use ($ride, $status, $data, $driverUser, $driverProfile) {
+                // Reload with lock for update to prevent concurrent updates
+                $ride = Ride::where('id', $ride->id)->lockForUpdate()->firstOrFail();
 
-            if ($status === 'arriving') {
-                $ride->update([
-                    'status' => RideStatus::ARRIVING,
-                ]);
-            } elseif ($status === 'arrived') {
-                $ride->update([
-                    'status' => RideStatus::ARRIVED,
-                    'arrived_at' => now(),
-                ]);
-            } elseif ($status === 'in_progress') {
-                // Verify OTP
-                $otp = $data['otp'] ?? null;
-                if ($otp !== $ride->otp) {
-                    throw ValidationException::withMessages([
-                        'otp' => ['The provided OTP is invalid.'],
+                if ($status === 'arriving') {
+                    $ride->update([
+                        'status' => RideStatus::ARRIVING,
                     ]);
+                } elseif ($status === 'arrived') {
+                    $ride->update([
+                        'status' => RideStatus::ARRIVED,
+                        'arrived_at' => now(),
+                    ]);
+                } elseif ($status === 'in_progress') {
+                    // Verify OTP
+                    $otp = $data['otp'] ?? null;
+                    if ($otp !== $ride->otp) {
+                        throw ValidationException::withMessages([
+                            'otp' => ['The provided OTP is invalid.'],
+                        ]);
+                    }
+
+                    $ride->update([
+                        'status' => RideStatus::IN_PROGRESS,
+                        'started_at' => now(),
+                        'otp_verified_at' => now(),
+                        'otp_verified_by' => $driverUser->id,
+                    ]);
+                } elseif ($status === 'completed') {
+                    $distance = (float) $data['actual_distance'];
+                    $duration = (int) $data['actual_duration'];
+
+                    $vehicleType = $ride->vehicleType;
+                    $baseFare = (float) $vehicleType->base_fare;
+                    $perKmRate = (float) $vehicleType->per_km_rate;
+                    $perMinuteRate = (float) $vehicleType->per_minute_rate;
+                    $minimumFare = (float) $vehicleType->minimum_fare;
+
+                    $distanceFare = $perKmRate * $distance;
+                    $durationFare = $perMinuteRate * $duration;
+                    $calculatedFare = $baseFare + $distanceFare + $durationFare;
+                    
+                    $appliedMinimumFare = false;
+                    $finalFare = $calculatedFare;
+                    if ($finalFare < $minimumFare) {
+                        $finalFare = $minimumFare;
+                        $appliedMinimumFare = true;
+                    }
+
+                    // Detailed breakdown
+                    $breakdown = [
+                        'base_fare' => round($baseFare, 2),
+                        'distance' => round($distance, 2),
+                        'per_km_rate' => round($perKmRate, 2),
+                        'distance_fare' => round($distanceFare, 2),
+                        'duration' => $duration,
+                        'per_minute_rate' => round($perMinuteRate, 2),
+                        'duration_fare' => round($durationFare, 2),
+                        'calculated_fare' => round($calculatedFare, 2),
+                        'minimum_fare' => round($minimumFare, 2),
+                        'applied_minimum_fare' => $appliedMinimumFare,
+                        'final_fare' => round($finalFare, 2),
+                    ];
+
+                    $ride->update([
+                        'status' => RideStatus::COMPLETED,
+                        'actual_distance' => $distance,
+                        'actual_duration' => $duration,
+                        'actual_fare' => round($finalFare, 2),
+                        'completed_at' => now(),
+                        'fare_breakdown' => $breakdown,
+                    ]);
+
+                    // Process payment for completed ride
+                    $paymentService = app(PaymentService::class);
+                    $paymentService->processPaymentForRide($ride);
+
+                    // Update driver profile current location to destination and sync with Redis if online
+                    $this->locationService->updateLocation(
+                        $driverProfile,
+                        (float) $ride->destination_latitude,
+                        (float) $ride->destination_longitude
+                    );
                 }
 
-                $ride->update([
-                    'status' => RideStatus::IN_PROGRESS,
-                    'started_at' => now(),
-                    'otp_verified_at' => now(),
-                    'otp_verified_by' => $driverUser->id,
-                ]);
-            } elseif ($status === 'completed') {
+                return $ride;
+            });
+        } catch (\Exception $e) {
+            if ($status === 'completed') {
+                // The transaction has rolled back!
+                // We write the failed payment record outside the rolled back transaction.
                 $distance = (float) $data['actual_distance'];
                 $duration = (int) $data['actual_duration'];
 
@@ -93,47 +156,33 @@ class RideLifecycleService
                 $distanceFare = $perKmRate * $distance;
                 $durationFare = $perMinuteRate * $duration;
                 $calculatedFare = $baseFare + $distanceFare + $durationFare;
-                
-                $appliedMinimumFare = false;
-                $finalFare = $calculatedFare;
-                if ($finalFare < $minimumFare) {
-                    $finalFare = $minimumFare;
-                    $appliedMinimumFare = true;
-                }
+                $subtotal = round(max($calculatedFare, $minimumFare), 2);
 
-                // Detailed breakdown
-                $breakdown = [
-                    'base_fare' => round($baseFare, 2),
-                    'distance' => round($distance, 2),
-                    'per_km_rate' => round($perKmRate, 2),
-                    'distance_fare' => round($distanceFare, 2),
-                    'duration' => $duration,
-                    'per_minute_rate' => round($perMinuteRate, 2),
-                    'duration_fare' => round($durationFare, 2),
-                    'calculated_fare' => round($calculatedFare, 2),
-                    'minimum_fare' => round($minimumFare, 2),
-                    'applied_minimum_fare' => $appliedMinimumFare,
-                    'final_fare' => round($finalFare, 2),
-                ];
+                $commissionRate = (float) config('services.payments.commission_rate', 15.0);
+                $commission = round($subtotal * ($commissionRate / 100), 2);
+                $driverEarning = round($subtotal - $commission, 2);
+
+                \App\Models\Payment::updateOrCreate(
+                    ['ride_id' => $ride->id],
+                    [
+                        'rider_id' => $ride->rider_id,
+                        'driver_profile_id' => $ride->driver_profile_id,
+                        'payment_method' => $ride->payment_method,
+                        'payment_status' => \App\Enums\PaymentStatus::FAILED,
+                        'subtotal' => $subtotal,
+                        'tax' => 0.00,
+                        'discount' => 0.00,
+                        'platform_commission' => $commission,
+                        'driver_earning' => $driverEarning,
+                        'total' => $subtotal,
+                    ]
+                );
 
                 $ride->update([
-                    'status' => RideStatus::COMPLETED,
-                    'actual_distance' => $distance,
-                    'actual_duration' => $duration,
-                    'actual_fare' => round($finalFare, 2),
-                    'completed_at' => now(),
-                    'fare_breakdown' => $breakdown,
+                    'payment_status' => 'failed',
                 ]);
-
-                // Update driver profile current location to destination and sync with Redis if online
-                $this->locationService->updateLocation(
-                    $driverProfile,
-                    (float) $ride->destination_latitude,
-                    (float) $ride->destination_longitude
-                );
             }
-
-            return $ride;
-        });
+            throw $e;
+        }
     }
 }

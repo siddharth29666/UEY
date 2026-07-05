@@ -770,13 +770,40 @@ class DriverController extends Controller
     )]
     public function completeRide(UpdateRideStatusRequest $request, \App\Models\Ride $ride): JsonResponse
     {
-        $updatedRide = $this->lifecycleService->updateStatus($ride, 'completed', $request->validated(), $request->user());
+        try {
+            $updatedRide = $this->lifecycleService->updateStatus($ride, 'completed', $request->validated(), $request->user());
+            $updatedRide->load(['rider', 'driverProfile.user', 'payment']);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Ride completed successfully.',
-            'ride' => new \App\Http\Resources\RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Ride completed successfully.',
+                'ride' => new \App\Http\Resources\RideResource($updatedRide),
+                'payment' => $updatedRide->payment ? [
+                    'id' => $updatedRide->payment->id,
+                    'payment_method' => $updatedRide->payment->payment_method->value,
+                    'payment_status' => $updatedRide->payment->payment_status->value,
+                ] : null,
+            ]);
+        } catch (\App\Exceptions\InsufficientWalletBalanceException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'wallet_balance' => $e->getBalance(),
+                'required_amount' => $e->getRequired(),
+                'shortfall' => $e->getShortfall(),
+            ], 422);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
     public function rideHistory(Request $request) {}
     public function earningsSummary(Request $request) {}

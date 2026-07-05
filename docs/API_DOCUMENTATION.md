@@ -2077,15 +2077,396 @@ Returned when input fields fail to meet specified validation rules.
           "applied_minimum_fare": false,
           "final_fare": 15.25
         }
+      },
+      "payment": {
+        "id": 7,
+        "payment_method": "wallet",
+        "payment_status": "paid"
       }
+    }
+    ```
+*   **Error Response (422 Unprocessable Content - Insufficient Wallet Balance):**
+    ```json
+    {
+      "success": false,
+      "message": "Insufficient wallet balance.",
+      "wallet_balance": 5.00,
+      "required_amount": 20.00,
+      "shortfall": 15.00
     }
     ```
 *   **Business Logic Explanation:**
     *   Validates input values (distance >= 0, duration >= 0).
     *   Calculates final fare: `base_fare + per_km_rate * actual_distance + per_minute_rate * actual_duration`, capped at the category's `minimum_fare`.
     *   Saves the detailed invoice items under `fare_breakdown` JSON column.
+    *   Triggers payment processing. If payment method is wallet, checks if rider balance >= total fare. On failure, aborts with 422, rolls back the entire completed status, and logs a failed payment.
     *   Updates the driver's location coordinate fields and coordinates inside Redis to the destination of the ride to mark availability nearby.
-*   **Database Tables Affected:** `rides`, `driver_profiles`, `ride_status_logs`
+*   **Database Tables Affected:** `rides`, `driver_profiles`, `ride_status_logs`, `payments`, `wallets`, `wallet_transactions`
+
+---
+
+### 34. Get Ride Payment Details
+*   **API Name:** Get Ride Payment Details
+*   **Purpose:** Retrieves payment logs and commission details for a specific ride. Access is restricted to the rider or driver associated with the ride.
+*   **Endpoint URL:** `/payments/{ride}`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Rider or Driver)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Parameters:**
+    *   `ride`: (Path parameter, Integer) The ID of the ride.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "payment": {
+        "id": 7,
+        "ride_id": 12,
+        "rider_id": 1,
+        "driver_profile_id": 3,
+        "payment_method": "wallet",
+        "payment_status": "paid",
+        "transaction_reference": "PAY-20260704-000007",
+        "subtotal": 15.00,
+        "tax": 0.00,
+        "discount": 0.00,
+        "platform_commission": 2.25,
+        "driver_earning": 12.75,
+        "total": 15.00,
+        "paid_at": "2026-07-04T00:30:00+05:30",
+        "created_at": "2026-07-04T00:29:00+05:30",
+        "updated_at": "2026-07-04T00:30:00+05:30"
+      }
+    }
+    ```
+*   **Error Response (403 Forbidden - Unauthorized Access):**
+    ```json
+    {
+      "success": false,
+      "message": "Unauthorized."
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Verifies that the requesting user is the rider or driver of the ride.
+    *   Fetches the matching payment record and returns the detailed attributes.
+*   **Database Tables Affected:** `payments` (reads)
+
+---
+
+### 35. Get Payment History
+*   **API Name:** Get Payment History
+*   **Purpose:** Retrieves payment history logs. For Riders, returns rides they paid for. For Drivers, returns their earnings and commission logs.
+*   **Endpoint URL:** `/payments/history`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Rider or Driver)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Parameters (Query Parameters):**
+    *   `page`: (Optional, Integer) The page number for pagination. Default is `1`.
+    *   `per_page`: (Optional, Integer) The number of items per page. Default is `15`.
+    *   `status`: (Optional, String) Filter by payment status (e.g., `paid`, `failed`, `pending`).
+    *   `payment_method`: (Optional, String) Filter by payment method (e.g., `cash`, `wallet`, `stripe`).
+    *   `from`: (Optional, Date string Y-m-d) Filter payments created on or after this date.
+    *   `to`: (Optional, Date string Y-m-d) Filter payments created on or before this date.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "payments": [
+        {
+          "id": 7,
+          "ride_id": 12,
+          "rider_id": 1,
+          "driver_profile_id": 3,
+          "payment_method": "wallet",
+          "payment_status": "paid",
+          "transaction_reference": "PAY-20260704-000007",
+          "subtotal": 15.00,
+          "tax": 0.00,
+          "discount": 0.00,
+          "platform_commission": 2.25,
+          "driver_earning": 12.75,
+          "total": 15.00,
+          "paid_at": "2026-07-04T00:30:00+05:30",
+          "created_at": "2026-07-04T00:29:00+05:30",
+          "updated_at": "2026-07-04T00:30:00+05:30"
+        }
+      ],
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      }
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Queries payment records by either `rider_id` or `driver_profile_id` depending on the user's role.
+    *   Applies optional query parameters to filter status, method, and date ranges.
+    *   Returns the payment list sorted in descending order of ID (newest first) with pagination support.
+*   **Database Tables Affected:** `payments` (reads)
+
+---
+
+### 36. Get Ride Invoice Details
+*   **API Name:** Get Ride Invoice Details
+*   **Purpose:** Generates a complete structured receipt/invoice breakdown for a completed ride. Includes ride details and payment logs.
+*   **Endpoint URL:** `/payments/invoice/{ride}`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Rider or Driver)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Parameters:**
+    *   `ride`: (Path parameter, Integer) The ID of the ride.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "invoice": {
+        "ride_id": 12,
+        "pickup_address": "London Eye",
+        "destination_address": "Regents Park",
+        "distance": 3.5,
+        "duration": 10,
+        "payment_method": "wallet",
+        "payment_status": "paid",
+        "transaction_reference": "PAY-20260704-000007",
+        "completed_at": "2026-07-04T00:30:00+05:30",
+        "rider": {
+          "id": 1,
+          "name": "Alice Rider"
+        },
+        "driver": {
+          "id": 3,
+          "name": "Bob Driver"
+        },
+        "fare_breakdown": {
+          "subtotal": 15.00,
+          "tax": 0.00,
+          "discount": 0.00,
+          "platform_commission": 2.25,
+          "driver_earning": 12.75,
+          "total": 15.00
+        },
+        "paid_at": "2026-07-04T00:30:00+05:30"
+      }
+    }
+    ```
+*   **Error Response (403 Forbidden - Unauthorized Access):**
+    ```json
+    {
+      "success": false,
+      "message": "Unauthorized."
+    }
+    ```
+*   **Database Tables Affected:** `rides`, `payments`, `users` (reads)
+
+---
+
+### 37. Submit Ride Review
+*   **API Name:** Submit Ride Review
+*   **Purpose:** Submits a rating and optional review for a completed ride. Only participants of the ride can rate the other party once. Reviews cannot be edited or deleted after submission.
+*   **Endpoint URL:** `/rides/{ride}/review`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Rider or Driver)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:**
+    ```json
+    {
+      "rating": 5,
+      "review": "Polite driver and clean vehicle.",
+      "review_tags": ["polite", "clean_car"],
+      "is_anonymous": false
+    }
+    ```
+*   **Success Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": "Review submitted successfully.",
+      "review": {
+        "id": 1,
+        "ride_id": 12,
+        "reviewer_id": 1,
+        "reviewee_id": 3,
+        "rating": 5,
+        "review": "Polite driver and clean vehicle.",
+        "review_tags": ["polite", "clean_car"],
+        "is_anonymous": false,
+        "created_at": "2026-07-04T22:30:00+05:30",
+        "updated_at": "2026-07-04T22:30:00+05:30"
+      },
+      "reviewee_stats": {
+        "average_rating": 4.85,
+        "total_reviews": 12
+      }
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Validates that the ride status is completed.
+    *   Ensures that only participants (rider or driver) of the ride can submit reviews.
+    *   Prevents duplicate reviews for the same ride by the same participant.
+    *   Updates the reviewee's average rating and total review counts incrementally.
+*   **Database Tables Affected:** `ride_reviews`, `users`, `driver_profiles`
+
+---
+
+### 38. Get Ride Reviews
+*   **API Name:** Get Ride Reviews
+*   **Purpose:** Retrieves both reviews (rider-to-driver and driver-to-rider) submitted for a specific ride. Restricted to the ride participants.
+*   **Endpoint URL:** `/rides/{ride}/review`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Rider or Driver participant)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "rider_review": {
+        "id": 1,
+        "ride_id": 12,
+        "reviewer_id": 1,
+        "reviewee_id": 3,
+        "rating": 5,
+        "review": "Polite driver and clean vehicle.",
+        "review_tags": ["polite", "clean_car"],
+        "is_anonymous": false,
+        "created_at": "2026-07-04T22:30:00+05:30",
+        "updated_at": "2026-07-04T22:30:00+05:30"
+      },
+      "driver_review": null
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Authorizes that the requester is a participant of the ride.
+    *   Returns the rider's review and the driver's review associated with the ride.
+*   **Database Tables Affected:** `ride_reviews` (reads)
+
+---
+
+### 39. Get Driver Reviews
+*   **API Name:** Get Driver Reviews
+*   **Purpose:** Retrieves a paginated list of reviews received by a driver. Supports sorting and page/per_page parameters. Returns `reviewer_name` instead of `reviewer_id` (returns `"Anonymous"` if `is_anonymous` is true).
+*   **Endpoint URL:** `/drivers/{driver}/reviews`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Parameters (Query Parameters):**
+    *   `page`: (Optional, Integer) The page number. Default `1`.
+    *   `per_page`: (Optional, Integer) Items per page. Default `15`.
+    *   `sort`: (Optional, String) Sorting method: `latest`, `highest_rating`, `lowest_rating`. Default `latest`.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "reviews": [
+        {
+          "id": 1,
+          "ride_id": 12,
+          "reviewer_name": "Alice Rider",
+          "reviewee_id": 3,
+          "rating": 5,
+          "review": "Polite driver and clean vehicle.",
+          "review_tags": ["polite", "clean_car"],
+          "is_anonymous": false,
+          "created_at": "2026-07-04T22:30:00+05:30",
+          "updated_at": "2026-07-04T22:30:00+05:30"
+        }
+      ],
+      "rating_summary": {
+        "average_rating": 4.85,
+        "total_reviews": 12,
+        "five_star": 10,
+        "four_star": 2,
+        "three_star": 0,
+        "two_star": 0,
+        "one_star": 0
+      },
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      },
+      "links": {
+        "first": "https://api.domain.com/api/v1/drivers/3/reviews?page=1",
+        "last": "https://api.domain.com/api/v1/drivers/3/reviews?page=1",
+        "prev": null,
+        "next": null
+      }
+    }
+    ```
+*   **Database Tables Affected:** `ride_reviews` (reads), `users` (reads)
+
+---
+
+### 40. Get Rider Reviews
+*   **API Name:** Get Rider Reviews
+*   **Purpose:** Retrieves a paginated list of reviews received by a rider. Supports sorting and page/per_page parameters. Returns `reviewer_name` instead of `reviewer_id` (returns `"Anonymous"` if `is_anonymous` is true).
+*   **Endpoint URL:** `/riders/{rider}/reviews`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Parameters (Query Parameters):**
+    *   `page`: (Optional, Integer) The page number. Default `1`.
+    *   `per_page`: (Optional, Integer) Items per page. Default `15`.
+    *   `sort`: (Optional, String) Sorting method: `latest`, `highest_rating`, `lowest_rating`. Default `latest`.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "reviews": [
+        {
+          "id": 2,
+          "ride_id": 12,
+          "reviewer_name": "Anonymous",
+          "reviewee_id": 1,
+          "rating": 4,
+          "review": "Nice passenger.",
+          "review_tags": null,
+          "is_anonymous": true,
+          "created_at": "2026-07-04T22:35:00+05:30",
+          "updated_at": "2026-07-04T22:35:00+05:30"
+        }
+      ],
+      "rating_summary": {
+        "average_rating": 4.00,
+        "total_reviews": 1,
+        "five_star": 0,
+        "four_star": 1,
+        "three_star": 0,
+        "two_star": 0,
+        "one_star": 0
+      },
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      },
+      "links": {
+        "first": "https://api.domain.com/api/v1/riders/1/reviews?page=1",
+        "last": "https://api.domain.com/api/v1/riders/1/reviews?page=1",
+        "prev": null,
+        "next": null
+      }
+    }
+    ```
+*   **Database Tables Affected:** `ride_reviews` (reads), `users` (reads)
+
+
 
 
 

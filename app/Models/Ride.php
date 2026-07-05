@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Enums\RideStatus;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Ride extends Model
 {
@@ -49,6 +52,8 @@ class Ride extends Model
         'otp_verified_at',
         'otp_verified_by',
         'fare_breakdown',
+        'payment_method',
+        'payment_status',
     ];
 
     /**
@@ -81,6 +86,8 @@ class Ride extends Model
             'otp_verified_at' => 'datetime',
             'otp_verified_by' => 'integer',
             'fare_breakdown' => 'array',
+            'payment_method' => PaymentMethod::class,
+            'payment_status' => PaymentStatus::class,
         ];
     }
 
@@ -130,5 +137,13 @@ class Ride extends Model
     public function statusLogs(): HasMany
     {
         return $this->hasMany(RideStatusLog::class, 'ride_id');
+    }
+
+    /**
+     * Get the payment associated with this ride.
+     */
+    public function payment(): HasOne
+    {
+        return $this->hasOne(Payment::class, 'ride_id');
     }
 }

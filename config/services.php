@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'payments' => [
+        'commission_rate' => (float) env('PLATFORM_COMMISSION_PERCENTAGE', 15.0),
+    ],
+
 ];

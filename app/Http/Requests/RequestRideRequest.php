@@ -27,6 +27,7 @@ class RequestRideRequest extends FormRequest
             'destination_longitude' => ['required', 'numeric', 'between:-180,180'],
             'destination_address' => ['required', 'string', 'max:255'],
             'vehicle_type_id' => ['required', 'integer', 'exists:vehicle_types,id'],
+            'payment_method' => ['sometimes', 'string', 'in:cash,wallet,stripe'],
         ];
     }
 }
