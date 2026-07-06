@@ -27,15 +27,16 @@ class WalletGateway implements PaymentGatewayInterface
             );
         }
 
+        $walletService = app(\App\Services\WalletService::class);
+
         // Debit rider's wallet
-        $riderWallet->decrement('balance', $payment->total);
-        WalletTransaction::create([
-            'wallet_id' => $riderWallet->id,
-            'type' => 'debit',
-            'amount' => $payment->total,
-            'reference' => 'ride_' . $ride->id,
-            'description' => "Payment debited for Ride #{$ride->id}",
-        ]);
+        $walletService->debit(
+            $riderWallet,
+            (float) $payment->total,
+            \App\Enums\WalletTransactionType::RIDE_PAYMENT,
+            'ride_' . $ride->id,
+            "Payment debited for Ride #{$ride->id}"
+        );
 
         // Credit driver's wallet with earnings
         $driverProfile = $ride->driverProfile;
@@ -46,14 +47,13 @@ class WalletGateway implements PaymentGatewayInterface
                     ['user_id' => $driverUser->id],
                     ['balance' => 0.00]
                 );
-                $driverWallet->increment('balance', $payment->driver_earning);
-                WalletTransaction::create([
-                    'wallet_id' => $driverWallet->id,
-                    'type' => 'credit',
-                    'amount' => $payment->driver_earning,
-                    'reference' => 'ride_' . $ride->id,
-                    'description' => "Earnings credited for Ride #{$ride->id}",
-                ]);
+                $walletService->credit(
+                    $driverWallet,
+                    (float) $payment->driver_earning,
+                    \App\Enums\WalletTransactionType::RIDE_EARNING,
+                    'ride_' . $ride->id,
+                    "Earnings credited for Ride #{$ride->id}"
+                );
             }
         }
 

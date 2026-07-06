@@ -21,17 +21,14 @@ class CashGateway implements PaymentGatewayInterface
                     ['balance' => 0.00]
                 );
 
-                // Debit commission
-                $wallet->decrement('balance', $payment->platform_commission);
-
-                // Record transaction
-                WalletTransaction::create([
-                    'wallet_id' => $wallet->id,
-                    'type' => 'debit',
-                    'amount' => $payment->platform_commission,
-                    'reference' => 'ride_' . $ride->id,
-                    'description' => "Commission debited for cash Ride #{$ride->id}",
-                ]);
+                $walletService = app(\App\Services\WalletService::class);
+                $walletService->debit(
+                    $wallet,
+                    (float) $payment->platform_commission,
+                    \App\Enums\WalletTransactionType::ADMIN_DEBIT,
+                    'ride_' . $ride->id,
+                    "Commission debited for cash Ride #{$ride->id}"
+                );
             }
         }
 

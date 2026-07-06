@@ -1136,6 +1136,67 @@ flowchart TD
 2. Verify page size conforms to requested query parameter.
 3. Verify reviews are sorted ascendingly by rating.
 
+---
+
+## 16. Wallet & Stripe Top-up Testing Flow
+
+### Stripe as a Ride Payment Method has been completely removed. Ride bookings only accept `cash` or `wallet`. Stripe is used exclusively to top up the wallet balance.
+
+### Step 1: Check Initial Wallet Balance
+1. Authenticate as a Rider.
+2. Call `GET {{base_url}}/wallet`.
+3. Verify response is **200 OK** containing a balance of `0.00` and `last_transaction: null`.
+
+### Step 2: Request Stripe Wallet Top-up
+1. Call `POST {{base_url}}/wallet/top-up` with payload:
+   ```json
+   {
+     "amount": 50.00
+   }
+   ```
+2. Verify response is **200 OK** containing `client_secret`, `payment_intent` (e.g. `pi_12345`), and a pending `wallet_topup` record.
+
+### Step 3: Simulate Stripe Webhook Succeeded Event
+1. Since Stripe webhooks reside locally or in sandbox, simulate the hook locally.
+2. Send a `POST {{base_url}}/stripe/webhook` request with payload:
+   ```json
+   {
+     "id": "evt_test_123",
+     "type": "payment_intent.succeeded",
+     "data": {
+       "object": {
+         "id": "pi_12345",
+         "amount": 5000,
+         "currency": "usd"
+       }
+     }
+   }
+   ```
+   *(Note: You do not need the Stripe-Signature header if you are testing locally in the sandbox/testing environment).*
+3. Verify response is **200 OK**.
+4. Query `GET {{base_url}}/wallet` again: balance must now be exactly `50.00`, and `last_transaction` must show the top-up credit.
+
+### Step 4: Verify Webhook Idempotency
+1. Send the exact same webhook payload `POST {{base_url}}/stripe/webhook` with event ID `"evt_test_123"` again.
+2. Verify response is **200 OK**.
+3. Call `GET {{base_url}}/wallet` and verify the balance remains exactly `50.00` (meaning duplicate events are safely ignored).
+
+### Step 5: File Withdrawal Request
+1. Call `POST {{base_url}}/wallet/withdraw` with payload:
+   ```json
+   {
+     "amount": 20.00,
+     "bank_account_id": 1
+   }
+   ```
+2. Verify response is **201 Created** showing status `"pending"`.
+3. Attempt to withdraw an amount exceeding the current balance (e.g. `100.00`). Verify it fails with **422 Unprocessable Content** and message `"Withdrawal amount exceeds wallet balance."`.
+
+### Step 6: View Ledger Transactions
+1. Call `GET {{base_url}}/wallet/transactions?per_page=2&sort=latest`.
+2. Verify that pagination parameters, metadata, and link URLs are present.
+
+
 
 
 

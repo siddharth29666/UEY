@@ -8,7 +8,6 @@ use App\Models\Ride;
 use App\Services\Payments\PaymentGatewayInterface;
 use App\Services\Payments\CashGateway;
 use App\Services\Payments\WalletGateway;
-use App\Services\Payments\StripeGateway;
 use Illuminate\Support\Facades\DB;
 
 class PaymentService
@@ -21,7 +20,6 @@ class PaymentService
         return match ($method) {
             'cash' => new CashGateway(),
             'wallet' => new WalletGateway(),
-            'stripe' => new StripeGateway(),
             default => throw new \Exception("Unsupported payment method: {$method}"),
         };
     }

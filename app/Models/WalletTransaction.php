@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -22,9 +24,16 @@ class WalletTransaction extends Model
     protected $fillable = [
         'wallet_id',
         'type',
+        'transaction_type',
         'amount',
+        'balance_before',
+        'balance_after',
+        'status',
+        'payment_gateway',
+        'gateway_reference',
         'reference',
-        'description',
+        'remarks',
+        'metadata',
     ];
 
     /**
@@ -37,6 +46,11 @@ class WalletTransaction extends Model
         return [
             'wallet_id' => 'integer',
             'amount' => 'decimal:2',
+            'balance_before' => 'decimal:2',
+            'balance_after' => 'decimal:2',
+            'transaction_type' => WalletTransactionType::class,
+            'status' => WalletTransactionStatus::class,
+            'metadata' => 'array',
         ];
     }
 

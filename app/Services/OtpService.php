@@ -45,11 +45,18 @@ class OtpService
         ]);
 
         // 4. Return OTP in response ONLY when local
-        if (App::environment('local')) {
+
+        if (config('services.otp.return_in_response')) {
             return $otp;
         }
 
         return null;
+        // if (App::environment('local')) {
+        //     return $otp;
+        // }
+
+        // return null;
+
     }
 
     /**

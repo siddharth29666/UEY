@@ -13,6 +13,9 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
+    'otp' => [
+        'return_in_response' => env('OTP_RETURN_IN_RESPONSE', false),
+    ],
 
     'postmark' => [
         'key' => env('POSTMARK_API_KEY'),
@@ -37,6 +40,12 @@ return [
 
     'payments' => [
         'commission_rate' => (float) env('PLATFORM_COMMISSION_PERCENTAGE', 15.0),
+    ],
+
+    'stripe' => [
+        'key' => env('STRIPE_KEY'),
+        'secret' => env('STRIPE_SECRET'),
+        'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
 ];

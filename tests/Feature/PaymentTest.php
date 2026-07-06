@@ -261,33 +261,7 @@ class PaymentTest extends TestCase
         ]);
     }
 
-    public function test_stripe_payment_processing()
-    {
-        $driver = $this->createDriver('Bob Driver', '+447922222222');
-        $ride = $this->createInProgressRide($driver, PaymentMethod::STRIPE);
 
-        $token = $driver['user']->createToken('test', ['role:driver'])->plainTextToken;
-
-        $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
-        ])->postJson("/api/v1/driver/rides/{$ride->id}/complete", [
-            'actual_distance' => 5.0,
-            'actual_duration' => 15,
-        ]);
-
-        $response->assertStatus(200);
-
-        $this->assertDatabaseHas('payments', [
-            'ride_id' => $ride->id,
-            'payment_method' => 'stripe',
-            'payment_status' => 'paid',
-            'total' => 20.00,
-        ]);
-
-        $driverWallet = $driver['user']->wallet;
-        $this->assertNotNull($driverWallet);
-        $this->assertEquals(17.00, $driverWallet->balance);
-    }
 
     public function test_view_payment_details()
     {

@@ -85,4 +85,52 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: "updated_at", type: "string", format: "date-time")
     ]
 )]
+#[OA\Schema(
+    schema: "WalletTopup",
+    properties: [
+        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "wallet_id", type: "integer", example: 1),
+        new OA\Property(property: "amount", type: "number", format: "float", example: 50.00),
+        new OA\Property(property: "stripe_payment_intent", type: "string", example: "pi_3MtwJD2eZvKYlo2C0DGk4"),
+        new OA\Property(property: "payment_status", type: "string", example: "pending"),
+        new OA\Property(property: "paid_at", type: "string", format: "date-time", nullable: true)
+    ]
+)]
+#[OA\Schema(
+    schema: "WithdrawalRequest",
+    properties: [
+        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "wallet_id", type: "integer", example: 1),
+        new OA\Property(property: "amount", type: "number", format: "float", example: 100.00),
+        new OA\Property(property: "status", type: "string", example: "pending"),
+        new OA\Property(property: "bank_account_id", type: "integer", nullable: true, example: 2),
+        new OA\Property(property: "admin_note", type: "string", nullable: true, example: "Approved."),
+        new OA\Property(property: "processed_at", type: "string", format: "date-time", nullable: true)
+    ]
+)]
+#[OA\Schema(
+    schema: "Wallet",
+    properties: [
+        new OA\Property(property: "balance", type: "number", format: "float", example: 150.00),
+        new OA\Property(property: "currency", type: "string", example: "USD"),
+        new OA\Property(property: "status", type: "string", example: "active"),
+        new OA\Property(property: "last_transaction", ref: "#/components/schemas/WalletTransaction", nullable: true),
+        new OA\Property(property: "updated_at", type: "string", format: "date-time")
+    ]
+)]
+#[OA\Schema(
+    schema: "WalletTransaction",
+    properties: [
+        new OA\Property(property: "id", type: "integer", example: 1),
+        new OA\Property(property: "transaction_type", type: "string", example: "top_up"),
+        new OA\Property(property: "type", type: "string", example: "credit"),
+        new OA\Property(property: "amount", type: "number", format: "float", example: 50.00),
+        new OA\Property(property: "balance_before", type: "number", format: "float", example: 100.00),
+        new OA\Property(property: "balance_after", type: "number", format: "float", example: 150.00),
+        new OA\Property(property: "status", type: "string", example: "completed"),
+        new OA\Property(property: "reference", type: "string", nullable: true, example: "topup_1"),
+        new OA\Property(property: "remarks", type: "string", nullable: true, example: "Stripe wallet top-up completed"),
+        new OA\Property(property: "created_at", type: "string", format: "date-time")
+    ]
+)]
 class ModelSchemas {}

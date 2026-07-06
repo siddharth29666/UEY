@@ -1,18 +1,16 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Rider\RiderController;
-use App\Http\Controllers\Driver\DriverController;
+use App\Http\Controllers\WalletController;
 
-Route::middleware('auth:sanctum')->prefix('wallet')->group(function () {
-    // Rider Wallet
-    Route::middleware('ability:role:rider')->group(function () {
-        Route::get('/rider', [RiderController::class, 'getWallet']);
-        Route::post('/rider/topup', [RiderController::class, 'walletTopup']);
-    });
+// Public Stripe webhook
+Route::post('/stripe/webhook', [WalletController::class, 'stripeWebhook']);
 
-    // Driver Wallet
-    Route::middleware('ability:role:driver')->group(function () {
-        Route::post('/driver/cashout', [DriverController::class, 'walletCashout']);
-    });
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/wallet', [WalletController::class, 'show']);
+    Route::get('/wallet/transactions', [WalletController::class, 'transactions']);
+    Route::post('/wallet/top-up', [WalletController::class, 'topUp']);
+    Route::post('/wallet/withdraw', [WalletController::class, 'withdraw']);
+    Route::get('/wallet/withdrawals', [WalletController::class, 'withdrawals']);
+    Route::get('/wallet/withdrawals/{id}', [WalletController::class, 'showWithdrawal']);
 });

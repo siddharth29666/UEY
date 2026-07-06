@@ -2466,6 +2466,272 @@ Returned when input fields fail to meet specified validation rules.
     ```
 *   **Database Tables Affected:** `ride_reviews` (reads), `users` (reads)
 
+---
+
+### 41. Get Wallet Balance
+*   **API Name:** Get Wallet Balance
+*   **Purpose:** Retrieves current wallet balance, currency, and details of the last transaction.
+*   **Endpoint URL:** `/wallet`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "wallet": {
+        "balance": 150.00,
+        "currency": "USD",
+        "last_transaction": {
+          "id": 12,
+          "transaction_type": "top_up",
+          "type": "credit",
+          "amount": 50.00,
+          "balance_before": 100.00,
+          "balance_after": 150.00,
+          "status": "completed",
+          "reference": "topup_3",
+          "remarks": "Stripe wallet top-up completed",
+          "created_at": "2026-07-05T21:30:00+00:00"
+        },
+        "updated_at": "2026-07-05T21:30:00+00:00"
+      }
+    }
+    ```
+*   **Database Tables Affected:** `wallets` (reads), `wallet_transactions` (reads)
+
+---
+
+### 42. Get Wallet Transactions
+*   **API Name:** Get Wallet Transactions
+*   **Purpose:** Retrieves a paginated list of ledger transactions. Supports sorting and pagination.
+*   **Endpoint URL:** `/wallet/transactions`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Parameters (Query Parameters):**
+    *   `page`: (Optional, Integer) Page number. Default `1`.
+    *   `per_page`: (Optional, Integer) Items per page. Default `15`.
+    *   `sort`: (Optional, String) Sorting method: `latest`, `oldest`. Default `latest`.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "transactions": [
+        {
+          "id": 12,
+          "transaction_type": "top_up",
+          "type": "credit",
+          "amount": 50.00,
+          "balance_before": 100.00,
+          "balance_after": 150.00,
+          "status": "completed",
+          "reference": "topup_3",
+          "remarks": "Stripe wallet top-up completed",
+          "created_at": "2026-07-05T21:30:00+00:00"
+        }
+      ],
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      },
+      "links": {
+        "first": "https://api.domain.com/api/v1/wallet/transactions?page=1",
+        "last": "https://api.domain.com/api/v1/wallet/transactions?page=1",
+        "prev": null,
+        "next": null
+      }
+    }
+    ```
+*   **Database Tables Affected:** `wallet_transactions` (reads)
+
+---
+
+### 43. Create Top-up PaymentIntent
+*   **API Name:** Create Top-up PaymentIntent
+*   **Purpose:** Requests creation of a Stripe PaymentIntent to initiate a wallet top-up. The frontend confirms this intent using the Stripe SDK.
+*   **Endpoint URL:** `/wallet/top-up`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:**
+    ```json
+    {
+      "amount": 50.00
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "client_secret": "pi_3MtwJD2eZvKYlo2C0DGk4_secret_1234",
+      "payment_intent": "pi_3MtwJD2eZvKYlo2C0DGk4",
+      "amount": 50.00,
+      "currency": "USD",
+      "wallet_topup": {
+        "id": 3,
+        "amount": 50.00,
+        "stripe_payment_intent": "pi_3MtwJD2eZvKYlo2C0DGk4",
+        "payment_status": "pending",
+        "paid_at": null,
+        "created_at": "2026-07-05T21:28:00+00:00"
+      }
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Validates that the amount is positive (min $5.00, max $5000.00).
+    *   Generates a Stripe PaymentIntent.
+    *   Logs a pending `wallet_topups` record.
+*   **Database Tables Affected:** `wallet_topups` (writes)
+
+---
+
+### 44. Request Wallet Withdrawal
+*   **API Name:** Request Wallet Withdrawal
+*   **Purpose:** Files a mock withdrawal request for the user's active wallet balance.
+*   **Endpoint URL:** `/wallet/withdraw`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:**
+    ```json
+    {
+      "amount": 100.00,
+      "bank_account_id": 2
+    }
+    ```
+*   **Success Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": "Withdrawal request submitted successfully.",
+      "withdrawal": {
+        "id": 1,
+        "amount": 100.00,
+        "status": "pending",
+        "bank_account_id": 2,
+        "admin_note": null,
+        "requested_at": "2026-07-05T21:32:00+00:00",
+        "processed_at": null
+      }
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Validates that the withdrawal amount is at least $10.00.
+    *   Validates that the withdrawal amount does not exceed the current wallet balance.
+    *   Withdrawal remains pending until approved or completed by an admin.
+*   **Database Tables Affected:** `withdrawal_requests` (writes)
+
+---
+
+### 45. Get Withdrawals History
+*   **API Name:** Get Withdrawals History
+*   **Purpose:** Retrieves a paginated history of withdrawal requests.
+*   **Endpoint URL:** `/wallet/withdrawals`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Parameters (Query Parameters):**
+    *   `page`: (Optional, Integer) Page number.
+    *   `per_page`: (Optional, Integer) Items per page.
+    *   `sort`: (Optional, String) Sorting method: `latest`, `oldest`.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "withdrawals": [
+        {
+          "id": 1,
+          "amount": 100.00,
+          "status": "pending",
+          "bank_account_id": 2,
+          "admin_note": null,
+          "requested_at": "2026-07-05T21:32:00+00:00",
+          "processed_at": null
+        }
+      ],
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      },
+      "links": {
+        "first": "https://api.domain.com/api/v1/wallet/withdrawals?page=1",
+        "last": "https://api.domain.com/api/v1/wallet/withdrawals?page=1",
+        "prev": null,
+        "next": null
+      }
+    }
+    ```
+*   **Database Tables Affected:** `withdrawal_requests` (reads)
+
+---
+
+### 46. Get Withdrawal Details
+*   **API Name:** Get Withdrawal Details
+*   **Purpose:** Retrieves details of a specific withdrawal request.
+*   **Endpoint URL:** `/wallet/withdrawals/{id}`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "withdrawal": {
+        "id": 1,
+        "amount": 100.00,
+        "status": "pending",
+        "bank_account_id": 2,
+        "admin_note": null,
+        "requested_at": "2026-07-05T21:32:00+00:00",
+        "processed_at": null
+      }
+    }
+    ```
+*   **Database Tables Affected:** `withdrawal_requests` (reads)
+
+---
+
+### 47. Stripe Webhook Listener
+*   **API Name:** Stripe Webhook Listener
+*   **Purpose:** Idempotently consumes Stripe PaymentIntent succeeded or failed event notifications to finalize wallet credits.
+*   **Endpoint URL:** `/stripe/webhook`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** No (Signature verified via Header)
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Stripe-Signature: t=1612345678,v1=sig_hash...`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true
+    }
+    ```
+*   **Business Logic Explanation:**
+    *   Verifies webhook signature using configured `STRIPE_WEBHOOK_SECRET`.
+    *   Validates event idempotency using `processed_stripe_events` to ignore duplicate events.
+    *   If event is `payment_intent.succeeded`, updates the top-up status to completed, creates a wallet credit ledger entry, and increments the wallet balance.
+*   **Database Tables Affected:** `processed_stripe_events` (writes), `wallet_topups` (updates), `wallets` (updates), `wallet_transactions` (writes)
+
+
 
 
 
