@@ -1196,6 +1196,209 @@ flowchart TD
 1. Call `GET {{base_url}}/wallet/transactions?per_page=2&sort=latest`.
 2. Verify that pagination parameters, metadata, and link URLs are present.
 
+---
+
+### Phase 10: Push Notifications & Communication Testing Flow
+
+This section details how to verify device token registrations and notification log histories.
+
+#### 1. Register Device Token
+*   **Method / Route:** `POST {{base_url}}/devices/register`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "device_type": "android",
+      "device_name": "Pixel 7 Pro",
+      "device_token": "fcm_testing_token_123456",
+      "platform": "Android",
+      "os_version": "14.0",
+      "app_version": "1.0.0",
+      "language": "en",
+      "timezone": "Europe/London"
+    }
+    ```
+*   **Expected Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": "Device registered successfully.",
+      "device": {
+        "id": 1,
+        "device_type": "android",
+        "device_name": "Pixel 7 Pro",
+        "device_token": "fcm_testing_token_123456",
+        "platform": "Android"
+      }
+    }
+    ```
+
+#### 2. Get Notification History
+*   **Method / Route:** `GET {{base_url}}/notifications?category=ride&sort=latest`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "notifications": [
+        {
+          "id": 1,
+          "title": "Ride Update",
+          "body": "Your driver is arriving.",
+          "type": "driver_arriving",
+          "category": "ride",
+          "priority": "high",
+          "status": "sent",
+          "created_at": "2026-07-08T17:00:00Z"
+        }
+      ]
+    }
+    ```
+
+#### 3. Get Unread Notification Count
+*   **Method / Route:** `GET {{base_url}}/notifications/unread-count`
+*   **Headers:**
+    *   `Authorization: Bearer {{token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "unread_count": 1
+    }
+    ```
+
+#### 4. Mark Notification as Read
+*   **Method / Route:** `POST {{base_url}}/notifications/{id}/read`
+*   **Headers:**
+    *   `Authorization: Bearer {{token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Notification marked as read."
+    }
+    ```
+
+#### 5. Mark All Read
+*   **Method / Route:** `POST {{base_url}}/notifications/read-all`
+*   **Headers:**
+    *   `Authorization: Bearer {{token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "All notifications marked as read."
+    }
+    ```
+
+#### 6. Soft Delete Notification
+*   **Method / Route:** `DELETE {{base_url}}/notifications/{id}`
+*   **Headers:**
+    *   `Authorization: Bearer {{token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Notification deleted successfully."
+    }
+    ```
+
+#### 7. Restore Notification
+*   **Method / Route:** `POST {{base_url}}/notifications/{id}/restore`
+*   **Headers:**
+    *   `Authorization: Bearer {{token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Notification restored successfully.",
+      "notification": {
+        "id": 1,
+        "title": "Ride Update"
+      }
+    }
+    ```
+
+---
+
+### Phase 11: Admin Panel & Platform Operations Testing Flow
+
+#### 1. Admin Login
+*   **Method / Route:** `POST {{base_url}}/admin/login`
+*   **Body (JSON):**
+    ```json
+    {
+      "phone": "+447999999999",
+      "password": "password123"
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "token": "1|abcdef...",
+      "user": {
+        "id": 1,
+        "name": "Alice Admin"
+      }
+    }
+    ```
+    *(Store the token in `admin_token` variable).*
+
+#### 2. Get Dashboard Stats
+*   **Method / Route:** `GET {{base_url}}/admin/dashboard`
+*   **Headers:**
+    *   `Authorization: Bearer {{admin_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "metrics": {
+          "total_riders": 1,
+          "total_drivers": 0
+        }
+      }
+    }
+    ```
+
+#### 3. Block Rider Account
+*   **Method / Route:** `POST {{base_url}}/admin/riders/{rider_id}/block`
+*   **Headers:**
+    *   `Authorization: Bearer {{admin_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Rider blocked successfully."
+    }
+    ```
+
+#### 4. View Audit Logs
+*   **Method / Route:** `GET {{base_url}}/admin/audit-logs?module=users`
+*   **Headers:**
+    *   `Authorization: Bearer {{admin_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "audit_logs": [
+        {
+          "admin_name": "Alice Admin",
+          "action": "user_block",
+          "module": "users"
+        }
+      ]
+    }
+    ```
+
+
+
 
 
 

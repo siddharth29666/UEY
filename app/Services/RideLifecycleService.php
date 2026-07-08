@@ -61,11 +61,13 @@ class RideLifecycleService
                     $ride->update([
                         'status' => RideStatus::ARRIVING,
                     ]);
+                    event(new \App\Events\RideArrivingEvent($ride->rider, \App\Enums\NotificationType::DRIVER_ARRIVING, null, null, ['ride_id' => $ride->id]));
                 } elseif ($status === 'arrived') {
                     $ride->update([
                         'status' => RideStatus::ARRIVED,
                         'arrived_at' => now(),
                     ]);
+                    event(new \App\Events\RideArrivedEvent($ride->rider, \App\Enums\NotificationType::DRIVER_ARRIVED, null, null, ['ride_id' => $ride->id]));
                 } elseif ($status === 'in_progress') {
                     // Verify OTP
                     $otp = $data['otp'] ?? null;
@@ -81,6 +83,7 @@ class RideLifecycleService
                         'otp_verified_at' => now(),
                         'otp_verified_by' => $driverUser->id,
                     ]);
+                    event(new \App\Events\RideStartedEvent($ride->rider, \App\Enums\NotificationType::RIDE_STARTED, null, null, ['ride_id' => $ride->id]));
                 } elseif ($status === 'completed') {
                     $distance = (float) $data['actual_distance'];
                     $duration = (int) $data['actual_duration'];
@@ -136,6 +139,7 @@ class RideLifecycleService
                         (float) $ride->destination_latitude,
                         (float) $ride->destination_longitude
                     );
+                    event(new \App\Events\RideCompletedEvent($ride->rider, \App\Enums\NotificationType::RIDE_COMPLETED, null, null, ['ride_id' => $ride->id]));
                 }
 
                 return $ride;
@@ -181,6 +185,8 @@ class RideLifecycleService
                 $ride->update([
                     'payment_status' => 'failed',
                 ]);
+
+                event(new \App\Events\PaymentFailedEvent($ride->rider, \App\Enums\NotificationType::PAYMENT_FAILED, null, null, ['amount' => $subtotal, 'ride_id' => $ride->id]));
             }
             throw $e;
         }

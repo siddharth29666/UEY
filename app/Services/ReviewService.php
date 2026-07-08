@@ -93,6 +93,12 @@ class ReviewService
 
             return $review;
         });
+
+        // Notify Reviewee
+        $reviewee = \App\Models\User::findOrFail($revieweeId);
+        event(new \App\Events\ReviewReceivedEvent($reviewee, \App\Enums\NotificationType::REVIEW_RECEIVED, null, null, ['rating' => $review->rating, 'ride_id' => $ride->id]));
+
+        return $review;
     }
 
     /**

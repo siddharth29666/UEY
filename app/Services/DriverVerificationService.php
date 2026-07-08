@@ -64,7 +64,7 @@ class DriverVerificationService
      */
     public function verifyDocument(int $documentId, DocumentStatus $status, ?string $reason = null): DriverDocument
     {
-        return DB::transaction(function () use ($documentId, $status, $reason) {
+        $document = DB::transaction(function () use ($documentId, $status, $reason) {
             $document = DriverDocument::findOrFail($documentId);
 
             $document->update([
@@ -79,6 +79,15 @@ class DriverVerificationService
 
             return $document;
         });
+
+        // Notify Driver
+        if ($status === DocumentStatus::APPROVED) {
+            event(new \App\Events\DriverDocumentApprovedEvent($document->driverProfile->user, \App\Enums\NotificationType::DRIVER_DOCUMENT_APPROVED, null, null, ['document_id' => $document->id]));
+        } else {
+            event(new \App\Events\DriverDocumentRejectedEvent($document->driverProfile->user, \App\Enums\NotificationType::DRIVER_DOCUMENT_REJECTED, null, null, ['document_id' => $document->id, 'reason' => $reason]));
+        }
+
+        return $document;
     }
 
     /**

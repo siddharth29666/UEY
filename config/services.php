@@ -48,4 +48,14 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
+    'firebase' => [
+        'enabled' => (bool) env('FIREBASE_ENABLED', true),
+        'project_id' => env('FIREBASE_PROJECT_ID'),
+        'client_email' => env('FIREBASE_CLIENT_EMAIL'),
+        'private_key' => env('FIREBASE_PRIVATE_KEY'),
+        'private_key_id' => env('FIREBASE_PRIVATE_KEY_ID'),
+        'client_id' => env('FIREBASE_CLIENT_ID'),
+        'token_uri' => env('FIREBASE_TOKEN_URI', 'https://oauth2.googleapis.com/token'),
+    ],
+
 ];

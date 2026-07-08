@@ -37,7 +37,7 @@ class WalletService
 
             $wallet->update(['balance' => $after]);
 
-            return WalletTransaction::create([
+            $tx = WalletTransaction::create([
                 'wallet_id' => $wallet->id,
                 'type' => 'credit',
                 'transaction_type' => $type,
@@ -49,6 +49,10 @@ class WalletService
                 'remarks' => $remarks,
                 'metadata' => $metadata,
             ]);
+
+            event(new \App\Events\WalletCreditEvent($wallet->user, \App\Enums\NotificationType::WALLET_CREDIT, null, null, ['amount' => $amount]));
+
+            return $tx;
         });
     }
 
@@ -81,7 +85,7 @@ class WalletService
             $after = $before - $amount;
             $wallet->update(['balance' => $after]);
 
-            return WalletTransaction::create([
+            $tx = WalletTransaction::create([
                 'wallet_id' => $wallet->id,
                 'type' => 'debit',
                 'transaction_type' => $type,
@@ -93,6 +97,10 @@ class WalletService
                 'remarks' => $remarks,
                 'metadata' => $metadata,
             ]);
+
+            event(new \App\Events\WalletDebitEvent($wallet->user, \App\Enums\NotificationType::WALLET_DEBIT, null, null, ['amount' => $amount]));
+
+            return $tx;
         });
     }
 
@@ -167,11 +175,15 @@ class WalletService
                     'Stripe wallet top-up completed',
                     ['stripe_payment_intent' => $intentId]
                 );
+
+                event(new \App\Events\WalletTopupCompletedEvent($topup->wallet->user, \App\Enums\NotificationType::WALLET_TOPUP, null, null, ['amount' => $topup->amount]));
             } elseif ($type === 'payment_intent.payment_failed') {
                 $topup->update([
                     'payment_status' => 'failed',
                     'gateway_response' => $payload,
                 ]);
+
+                event(new \App\Events\PaymentFailedEvent($topup->wallet->user, \App\Enums\NotificationType::PAYMENT_FAILED, null, null, ['amount' => $topup->amount]));
             }
         });
     }
@@ -189,12 +201,16 @@ class WalletService
             throw new \Exception("Withdrawal amount exceeds wallet balance.");
         }
 
-        return WithdrawalRequest::create([
+        $withdrawal = WithdrawalRequest::create([
             'wallet_id' => $wallet->id,
             'amount' => $amount,
             'status' => WithdrawalStatus::PENDING,
             'bank_account_id' => $bankAccountId,
         ]);
+
+        event(new \App\Events\WithdrawalRequestedEvent($wallet->user, \App\Enums\NotificationType::WITHDRAW_REQUESTED, null, null, ['amount' => $amount]));
+
+        return $withdrawal;
     }
 
     /**
@@ -225,6 +241,9 @@ class WalletService
                 'processed_at' => now(),
             ]);
         });
+
+        event(new \App\Events\WithdrawalApprovedEvent($request->wallet->user, \App\Enums\NotificationType::WITHDRAW_APPROVED, null, null, ['amount' => $request->amount]));
+        event(new \App\Events\WithdrawalCompletedEvent($request->wallet->user, \App\Enums\NotificationType::WITHDRAW_COMPLETED, null, null, ['amount' => $request->amount]));
     }
 
     /**
@@ -241,5 +260,7 @@ class WalletService
             'admin_note' => $adminNote,
             'processed_at' => now(),
         ]);
+
+        event(new \App\Events\WithdrawalRejectedEvent($request->wallet->user, \App\Enums\NotificationType::WITHDRAW_REJECTED, null, null, ['amount' => $request->amount]));
     }
 }

@@ -113,6 +113,9 @@ class RideService
             $matchingService = app(RideMatchingService::class);
             $matchingService->matchDriversForRide($ride);
 
+            // Notify Rider
+            event(new \App\Events\RideRequestedEvent($rider, \App\Enums\NotificationType::RIDE_REQUESTED, null, null, ['ride_id' => $ride->id]));
+
             return $ride;
         });
     }
@@ -147,6 +150,17 @@ class RideService
             $ride->requests()->where('status', RideRequestStatus::PENDING)->update([
                 'status' => RideRequestStatus::EXPIRED,
             ]);
+
+            // Notify counterpart
+            if ($user->isRider()) {
+                if ($ride->driverProfile && $ride->driverProfile->user) {
+                    event(new \App\Events\RideCancelledEvent($ride->driverProfile->user, \App\Enums\NotificationType::RIDE_CANCELLED, null, null, ['ride_id' => $ride->id]));
+                }
+            } else {
+                if ($ride->rider) {
+                    event(new \App\Events\RideCancelledEvent($ride->rider, \App\Enums\NotificationType::RIDE_CANCELLED, null, null, ['ride_id' => $ride->id]));
+                }
+            }
 
             return $ride;
         });

@@ -965,6 +965,9 @@ class DriverController extends Controller
                 return $ride;
             });
 
+            // Notify Rider
+            event(new \App\Events\RideAcceptedEvent($ride->rider, \App\Enums\NotificationType::RIDE_ACCEPTED, null, null, ['ride_id' => $ride->id, 'driver' => $driverProfile->user->name]));
+
             return response()->json([
                 'success' => true,
                 'message' => 'Ride request accepted successfully.',

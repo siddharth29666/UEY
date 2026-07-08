@@ -2731,6 +2731,521 @@ Returned when input fields fail to meet specified validation rules.
     *   If event is `payment_intent.succeeded`, updates the top-up status to completed, creates a wallet credit ledger entry, and increments the wallet balance.
 *   **Database Tables Affected:** `processed_stripe_events` (writes), `wallet_topups` (updates), `wallets` (updates), `wallet_transactions` (writes)
 
+---
+
+## Module 6: Push Notifications & Device Token Management
+
+### 48. Register Device
+*   **API Name:** Register Device
+*   **Purpose:** Registers or updates an FCM device token for push notification delivery.
+*   **Endpoint URL:** `/devices/register`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:**
+    ```json
+    {
+      "device_type": "android",
+      "device_name": "Pixel 7 Pro",
+      "device_token": "fcm_token_123456",
+      "platform": "Android",
+      "os_version": "14.0",
+      "app_version": "1.0.0",
+      "language": "en",
+      "timezone": "Europe/London"
+    }
+    ```
+*   **Success Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": "Device registered successfully.",
+      "device": {
+        "id": 1,
+        "device_type": "android",
+        "device_name": "Pixel 7 Pro",
+        "device_token": "fcm_token_123456",
+        "platform": "Android",
+        "os_version": "14.0",
+        "app_version": "1.0.0",
+        "language": "en",
+        "timezone": "Europe/London"
+      }
+    }
+    ```
+*   **Database Tables Affected:** `user_devices` (writes)
+
+---
+
+### 49. Update Device
+*   **API Name:** Update Device
+*   **Purpose:** Updates the metadata or token of an existing registered device.
+*   **Endpoint URL:** `/devices/{id}`
+*   **HTTP Method:** `PUT`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Request Payload:**
+    ```json
+    {
+      "device_name": "Pixel 7 Pro (Updated)",
+      "app_version": "1.0.1"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Device updated successfully.",
+      "device": {
+        "id": 1,
+        "device_type": "android",
+        "device_name": "Pixel 7 Pro (Updated)",
+        "device_token": "fcm_token_123456",
+        "platform": "Android",
+        "os_version": "14.0",
+        "app_version": "1.0.1",
+        "language": "en",
+        "timezone": "Europe/London"
+      }
+    }
+    ```
+*   **Database Tables Affected:** `user_devices` (updates)
+
+---
+
+### 50. Delete Device
+*   **API Name:** Delete Device
+*   **Purpose:** Removes/deregisters a device token from receiving push notifications.
+*   **Endpoint URL:** `/devices/{id}`
+*   **HTTP Method:** `DELETE`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Device deleted successfully."
+    }
+    ```
+*   **Database Tables Affected:** `user_devices` (deletes)
+
+---
+
+### 51. Get Notifications
+*   **API Name:** Get Notifications
+*   **Purpose:** Retrieves a filtered, paginated list of notification logs for the authenticated user.
+*   **Endpoint URL:** `/notifications`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Query Parameters (Optional):**
+    *   `page`: Page number (default: `1`)
+    *   `per_page`: Number of logs per page (default: `15`)
+    *   `sort`: Sort direction (`latest` or `oldest`, default: `latest`)
+    *   `type`: Filter by notification type value
+    *   `category`: Filter by category (e.g. `ride`, `wallet`, `payment`, `review`)
+    *   `status`: Filter by status (e.g. `pending`, `sent`, `failed`, `read`)
+    *   `search`: Keyword search on title and body
+    *   `from_date`: Filter logs created on or after date (`YYYY-MM-DD`)
+    *   `to_date`: Filter logs created on or before date (`YYYY-MM-DD`)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "notifications": [
+        {
+          "id": 1,
+          "title": "Ride Update",
+          "body": "Your driver is arriving.",
+          "type": "driver_arriving",
+          "category": "ride",
+          "priority": "high",
+          "payload": {
+            "ride_id": 12
+          },
+          "status": "sent",
+          "firebase_message_id": "projects/uey/messages/0:1623...",
+          "failure_reason": null,
+          "sent_at": "2026-07-08T17:00:00Z",
+          "read_at": null,
+          "created_at": "2026-07-08T17:00:00Z"
+        }
+      ],
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      }
+    }
+    ```
+*   **Database Tables Affected:** `notification_logs` (reads)
+
+---
+
+### 52. Notification Details
+*   **API Name:** Notification Details
+*   **Purpose:** Retrieves details of a specific notification log.
+*   **Endpoint URL:** `/notifications/{id}`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "notification": {
+        "id": 1,
+        "title": "Ride Update",
+        "body": "Your driver is arriving.",
+        "type": "driver_arriving",
+        "category": "ride",
+        "priority": "high",
+        "payload": {
+          "ride_id": 12
+        },
+        "status": "sent",
+        "firebase_message_id": "projects/uey/messages/0:1623...",
+        "failure_reason": null,
+        "sent_at": "2026-07-08T17:00:00Z",
+        "read_at": null,
+        "created_at": "2026-07-08T17:00:00Z"
+      }
+    }
+    ```
+*   **Database Tables Affected:** `notification_logs` (reads)
+
+---
+
+### 53. Mark Notification Read
+*   **API Name:** Mark Notification Read
+*   **Purpose:** Marks a specific notification log as read.
+*   **Endpoint URL:** `/notifications/{id}/read`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Notification marked as read."
+    }
+    ```
+*   **Database Tables Affected:** `notification_logs` (updates)
+
+---
+
+### 54. Mark All Read
+*   **API Name:** Mark All Read
+*   **Purpose:** Marks all unread notification logs for the user as read.
+*   **Endpoint URL:** `/notifications/read-all`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "All notifications marked as read."
+    }
+    ```
+*   **Database Tables Affected:** `notification_logs` (updates)
+
+---
+
+### 55. Unread Count
+*   **API Name:** Unread Count
+*   **Purpose:** Gets the count of unread notification logs for the user.
+*   **Endpoint URL:** `/notifications/unread-count`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "unread_count": 0
+    }
+    ```
+*   **Database Tables Affected:** `notification_logs` (reads)
+
+---
+
+### 56. Delete Notification
+*   **API Name:** Delete Notification
+*   **Purpose:** Soft-deletes a notification log.
+*   **Endpoint URL:** `/notifications/{id}`
+*   **HTTP Method:** `DELETE`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Notification deleted successfully."
+    }
+    ```
+*   **Database Tables Affected:** `notification_logs` (deletes/soft deletes)
+
+---
+
+### 57. Restore Notification
+*   **API Name:** Restore Notification
+*   **Purpose:** Restores a soft-deleted notification log.
+*   **Endpoint URL:** `/notifications/{id}/restore`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{auth_token}}`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Notification restored successfully.",
+      "notification": {
+        "id": 1,
+        "title": "Ride Update",
+        "body": "Your driver is arriving."
+      }
+    }
+    ```
+*   **Database Tables Affected:** `notification_logs` (restores)
+
+---
+
+## Module 7: Admin Panel & Platform Operations
+
+### 58. Admin Login
+*   **API Name:** Admin Login
+*   **Purpose:** Authenticates admin and returns access token.
+*   **Endpoint URL:** `/admin/login`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** No
+*   **Request Payload:**
+    ```json
+    {
+      "phone": "+447999999999",
+      "password": "password123"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "token": "1|abcdef...",
+      "user": {
+        "id": 1,
+        "name": "Alice Admin",
+        "email": "alice.admin@example.com",
+        "phone": "+447999999999",
+        "role": "admin"
+      }
+    }
+    ```
+
+### 59. Admin Logout
+*   **API Name:** Admin Logout
+*   **Purpose:** Revokes current session token.
+*   **Endpoint URL:** `/admin/logout`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Admin role)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Logged out successfully."
+    }
+    ```
+
+### 60. Get Dashboard Summary
+*   **API Name:** Get Dashboard Summary
+*   **Purpose:** Retrieves core metrics and chart distribution series.
+*   **Endpoint URL:** `/admin/dashboard`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Admin role)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "metrics": {
+          "total_riders": 50,
+          "total_drivers": 20,
+          "today_revenue": 150.00
+        },
+        "charts": {
+          "daily_rides": []
+        }
+      }
+    }
+    ```
+
+### 61. List Riders
+*   **API Name:** List Riders
+*   **Purpose:** Retrieves paginated, filterable lists of riders.
+*   **Endpoint URL:** `/admin/riders`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Admin role)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "riders": []
+    }
+    ```
+
+### 62. Approve Driver
+*   **API Name:** Approve Driver
+*   **Purpose:** Activates driver status and approves all pending documents.
+*   **Endpoint URL:** `/admin/drivers/{id}/approve`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Admin role)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Driver approved successfully."
+    }
+    ```
+
+### 63. Cancel Ride
+*   **API Name:** Cancel Ride (Admin)
+*   **Purpose:** Force cancels a pending/active ride with cancellation reason.
+*   **Endpoint URL:** `/admin/rides/{id}/cancel`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Admin role)
+*   **Request Payload:**
+    ```json
+    {
+      "cancel_reason": "Rider requested manual cancellation."
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride cancelled successfully."
+    }
+    ```
+
+### 64. Refund Ride
+*   **API Name:** Refund Ride (Admin)
+*   **Purpose:** Reverses ride fare transaction, crediting rider wallet and debiting driver wallet.
+*   **Endpoint URL:** `/admin/rides/{id}/refund`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Admin role)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride payment refunded successfully."
+    }
+    ```
+
+### 65. Credit Wallet (Admin)
+*   **API Name:** Credit Wallet (Admin)
+*   **Purpose:** Manually credits funds to user wallet with reason and audits.
+*   **Endpoint URL:** `/admin/wallets/{id}/credit`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Admin role)
+*   **Request Payload:**
+    ```json
+    {
+      "amount": 50.00,
+      "reason": "Referral credit adjustment"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Wallet credited successfully."
+    }
+    ```
+
+### 66. Broadcast Announcement
+*   **API Name:** Broadcast Announcement
+*   **Purpose:** Queues push and database broadcast announcements.
+*   **Endpoint URL:** `/admin/notifications/broadcast`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Admin role)
+*   **Request Payload:**
+    ```json
+    {
+      "target": "all_users",
+      "title": "System Alert",
+      "body": "System will undergo updates tonight.",
+      "category": "system",
+      "priority": "high",
+      "channels": ["push", "database"]
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Broadcast notification queued successfully."
+    }
+    ```
+
+### 67. Save Settings
+*   **API Name:** Save Settings
+*   **Purpose:** Modifies system configurations.
+*   **Endpoint URL:** `/admin/settings`
+*   **HTTP Method:** `PUT`
+*   **Authentication Required:** Yes (Admin role)
+*   **Request Payload:**
+    ```json
+    {
+      "platform_commission": 15.00,
+      "currency": "USD"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "System settings updated successfully."
+    }
+    ```
+
+### 68. List Audit Logs
+*   **API Name:** List Audit Logs
+*   **Purpose:** Retrieves log history trails of all admin operations.
+*   **Endpoint URL:** `/admin/audit-logs`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Admin role)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "audit_logs": []
+    }
+    ```
+
+
+
 
 
 

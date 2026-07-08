@@ -80,6 +80,8 @@ class PaymentService
                     'payment_status' => 'paid',
                 ]);
 
+                event(new \App\Events\PaymentSucceededEvent($ride->rider, \App\Enums\NotificationType::PAYMENT_SUCCESS, null, null, ['amount' => $total, 'ride_id' => $ride->id]));
+
                 return $payment;
             });
         } catch (\Exception $e) {
@@ -103,6 +105,8 @@ class PaymentService
             $ride->update([
                 'payment_status' => 'failed',
             ]);
+
+            event(new \App\Events\PaymentFailedEvent($ride->rider, \App\Enums\NotificationType::PAYMENT_FAILED, null, null, ['amount' => $total, 'ride_id' => $ride->id]));
 
             throw $e;
         }

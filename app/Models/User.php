@@ -34,6 +34,7 @@ class User extends Authenticatable
         'push_notifications',
         'rating',
         'total_reviews',
+        'last_login_at',
     ];
 
     /**
@@ -63,6 +64,7 @@ class User extends Authenticatable
             'push_notifications' => 'boolean',
             'rating' => 'decimal:2',
             'total_reviews' => 'integer',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -128,5 +130,29 @@ class User extends Authenticatable
     public function reviewsSubmitted(): HasMany
     {
         return $this->hasMany(RideReview::class, 'reviewer_id');
+    }
+
+    /**
+     * Get the devices registered for the user.
+     */
+    public function devices(): HasMany
+    {
+        return $this->hasMany(UserDevice::class, 'user_id');
+    }
+
+    /**
+     * Get the notification logs for the user.
+     */
+    public function notificationLogs(): HasMany
+    {
+        return $this->hasMany(NotificationLog::class, 'user_id');
+    }
+
+    /**
+     * Get the notification preference associated with the user.
+     */
+    public function notificationPreference(): HasOne
+    {
+        return $this->hasOne(NotificationPreference::class, 'user_id');
     }
 }

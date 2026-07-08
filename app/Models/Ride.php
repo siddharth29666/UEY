@@ -146,4 +146,12 @@ class Ride extends Model
     {
         return $this->hasOne(Payment::class, 'ride_id');
     }
+
+    /**
+     * Get the reviews associated with this ride.
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(RideReview::class, 'ride_id');
+    }
 }

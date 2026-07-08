@@ -12,6 +12,358 @@
         }
     ],
     "paths": {
+        "/admin/audit-logs": {
+            "get": {
+                "tags": [
+                    "Admin Audit Logs"
+                ],
+                "summary": "List Audit Logs",
+                "description": "Retrieves history logs of all administrative actions, supporting filter parameters.",
+                "operationId": "91036d07a6df06c7eb9b95dc10c7ff35",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "module",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "admin_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Audit logs retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "audit_logs": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/AuditLogResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/audit-logs/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Audit Logs"
+                ],
+                "summary": "Get Audit Log Details",
+                "description": "Retrieves details of a specific administrative audit log.",
+                "operationId": "f40e03ac62dab62ff7e55247d5996d8f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Audit log details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AuditLogResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/login": {
+            "post": {
+                "tags": [
+                    "Admin Authentication"
+                ],
+                "summary": "Admin Login",
+                "description": "Authenticates admin credential and issues a Sanctum token.",
+                "operationId": "f4e675a5fe7622dc2f3322507ec718dd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/AdminLoginRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Logged in successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "1|abcdef..."
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                }
+            }
+        },
+        "/admin/logout": {
+            "post": {
+                "tags": [
+                    "Admin Authentication"
+                ],
+                "summary": "Admin Logout",
+                "description": "Revokes the current authenticated token.",
+                "operationId": "1fd208133ac2ccd948c3576e4b830d58",
+                "responses": {
+                    "200": {
+                        "description": "Logged out successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logged out successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/profile": {
+            "get": {
+                "tags": [
+                    "Admin Authentication"
+                ],
+                "summary": "Get Admin Profile",
+                "description": "Retrieves current admin profile details.",
+                "operationId": "9851905e874ddacc51632de8ddf02406",
+                "responses": {
+                    "200": {
+                        "description": "Profile details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Authentication"
+                ],
+                "summary": "Update Admin Profile",
+                "description": "Updates profile fields of the authenticated admin.",
+                "operationId": "72b23ff3c4fcab6640320fcbcdadd493",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateAdminProfileRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Profile updated.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "user": {
+                                            "$ref": "#/components/schemas/User"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/change-password": {
+            "put": {
+                "tags": [
+                    "Admin Authentication"
+                ],
+                "summary": "Change Admin Password",
+                "description": "Changes the password of the authenticated admin.",
+                "operationId": "821b3c4fbcd1d6445d0e74bebb6906c9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password changed successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password updated successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/documents/pending": {
             "get": {
                 "tags": [
@@ -207,6 +559,1993 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/dashboard": {
+            "get": {
+                "tags": [
+                    "Admin Dashboard"
+                ],
+                "summary": "Admin Dashboard Analytics",
+                "description": "Retrieves complete metrics summaries and chart data arrays for operations.",
+                "operationId": "bb0d636b6985882259b3a3de02e143f5",
+                "responses": {
+                    "200": {
+                        "description": "Dashboard summaries retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DashboardResource"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/drivers": {
+            "get": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "List Drivers",
+                "description": "Retrieves a list of all registered drivers, supporting sorting, searching, pagination, and status filters.",
+                "operationId": "711aafe1889ab8e0d161d890ebe81dc7",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "suspended",
+                                "pending"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "latest",
+                                "oldest"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "drivers": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DriverResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/drivers/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Get Driver Details",
+                "description": "Retrieves a single driver user's profile, vehicles, wallet, and devices details.",
+                "operationId": "8c779e3a1c8a791bd40962b003f80516",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/DriverResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Update Driver Profile",
+                "description": "Allows editing a driver's name or email address.",
+                "operationId": "12d3bfbbe0645b6529d64535689ef8b4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Jane Driver"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "jane.driver@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Driver profile updated."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/drivers/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Approve Driver Onboarding",
+                "description": "Marks onboarding driver status as active and approves all their pending documents.",
+                "operationId": "44b65490b4fe0f2a97bfdbd22fe0ce07",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver approved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/drivers/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Reject Driver Onboarding",
+                "description": "Resets driver status to pending and rejects pending documents with a reason.",
+                "operationId": "e17fc728a88f0cfe3069b26af50cf421",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "rejection_reason": {
+                                        "type": "string",
+                                        "example": "Driver license photo blurry."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Driver rejected successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/drivers/{id}/block": {
+            "post": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Block Driver",
+                "description": "Suspends the driver user account.",
+                "operationId": "87d255f39feb1e0219b04d043eb69605",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver blocked successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/drivers/{id}/unblock": {
+            "post": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Unblock Driver",
+                "description": "Unsuspends the driver user account, restoring access.",
+                "operationId": "5eec266ba7615a819266b577fa4d566a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver unblocked successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/drivers/{id}/documents": {
+            "get": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Get Driver Documents",
+                "description": "Retrieves all onboarding documents uploaded by this driver.",
+                "operationId": "7e0fa472e4c8aead3a7b7400f51ef1c1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver documents retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "documents": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DriverDocumentResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/notifications/broadcast": {
+            "post": {
+                "tags": [
+                    "Admin Notification Broadcast"
+                ],
+                "summary": "Broadcast Announcement",
+                "description": "Queues a system-wide push and database notification broadcast to selected targets.",
+                "operationId": "1b39939a7ba5203a9b995a7af6c300ef",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/BroadcastNotificationRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Broadcast queued.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Broadcast queued successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/promo-codes": {
+            "get": {
+                "tags": [
+                    "Admin Promo Code Management"
+                ],
+                "summary": "List Promo Codes",
+                "description": "Retrieves all promo codes config settings.",
+                "operationId": "60af6e637fd9cc06109b2d59bdd820bd",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promo codes list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "promo_codes": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PromoCodeResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Promo Code Management"
+                ],
+                "summary": "Create Promo Code",
+                "description": "Registers a new promo code with usability limits, expiry, and discounts.",
+                "operationId": "80c38c36a722d30f8dc289531a51b30a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PromoCodeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Promo Code created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "promo_code": {
+                                            "$ref": "#/components/schemas/PromoCodeResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/promo-codes/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Promo Code Management"
+                ],
+                "summary": "Get Promo Code Details",
+                "description": "Retrieves details of a single promo code setup.",
+                "operationId": "c7042816e6c46f839fe3c9bccd490ba5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promo Code details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PromoCodeResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Promo Code Management"
+                ],
+                "summary": "Update Promo Code",
+                "description": "Updates attributes of an existing promo code.",
+                "operationId": "55e95c0eef61ceb493f15e4fc01d9e2a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PromoCodeRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Promo Code updated successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Promo Code Management"
+                ],
+                "summary": "Delete Promo Code",
+                "description": "Permanently deletes a promo code config.",
+                "operationId": "7fbd1d7ca7b6e6073f1143421e18e8c0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promo Code deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reviews": {
+            "get": {
+                "tags": [
+                    "Admin Review Moderation"
+                ],
+                "summary": "List Reviews",
+                "description": "Retrieves all reviews, supporting filters for rating, review type (rider/driver), and keyword search.",
+                "operationId": "fbb4e0065910132b0b75cf3829e99b49",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "rating",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "rider",
+                                "driver"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reviews list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "reviews": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ReviewResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reviews/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Review Moderation"
+                ],
+                "summary": "Get Review Details",
+                "description": "Retrieves details of a specific ride review.",
+                "operationId": "297e0f2fa3cd8737a279995fdb6c52ff",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ReviewResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Review Moderation"
+                ],
+                "summary": "Delete Review",
+                "description": "Soft deletes a review from public visibility.",
+                "operationId": "cc390037bde0014d1740ae49724ce892",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Review deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/rides": {
+            "get": {
+                "tags": [
+                    "Admin Ride Management"
+                ],
+                "summary": "List Rides",
+                "description": "Retrieves a list of all rides, supporting search, sorting, pagination, and status filters.",
+                "operationId": "e8ae4aefb88e1e5055fd2ccb329d3ef6",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "latest",
+                                "oldest"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ride list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "rides": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RideResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/rides/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Ride Management"
+                ],
+                "summary": "Get Ride Details",
+                "description": "Retrieves a single ride's details including rider, driver, payment, and review records.",
+                "operationId": "64e113bdd36c9a741ceed50f9f9881ee",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ride details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RideResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/rides/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Admin Ride Management"
+                ],
+                "summary": "Cancel Ride",
+                "description": "Cancels an active ride from administrative dashboard control.",
+                "operationId": "8bfd075faf0f2bb40844f1f67bf03036",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "cancel_reason": {
+                                        "type": "string",
+                                        "example": "Rider booked by mistake."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ride cancelled successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/rides/{id}/refund": {
+            "post": {
+                "tags": [
+                    "Admin Ride Management"
+                ],
+                "summary": "Refund Ride Payment",
+                "description": "Reverses the ride fare transaction, crediting rider wallet and debiting driver wallet.",
+                "operationId": "c5333268ad757fafc603db55de73395d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Payment refunded successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/rides/{id}/timeline": {
+            "get": {
+                "tags": [
+                    "Admin Ride Management"
+                ],
+                "summary": "Get Ride Timeline",
+                "description": "Retrieves history logs of all status transitions for this ride.",
+                "operationId": "055baa5e00d5ed8ab271b5199f07220b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ride timeline logs.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "timeline": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "old_status": {
+                                                        "type": "string"
+                                                    },
+                                                    "new_status": {
+                                                        "type": "string"
+                                                    },
+                                                    "reason": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    },
+                                                    "changed_by_id": {
+                                                        "type": "integer",
+                                                        "nullable": true
+                                                    },
+                                                    "created_at": {
+                                                        "type": "string",
+                                                        "format": "date-time"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/riders": {
+            "get": {
+                "tags": [
+                    "Admin Rider Management"
+                ],
+                "summary": "List Riders",
+                "description": "Retrieves a list of all registered riders, supporting sorting, searching, pagination, and status filters.",
+                "operationId": "348b617c308debc7fa76a402a8f017de",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "suspended",
+                                "pending"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "latest",
+                                "oldest"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rider list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "riders": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RiderResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/riders/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Rider Management"
+                ],
+                "summary": "Get Rider Details",
+                "description": "Retrieves a single rider's profile, including their wallet and device registries.",
+                "operationId": "303e58999d6f427fe4b7883cc98b553c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rider details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RiderResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Rider Management"
+                ],
+                "summary": "Update Rider Profile",
+                "description": "Allows editing a rider's name or email address.",
+                "operationId": "7c83e93c99e8d60fc4d010e36a9a1895",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Jane Rider"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "jane.rider@example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Rider profile updated."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Rider Management"
+                ],
+                "summary": "Delete Rider",
+                "description": "Soft deletes the rider user account.",
+                "operationId": "cdb978280dd19b38da5d94b7c4c250cf",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rider deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/riders/{id}/block": {
+            "post": {
+                "tags": [
+                    "Admin Rider Management"
+                ],
+                "summary": "Block Rider",
+                "description": "Suspends the rider user account.",
+                "operationId": "64907c65391a3cef356ad3ec965988af",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rider blocked successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/riders/{id}/unblock": {
+            "post": {
+                "tags": [
+                    "Admin Rider Management"
+                ],
+                "summary": "Unblock Rider",
+                "description": "Unsuspends the rider user account, restoring access.",
+                "operationId": "bd14293d1072f7f8230c9052c60ba9d3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Rider unblocked successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/settings": {
+            "get": {
+                "tags": [
+                    "Admin System Settings"
+                ],
+                "summary": "List System Settings",
+                "description": "Retrieves all database-driven platform configurations.",
+                "operationId": "9ab9e9214349b66df4dc21dc2c65a26e",
+                "responses": {
+                    "200": {
+                        "description": "System configurations list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "settings": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SettingResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin System Settings"
+                ],
+                "summary": "Update System Settings",
+                "description": "Saves platform configuration values, clearing and updating the cache.",
+                "operationId": "8225d7d71f3fd1c8da2cef1f81c26778",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SaveSettingsRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Settings updated successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/settings/cache-refresh": {
+            "post": {
+                "tags": [
+                    "Admin System Settings"
+                ],
+                "summary": "Refresh settings cache",
+                "description": "Manually refreshes/invalidates system settings caching layer.",
+                "operationId": "e995f6e854bb60b4bad0fdd218472d5e",
+                "responses": {
+                    "200": {
+                        "description": "Settings cache cleared."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/wallets": {
+            "get": {
+                "tags": [
+                    "Admin Wallet Administration"
+                ],
+                "summary": "List Wallets",
+                "description": "Retrieves a list of all user wallets, supporting sorting, searching, and pagination.",
+                "operationId": "d7a0848d6505714a04628cd46692b481",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wallet list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "wallets": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WalletResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/wallets/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Wallet Administration"
+                ],
+                "summary": "Get Wallet Details",
+                "description": "Retrieves details of a user's wallet by its ID.",
+                "operationId": "f4db20843a813ae808cf00569ba79059",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wallet details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WalletResource"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/wallets/{id}/credit": {
+            "post": {
+                "tags": [
+                    "Admin Wallet Administration"
+                ],
+                "summary": "Credit Wallet",
+                "description": "Credits funds manually to a user's wallet with auditing.",
+                "operationId": "3df0d66420aa1bc6a7af83328a0f9b9b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreditWalletRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Wallet credited successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/wallets/{id}/debit": {
+            "post": {
+                "tags": [
+                    "Admin Wallet Administration"
+                ],
+                "summary": "Debit Wallet",
+                "description": "Debits funds manually from a user's wallet with auditing. Validates balance.",
+                "operationId": "6e5a0188250e0700a26bef9a1bab8b8a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DebitWalletRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Wallet debited successfully."
+                    },
+                    "422": {
+                        "description": "Insufficient funds."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/wallet-transactions": {
+            "get": {
+                "tags": [
+                    "Admin Wallet Administration"
+                ],
+                "summary": "List Wallet Transactions",
+                "description": "Retrieves ledger logs of all wallet balance adjustments across the platform.",
+                "operationId": "5e4db7db03c7bd628fdc97a7f49f72be",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Transactions list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "transactions": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WalletTransactionResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/withdrawals": {
+            "get": {
+                "tags": [
+                    "Admin Withdrawal Management"
+                ],
+                "summary": "List Withdrawals",
+                "description": "Retrieves all withdrawal requests, supporting pagination, status, and sorting filters.",
+                "operationId": "da4ec9a385ec37c130c37d70a6809aa9",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "completed",
+                                "rejected"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "latest",
+                                "oldest"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Withdrawal list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "withdrawals": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WithdrawalRequest"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/withdrawals/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Withdrawal Management"
+                ],
+                "summary": "Get Withdrawal Details",
+                "description": "Retrieves details of a specific withdrawal request.",
+                "operationId": "93c7d484061bcb9cd02f116e7342106b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Withdrawal details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WithdrawalRequest"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/withdrawals/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin Withdrawal Management"
+                ],
+                "summary": "Approve Withdrawal",
+                "description": "Approves a pending withdrawal request, completing the wallet debit action.",
+                "operationId": "c48d90f8d1d99c1d2de4486903f2697f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "admin_note": {
+                                        "type": "string",
+                                        "example": "Transfer approved."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Withdrawal approved successfully."
+                    },
+                    "422": {
+                        "description": "Withdrawal request is not pending."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/withdrawals/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin Withdrawal Management"
+                ],
+                "summary": "Reject Withdrawal",
+                "description": "Rejects a pending withdrawal request with a descriptive note.",
+                "operationId": "71a1d58d9b29eaff01ec54b87da839f4",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "admin_note": {
+                                        "type": "string",
+                                        "example": "Invalid bank account routing details."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Withdrawal rejected successfully."
+                    },
+                    "422": {
+                        "description": "Withdrawal request is not pending."
                     }
                 },
                 "security": [
@@ -1232,6 +3571,181 @@
                         "$ref": "#/components/responses/ValidationErrorResponse"
                     }
                 }
+            }
+        },
+        "/devices/register": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Register Device Token",
+                "description": "Registers or updates a user's device token for FCM push notifications.",
+                "operationId": "e1e7b350fd81f17e4526b0f32a10db4a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RegisterDeviceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Device token registered successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device registered successfully."
+                                        },
+                                        "device": {
+                                            "$ref": "#/components/schemas/UserDevice"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/devices/{device}": {
+            "put": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Update Device Token Details",
+                "description": "Updates parameters of a previously registered device token.",
+                "operationId": "05fe007fe068b3716c89a753e11987fe",
+                "parameters": [
+                    {
+                        "name": "device",
+                        "in": "path",
+                        "description": "The ID of the user device.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateDeviceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Device token details updated.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device updated successfully."
+                                        },
+                                        "device": {
+                                            "$ref": "#/components/schemas/UserDevice"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Delete Device Token",
+                "description": "Deletes and deregisters a device token from receiving push notifications.",
+                "operationId": "58c20cb77af5955f47a8faa610fe3c54",
+                "parameters": [
+                    {
+                        "name": "device",
+                        "in": "path",
+                        "description": "The ID of the user device.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Device token deleted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Device deleted successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/driver/onboarding/documents": {
@@ -2736,6 +5250,451 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get Notification History",
+                "description": "Retrieves a paginated list of notifications for the authenticated user, supporting filters and sorting.",
+                "operationId": "0f031f66cd8c52bf73e89fb2d050ad83",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "latest",
+                            "enum": [
+                                "latest",
+                                "oldest"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "notifications": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/NotificationLog"
+                                            }
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/unread-count": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get Unread Count",
+                "description": "Retrieves count of unread notifications for the user.",
+                "operationId": "5120217e8b1a75b2c61e53684a38c045",
+                "responses": {
+                    "200": {
+                        "description": "Unread count retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "unread_count": {
+                                            "type": "integer",
+                                            "example": 5
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/{notification}": {
+            "get": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Get Notification Details",
+                "description": "Retrieves details of a specific notification log.",
+                "operationId": "5c96653db5b9829078ca4c5a004ddb04",
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "description": "The ID of the notification log.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "notification": {
+                                            "$ref": "#/components/schemas/NotificationLog"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Delete Notification Log",
+                "description": "Soft-deletes a notification log.",
+                "operationId": "5b055554e24b9e67dd912035016cea0e",
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "description": "The ID of the notification log.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification soft-deleted successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification deleted successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/{notification}/read": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark Notification Read",
+                "description": "Marks a specific notification log as read.",
+                "operationId": "1f4e2729c9b19fafa9e69c05a0089034",
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "description": "The ID of the notification log.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification marked as read successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification marked as read."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Mark All Notifications Read",
+                "description": "Marks all notifications of the user as read.",
+                "operationId": "e873443612632a319ae0f88db368dd7a",
+                "responses": {
+                    "200": {
+                        "description": "All notifications marked as read.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "All notifications marked as read."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/notifications/{id}/restore": {
+            "post": {
+                "tags": [
+                    "Notifications"
+                ],
+                "summary": "Restore Notification Log",
+                "description": "Restores a soft-deleted notification log.",
+                "operationId": "c8364a07dc80131c3732c6934a778482",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "The ID of the soft-deleted notification log.",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notification restored successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notification restored successfully."
+                                        },
+                                        "notification": {
+                                            "$ref": "#/components/schemas/NotificationLog"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
@@ -4783,6 +7742,573 @@
                 },
                 "type": "object"
             },
+            "UserDevice": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "device_type": {
+                        "type": "string",
+                        "example": "android"
+                    },
+                    "device_name": {
+                        "type": "string",
+                        "example": "Pixel 7 Pro"
+                    },
+                    "device_token": {
+                        "type": "string",
+                        "example": "fcm_token_xyz"
+                    },
+                    "platform": {
+                        "type": "string",
+                        "example": "Android"
+                    },
+                    "os_version": {
+                        "type": "string",
+                        "example": "13.0",
+                        "nullable": true
+                    },
+                    "app_version": {
+                        "type": "string",
+                        "example": "1.0.0",
+                        "nullable": true
+                    },
+                    "language": {
+                        "type": "string",
+                        "example": "en",
+                        "nullable": true
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "example": "UTC",
+                        "nullable": true
+                    },
+                    "last_used_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "NotificationLog": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Ride Update"
+                    },
+                    "body": {
+                        "type": "string",
+                        "example": "Your driver is arriving."
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "driver_arriving"
+                    },
+                    "category": {
+                        "type": "string",
+                        "example": "ride"
+                    },
+                    "priority": {
+                        "type": "string",
+                        "example": "high"
+                    },
+                    "payload": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "sent"
+                    },
+                    "firebase_message_id": {
+                        "type": "string",
+                        "example": "projects/uey/messages/0:16234...",
+                        "nullable": true
+                    },
+                    "failure_reason": {
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "sent_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "read_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "AuditLogResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "admin_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "admin_name": {
+                        "type": "string",
+                        "example": "Alice Admin"
+                    },
+                    "ip_address": {
+                        "type": "string",
+                        "example": "127.0.0.1"
+                    },
+                    "user_agent": {
+                        "type": "string",
+                        "example": "Mozilla/5.0"
+                    },
+                    "module": {
+                        "type": "string",
+                        "example": "users"
+                    },
+                    "action": {
+                        "type": "string",
+                        "example": "user_block"
+                    },
+                    "affected_table": {
+                        "type": "string",
+                        "example": "users"
+                    },
+                    "affected_record_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "old_values": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "new_values": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "RiderResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Rider"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "john.rider@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+447911111111"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "rider"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    },
+                    "avatar_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_login_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "DriverResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Bob Driver"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "bob.driver@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+447922222222"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "driver"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    },
+                    "avatar_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "last_login_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "DashboardResource": {
+                "properties": {
+                    "metrics": {
+                        "type": "object"
+                    },
+                    "charts": {
+                        "type": "object"
+                    }
+                },
+                "type": "object"
+            },
+            "PromoCodeResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "HELLO50"
+                    },
+                    "discount_type": {
+                        "type": "string",
+                        "example": "percentage"
+                    },
+                    "discount_value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "usage_limit": {
+                        "type": "integer",
+                        "example": 100,
+                        "nullable": true
+                    },
+                    "used_count": {
+                        "type": "integer",
+                        "example": 0
+                    },
+                    "per_user_limit": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "min_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "max_discount": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "first_ride_only": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "referral_coupon": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "ride_eligibility": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SettingResource": {
+                "properties": {
+                    "key": {
+                        "type": "string",
+                        "example": "currency"
+                    },
+                    "value": {
+                        "type": "string",
+                        "example": "USD"
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Rider"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "john.rider@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+447911123456"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "rider"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    },
+                    "avatar_url": {
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "DriverDocumentResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "document_type": {
+                        "type": "string",
+                        "example": "driving_license"
+                    },
+                    "document_path": {
+                        "type": "string",
+                        "example": "documents/driving_license.jpg"
+                    },
+                    "document_url": {
+                        "type": "string",
+                        "format": "url",
+                        "example": "http://uey.test/storage/documents/driving_license.jpg"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "rejection_reason": {
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2028-12-31"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ReviewResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "ride_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "reviewer_name": {
+                        "type": "string",
+                        "example": "John Rider"
+                    },
+                    "rating": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "review": {
+                        "type": "string",
+                        "example": "Great driver!",
+                        "nullable": true
+                    },
+                    "review_tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "is_anonymous": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "RideResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "rider_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "pickup_address": {
+                        "type": "string",
+                        "example": "London Eye"
+                    },
+                    "destination_address": {
+                        "type": "string",
+                        "example": "Regent's Park"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "estimated_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "WalletResource": {
+                "properties": {
+                    "balance": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "USD"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    }
+                },
+                "type": "object"
+            },
+            "WalletTransactionResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "transaction_type": {
+                        "type": "string",
+                        "example": "top_up"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "credit"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50
+                    },
+                    "balance_before": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100
+                    },
+                    "balance_after": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 150
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "completed"
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "topup_1",
+                        "nullable": true
+                    },
+                    "remarks": {
+                        "type": "string",
+                        "example": "Stripe wallet top-up completed",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "SendOtpRequest": {
                 "required": [
                     "phone",
@@ -5162,6 +8688,344 @@
                     }
                 },
                 "type": "object"
+            },
+            "RegisterDeviceRequest": {
+                "required": [
+                    "device_type",
+                    "device_name",
+                    "device_token",
+                    "platform"
+                ],
+                "properties": {
+                    "device_type": {
+                        "type": "string",
+                        "example": "android"
+                    },
+                    "device_name": {
+                        "type": "string",
+                        "example": "Pixel 7 Pro"
+                    },
+                    "device_token": {
+                        "type": "string",
+                        "example": "fcm_token_xyz"
+                    },
+                    "platform": {
+                        "type": "string",
+                        "example": "Android"
+                    },
+                    "os_version": {
+                        "type": "string",
+                        "example": "13.0",
+                        "nullable": true
+                    },
+                    "app_version": {
+                        "type": "string",
+                        "example": "1.0.0",
+                        "nullable": true
+                    },
+                    "language": {
+                        "type": "string",
+                        "example": "en",
+                        "nullable": true
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "example": "UTC",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateDeviceRequest": {
+                "properties": {
+                    "device_type": {
+                        "type": "string",
+                        "example": "android"
+                    },
+                    "device_name": {
+                        "type": "string",
+                        "example": "Pixel 7 Pro"
+                    },
+                    "device_token": {
+                        "type": "string",
+                        "example": "fcm_token_xyz"
+                    },
+                    "platform": {
+                        "type": "string",
+                        "example": "Android"
+                    },
+                    "os_version": {
+                        "type": "string",
+                        "example": "13.0",
+                        "nullable": true
+                    },
+                    "app_version": {
+                        "type": "string",
+                        "example": "1.0.0",
+                        "nullable": true
+                    },
+                    "language": {
+                        "type": "string",
+                        "example": "en",
+                        "nullable": true
+                    },
+                    "timezone": {
+                        "type": "string",
+                        "example": "UTC",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "AdminLoginRequest": {
+                "required": [
+                    "phone",
+                    "password"
+                ],
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "example": "+447999999999"
+                    },
+                    "password": {
+                        "type": "string",
+                        "format": "password",
+                        "example": "password123"
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateAdminProfileRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Alice Modified"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "example": "alice.new@example.com"
+                    },
+                    "avatar_url": {
+                        "type": "string",
+                        "format": "url",
+                        "example": "https://example.com/avatar.png"
+                    }
+                },
+                "type": "object"
+            },
+            "ChangePasswordRequest": {
+                "required": [
+                    "current_password",
+                    "new_password",
+                    "new_password_confirmation"
+                ],
+                "properties": {
+                    "current_password": {
+                        "type": "string",
+                        "example": "password123"
+                    },
+                    "new_password": {
+                        "type": "string",
+                        "example": "newpassword123"
+                    },
+                    "new_password_confirmation": {
+                        "type": "string",
+                        "example": "newpassword123"
+                    }
+                },
+                "type": "object"
+            },
+            "CreditWalletRequest": {
+                "required": [
+                    "amount",
+                    "reason"
+                ],
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Referral bonus"
+                    }
+                },
+                "type": "object"
+            },
+            "DebitWalletRequest": {
+                "required": [
+                    "amount",
+                    "reason"
+                ],
+                "properties": {
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 20
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Cancellation fee debit"
+                    }
+                },
+                "type": "object"
+            },
+            "BroadcastNotificationRequest": {
+                "required": [
+                    "target",
+                    "title",
+                    "body",
+                    "category",
+                    "priority",
+                    "channels"
+                ],
+                "properties": {
+                    "target": {
+                        "type": "string",
+                        "enum": [
+                            "all_users",
+                            "all_riders",
+                            "all_drivers",
+                            "selected_users",
+                            "selected_riders",
+                            "selected_drivers"
+                        ]
+                    },
+                    "user_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "nullable": true
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "System Update"
+                    },
+                    "body": {
+                        "type": "string",
+                        "example": "Maintenance starting in 15 minutes."
+                    },
+                    "category": {
+                        "type": "string",
+                        "enum": [
+                            "ride",
+                            "wallet",
+                            "payment",
+                            "review",
+                            "promotion",
+                            "admin",
+                            "system"
+                        ]
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "high",
+                            "normal",
+                            "low"
+                        ]
+                    },
+                    "channels": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "enum": [
+                                "push",
+                                "database"
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "PromoCodeRequest": {
+                "required": [
+                    "code",
+                    "discount_type",
+                    "discount_value",
+                    "expires_at"
+                ],
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "example": "WELCOME10"
+                    },
+                    "discount_type": {
+                        "type": "string",
+                        "enum": [
+                            "percentage",
+                            "flat"
+                        ]
+                    },
+                    "discount_value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "usage_limit": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "per_user_limit": {
+                        "type": "integer",
+                        "nullable": true
+                    },
+                    "min_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "max_discount": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "first_ride_only": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "referral_coupon": {
+                        "type": "boolean",
+                        "nullable": true
+                    },
+                    "ride_eligibility": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SaveSettingsRequest": {
+                "properties": {
+                    "platform_commission": {
+                        "type": "number",
+                        "format": "float",
+                        "nullable": true
+                    },
+                    "currency": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "distance_unit": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
             }
         },
         "responses": {
@@ -5261,12 +9125,60 @@
     },
     "tags": [
         {
+            "name": "Admin Audit Logs",
+            "description": "Admin Audit Logs"
+        },
+        {
+            "name": "Admin Authentication",
+            "description": "Admin Authentication"
+        },
+        {
             "name": "Admin",
             "description": "Admin"
         },
         {
             "name": "Driver Verification",
             "description": "Driver Verification"
+        },
+        {
+            "name": "Admin Dashboard",
+            "description": "Admin Dashboard"
+        },
+        {
+            "name": "Admin Driver Management",
+            "description": "Admin Driver Management"
+        },
+        {
+            "name": "Admin Notification Broadcast",
+            "description": "Admin Notification Broadcast"
+        },
+        {
+            "name": "Admin Promo Code Management",
+            "description": "Admin Promo Code Management"
+        },
+        {
+            "name": "Admin Review Moderation",
+            "description": "Admin Review Moderation"
+        },
+        {
+            "name": "Admin Ride Management",
+            "description": "Admin Ride Management"
+        },
+        {
+            "name": "Admin Rider Management",
+            "description": "Admin Rider Management"
+        },
+        {
+            "name": "Admin System Settings",
+            "description": "Admin System Settings"
+        },
+        {
+            "name": "Admin Wallet Administration",
+            "description": "Admin Wallet Administration"
+        },
+        {
+            "name": "Admin Withdrawal Management",
+            "description": "Admin Withdrawal Management"
         },
         {
             "name": "Authentication",
@@ -5279,6 +9191,10 @@
         {
             "name": "Driver Onboarding",
             "description": "Driver Onboarding"
+        },
+        {
+            "name": "Notifications",
+            "description": "Notifications"
         },
         {
             "name": "Bank Account",
