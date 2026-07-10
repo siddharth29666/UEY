@@ -34,14 +34,14 @@ class VerifyOtpController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'OTP verified successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'OTP verified successfully.'),
                     ]
                 )
             ),
             new OA\Response(
                 response: 422,
                 ref: '#/components/responses/ValidationErrorResponse'
-            )
+            ),
         ]
     )]
     public function __invoke(VerifyOtpRequest $request): JsonResponse
@@ -49,7 +49,7 @@ class VerifyOtpController extends Controller
         $dto = VerifyOtpDTO::fromRequest($request);
         $verified = $this->otpService->verifyOtp($dto->phone, $dto->code, $dto->type);
 
-        if (!$verified) {
+        if (! $verified) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid or expired OTP code.',

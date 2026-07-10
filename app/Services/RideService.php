@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationType;
 use App\Enums\RideRequestStatus;
 use App\Enums\RideStatus;
+use App\Events\DriverStatusChanged;
+use App\Events\RideCancelledEvent;
+use App\Events\RideRequestedEvent;
 use App\Models\Ride;
 use App\Models\User;
 use App\Models\VehicleType;
@@ -78,7 +82,7 @@ class RideService
                 (float) $data['destination_latitude'],
                 (float) $data['destination_longitude']
             );
-            
+
             $duration = (int) ceil($distance * 1.5);
             if ($duration < 1) {
                 $duration = 1;
@@ -114,7 +118,7 @@ class RideService
             $matchingService->matchDriversForRide($ride);
 
             // Notify Rider
-            event(new \App\Events\RideRequestedEvent($rider, \App\Enums\NotificationType::RIDE_REQUESTED, null, null, ['ride_id' => $ride->id]));
+            event(new RideRequestedEvent($rider, NotificationType::RIDE_REQUESTED, null, null, ['ride_id' => $ride->id]));
 
             return $ride;
         });
@@ -133,9 +137,9 @@ class RideService
                 RideStatus::ARRIVED,
             ];
 
-            if (!in_array($ride->status, $allowedStatuses)) {
+            if (! in_array($ride->status, $allowedStatuses)) {
                 throw ValidationException::withMessages([
-                    'ride' => ['Cancellation is forbidden once the ride has started, completed, or is already cancelled.']
+                    'ride' => ['Cancellation is forbidden once the ride has started, completed, or is already cancelled.'],
                 ]);
             }
 
@@ -154,11 +158,15 @@ class RideService
             // Notify counterpart
             if ($user->isRider()) {
                 if ($ride->driverProfile && $ride->driverProfile->user) {
-                    event(new \App\Events\RideCancelledEvent($ride->driverProfile->user, \App\Enums\NotificationType::RIDE_CANCELLED, null, null, ['ride_id' => $ride->id]));
+                    event(new RideCancelledEvent($ride->driverProfile->user, NotificationType::RIDE_CANCELLED, null, null, ['ride_id' => $ride->id]));
+                    event(new DriverStatusChanged($ride->driverProfile->user, 'available'));
                 }
             } else {
                 if ($ride->rider) {
-                    event(new \App\Events\RideCancelledEvent($ride->rider, \App\Enums\NotificationType::RIDE_CANCELLED, null, null, ['ride_id' => $ride->id]));
+                    event(new RideCancelledEvent($ride->rider, NotificationType::RIDE_CANCELLED, null, null, ['ride_id' => $ride->id]));
+                }
+                if ($ride->driverProfile && $ride->driverProfile->user) {
+                    event(new DriverStatusChanged($ride->driverProfile->user, 'available'));
                 }
             }
 

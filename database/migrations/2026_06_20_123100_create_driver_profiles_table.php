@@ -22,17 +22,17 @@ return new class extends Migration
             $table->decimal('acceptance_rate', 5, 2)->default(100.00);
             $table->decimal('ontime_rate', 5, 2)->default(100.00);
             $table->integer('total_online_hours')->unsigned()->default(0);
-            
+
             // Preferences
             $table->string('default_navigation', 50)->default('google_maps');
             $table->boolean('auto_accept')->default(false);
-            
+
             // Location
             $table->decimal('current_lat', 10, 8)->nullable();
             $table->decimal('current_lng', 11, 8)->nullable();
             $table->decimal('bearing', 5, 2)->nullable();
             $table->timestamp('last_located_at')->nullable();
-            
+
             $table->timestamps();
 
             $table->index('is_online', 'idx_driver_online');

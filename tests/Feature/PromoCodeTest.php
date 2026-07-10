@@ -15,6 +15,7 @@ class PromoCodeTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected PromoCode $promoCode;
 
     protected function setUp(): void

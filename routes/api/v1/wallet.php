@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\WalletController;
+use Illuminate\Support\Facades\Route;
 
 // Public Stripe webhook
 Route::post('/stripe/webhook', [WalletController::class, 'stripeWebhook']);

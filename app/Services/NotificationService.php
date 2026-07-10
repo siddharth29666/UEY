@@ -68,7 +68,7 @@ class NotificationService
                             $sentCount++;
                             $firstMessageId = $res['message_id'] ?? null;
                         } else {
-                            $failedReasons[] = "Token: " . substr($token, 0, 10) . "... Error: " . ($res['error'] ?? 'Unknown');
+                            $failedReasons[] = 'Token: '.substr($token, 0, 10).'... Error: '.($res['error'] ?? 'Unknown');
                         }
                     }
 
@@ -117,6 +117,7 @@ class NotificationService
         foreach ($users as $user) {
             $logs[] = $this->sendToUser($user, $type, $title, $body, $data);
         }
+
         return $logs;
     }
 
@@ -181,6 +182,7 @@ class NotificationService
 
         if ($log) {
             $log->restore();
+
             return $log;
         }
 

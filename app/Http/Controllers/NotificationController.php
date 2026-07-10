@@ -35,7 +35,7 @@ class NotificationController extends Controller
             new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'search', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'from_date', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'to_date', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date'))
+            new OA\Parameter(name: 'to_date', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date')),
         ],
         responses: [
             new OA\Response(
@@ -52,13 +52,13 @@ class NotificationController extends Controller
                                 new OA\Property(property: 'current_page', type: 'integer', example: 1),
                                 new OA\Property(property: 'per_page', type: 'integer', example: 15),
                                 new OA\Property(property: 'total', type: 'integer', example: 10),
-                                new OA\Property(property: 'last_page', type: 'integer', example: 1)
+                                new OA\Property(property: 'last_page', type: 'integer', example: 1),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function index(NotificationFilterRequest $request): JsonResponse
@@ -79,7 +79,7 @@ class NotificationController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                  ->orWhere('body', 'like', "%{$search}%");
+                    ->orWhere('body', 'like', "%{$search}%");
             });
         }
         if ($request->filled('from_date')) {
@@ -110,7 +110,7 @@ class NotificationController extends Controller
                 'last' => $paginator->url($paginator->lastPage()),
                 'prev' => $paginator->previousPageUrl(),
                 'next' => $paginator->nextPageUrl(),
-            ]
+            ],
         ]);
     }
 
@@ -130,11 +130,11 @@ class NotificationController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'unread_count', type: 'integer', example: 5)
+                        new OA\Property(property: 'unread_count', type: 'integer', example: 5),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function unreadCount(Request $request): JsonResponse
@@ -163,7 +163,7 @@ class NotificationController extends Controller
                 required: true,
                 description: 'The ID of the notification log.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -172,13 +172,13 @@ class NotificationController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'notification', ref: '#/components/schemas/NotificationLog')
+                        new OA\Property(property: 'notification', ref: '#/components/schemas/NotificationLog'),
                     ]
                 )
             ),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
             new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function show(NotificationLog $notification, Request $request): JsonResponse
@@ -209,7 +209,7 @@ class NotificationController extends Controller
                 required: true,
                 description: 'The ID of the notification log.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -218,12 +218,12 @@ class NotificationController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Notification marked as read.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Notification marked as read.'),
                     ]
                 )
             ),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function markAsRead(NotificationLog $notification, Request $request): JsonResponse
@@ -256,11 +256,11 @@ class NotificationController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'All notifications marked as read.')
+                        new OA\Property(property: 'message', type: 'string', example: 'All notifications marked as read.'),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function markAllAsRead(Request $request): JsonResponse
@@ -289,7 +289,7 @@ class NotificationController extends Controller
                 required: true,
                 description: 'The ID of the notification log.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -298,12 +298,12 @@ class NotificationController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Notification deleted successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Notification deleted successfully.'),
                     ]
                 )
             ),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function destroy(NotificationLog $notification, Request $request): JsonResponse
@@ -336,7 +336,7 @@ class NotificationController extends Controller
                 required: true,
                 description: 'The ID of the soft-deleted notification log.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -346,19 +346,19 @@ class NotificationController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Notification restored successfully.'),
-                        new OA\Property(property: 'notification', ref: '#/components/schemas/NotificationLog')
+                        new OA\Property(property: 'notification', ref: '#/components/schemas/NotificationLog'),
                     ]
                 )
             ),
             new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function restore($id, Request $request): JsonResponse
     {
         $log = $this->notificationService->restore((int) $id, $request->user());
 
-        if (!$log) {
+        if (! $log) {
             return response()->json([
                 'success' => false,
                 'message' => 'Notification log not found or not deleted.',

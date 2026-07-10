@@ -2,6 +2,8 @@
 
 namespace App\DTOs;
 
+use Illuminate\Http\Request;
+
 class RegisterRiderDTO
 {
     public function __construct(
@@ -11,7 +13,7 @@ class RegisterRiderDTO
         public readonly string $password
     ) {}
 
-    public static function fromRequest(\Illuminate\Http\Request $request): self
+    public static function fromRequest(Request $request): self
     {
         return new self(
             name: $request->input('name'),

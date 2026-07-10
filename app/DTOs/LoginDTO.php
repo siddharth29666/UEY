@@ -2,6 +2,8 @@
 
 namespace App\DTOs;
 
+use Illuminate\Http\Request;
+
 class LoginDTO
 {
     public function __construct(
@@ -9,7 +11,7 @@ class LoginDTO
         public readonly string $password
     ) {}
 
-    public static function fromRequest(\Illuminate\Http\Request $request): self
+    public static function fromRequest(Request $request): self
     {
         return new self(
             phone: $request->input('phone'),

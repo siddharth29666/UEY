@@ -52,7 +52,7 @@ class AccountManagementTest extends TestCase
 
         // Assert a notification was sent to the user
         Notification::assertSentTo($this->user, PasswordResetNotification::class, function ($notification) {
-            return !empty($notification);
+            return ! empty($notification);
         });
 
         // Assert record exists in password_reset_tokens
@@ -99,6 +99,7 @@ class AccountManagementTest extends TestCase
             $property = $reflector->getProperty('otp');
             $property->setAccessible(true);
             $otpCode = $property->getValue($notification);
+
             return true;
         });
 
@@ -183,7 +184,7 @@ class AccountManagementTest extends TestCase
         $token = $this->user->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->deleteJson('/api/v1/profile/delete-account', [
             'password' => 'password123',
         ]);
@@ -208,7 +209,7 @@ class AccountManagementTest extends TestCase
         $token = $this->user->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->deleteJson('/api/v1/profile/delete-account', [
             'password' => 'wrongpassword',
         ]);

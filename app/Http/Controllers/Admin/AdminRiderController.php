@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\RiderResource;
 use App\Models\User;
 use App\Services\AdminService;
+use App\Services\AuditLogService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -32,7 +33,7 @@ class AdminRiderController extends Controller
             new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string', enum: ['active', 'suspended', 'pending'])),
             new OA\Parameter(name: 'sort', in: 'query', schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest'])),
             new OA\Parameter(name: 'date_from', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'date_to', in: 'query', schema: new OA\Schema(type: 'string', format: 'date'))
+            new OA\Parameter(name: 'date_to', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
         ],
         responses: [
             new OA\Response(
@@ -42,10 +43,10 @@ class AdminRiderController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'riders', type: 'array', items: new OA\Items(ref: '#/components/schemas/RiderResource')),
-                        new OA\Property(property: 'meta', type: 'object')
+                        new OA\Property(property: 'meta', type: 'object'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse
@@ -56,8 +57,8 @@ class AdminRiderController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -102,7 +103,7 @@ class AdminRiderController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Rider Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -110,7 +111,7 @@ class AdminRiderController extends Controller
                 description: 'Rider details retrieved.',
                 content: new OA\JsonContent(ref: '#/components/schemas/RiderResource')
             ),
-            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse')
+            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
         ]
     )]
     public function show($id): JsonResponse
@@ -133,19 +134,19 @@ class AdminRiderController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Rider Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'Jane Rider'),
-                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'jane.rider@example.com')
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'jane.rider@example.com'),
                 ]
             )
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Rider profile updated.')
+            new OA\Response(response: 200, description: 'Rider profile updated.'),
         ]
     )]
     public function update(Request $request, $id): JsonResponse
@@ -154,7 +155,7 @@ class AdminRiderController extends Controller
 
         $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,' . $rider->id],
+            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,'.$rider->id],
         ]);
 
         $rider->update(array_filter($request->only(['name', 'email'])));
@@ -176,10 +177,10 @@ class AdminRiderController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Rider Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Rider blocked successfully.')
+            new OA\Response(response: 200, description: 'Rider blocked successfully.'),
         ]
     )]
     public function block(Request $request, $id): JsonResponse
@@ -203,10 +204,10 @@ class AdminRiderController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Rider Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Rider unblocked successfully.')
+            new OA\Response(response: 200, description: 'Rider unblocked successfully.'),
         ]
     )]
     public function unblock(Request $request, $id): JsonResponse
@@ -230,10 +231,10 @@ class AdminRiderController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Rider Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Rider deleted successfully.')
+            new OA\Response(response: 200, description: 'Rider deleted successfully.'),
         ]
     )]
     public function destroy(Request $request, $id): JsonResponse
@@ -247,7 +248,7 @@ class AdminRiderController extends Controller
 
         // Log audit
         app(AdminService::class)->unblockUser($rider, $admin); // Wait, block/unblock, let's log audit log directly:
-        app(\App\Services\AuditLogService::class)->log(
+        app(AuditLogService::class)->log(
             $admin,
             'riders',
             'rider_delete',

@@ -34,10 +34,10 @@ class AdminSystemSettingsController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'settings', type: 'array', items: new OA\Items(ref: '#/components/schemas/SettingResource'))
+                        new OA\Property(property: 'settings', type: 'array', items: new OA\Items(ref: '#/components/schemas/SettingResource')),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function index(): JsonResponse
@@ -64,7 +64,7 @@ class AdminSystemSettingsController extends Controller
             content: new OA\JsonContent(ref: '#/components/schemas/SaveSettingsRequest')
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Settings updated successfully.')
+            new OA\Response(response: 200, description: 'Settings updated successfully.'),
         ]
     )]
     public function update(SaveSettingsRequest $request): JsonResponse
@@ -103,7 +103,7 @@ class AdminSystemSettingsController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin System Settings'],
         responses: [
-            new OA\Response(response: 200, description: 'Settings cache cleared.')
+            new OA\Response(response: 200, description: 'Settings cache cleared.'),
         ]
     )]
     public function refreshCache(): JsonResponse

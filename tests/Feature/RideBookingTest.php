@@ -10,14 +10,13 @@ use App\Enums\VehicleStatus;
 use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\RideRequest;
-use App\Models\RideStatusLog;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redis;
-use Carbon\Carbon;
 use Tests\TestCase;
 
 class RideBookingTest extends TestCase
@@ -25,7 +24,9 @@ class RideBookingTest extends TestCase
     use RefreshDatabase;
 
     protected User $rider;
+
     protected VehicleType $standardVehicleType;
+
     protected VehicleType $suvVehicleType;
 
     protected function setUp(): void
@@ -82,7 +83,7 @@ class RideBookingTest extends TestCase
 
         $profile = DriverProfile::create([
             'user_id' => $user->id,
-            'license_number' => 'DL-' . rand(100000, 999999),
+            'license_number' => 'DL-'.rand(100000, 999999),
             'license_expiry' => Carbon::now()->addYears(2),
             'is_online' => $online,
             'rating' => 4.9,
@@ -99,7 +100,7 @@ class RideBookingTest extends TestCase
             'model' => 'Prius',
             'year' => 2021,
             'color' => 'White',
-            'plate_number' => 'PL-' . rand(1000, 9999),
+            'plate_number' => 'PL-'.rand(1000, 9999),
             'status' => VehicleStatus::APPROVED,
         ]);
 
@@ -114,7 +115,7 @@ class RideBookingTest extends TestCase
         $token = $this->rider->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/rides/estimate', [
             'pickup_latitude' => 51.5074,
             'pickup_longitude' => -0.1278,
@@ -133,8 +134,8 @@ class RideBookingTest extends TestCase
                         'estimated_distance',
                         'estimated_duration',
                         'estimated_fare',
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $estimates = $response->json('estimates');
@@ -169,7 +170,7 @@ class RideBookingTest extends TestCase
         $token = $this->rider->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/rides/request', [
             'pickup_latitude' => 51.5074,
             'pickup_longitude' => -0.1278,
@@ -193,7 +194,7 @@ class RideBookingTest extends TestCase
                     'status',
                     'otp',
                     'estimated_fare',
-                ]
+                ],
             ]);
 
         $rideId = $response->json('ride.id');
@@ -206,7 +207,7 @@ class RideBookingTest extends TestCase
         $this->assertEquals((int) $id1, $requests[0]->driver_profile_id);
         $this->assertEquals((int) $id2, $requests[1]->driver_profile_id);
         $this->assertEquals(RideRequestStatus::PENDING, $requests[0]->status);
-        
+
         // Check expires_at is set to roughly 30 seconds from now
         $this->assertNotNull($requests[0]->expires_at);
         $this->assertTrue($requests[0]->expires_at->isAfter(now()->addSeconds(25)));
@@ -249,7 +250,7 @@ class RideBookingTest extends TestCase
 
         // Fetch driver requests
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson('/api/v1/driver/ride-requests');
 
         $response->assertStatus(200)
@@ -304,7 +305,7 @@ class RideBookingTest extends TestCase
         $token = $driver1['user']->createToken('driver-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/driver/ride-requests/{$req1->id}/accept");
 
         $response->assertStatus(200)
@@ -313,7 +314,7 @@ class RideBookingTest extends TestCase
                 'message' => 'Ride request accepted successfully.',
             ])
             ->assertJsonStructure([
-                'ride' => ['id', 'status', 'driver_profile_id', 'accepted_at']
+                'ride' => ['id', 'status', 'driver_profile_id', 'accepted_at'],
             ]);
 
         // Assert ride is accepted and driver assigned
@@ -367,7 +368,7 @@ class RideBookingTest extends TestCase
 
         // Driver 2 tries to accept but ride is already accepted by Driver 1
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token2,
+            'Authorization' => 'Bearer '.$token2,
         ])->postJson("/api/v1/driver/ride-requests/{$req2->id}/accept");
 
         $response->assertStatus(422)
@@ -410,7 +411,7 @@ class RideBookingTest extends TestCase
         $token = $driver['user']->createToken('driver-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/driver/ride-requests/{$req->id}/decline");
 
         $response->assertStatus(200)
@@ -447,7 +448,7 @@ class RideBookingTest extends TestCase
         $token = $this->rider->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/rides/{$ride->id}/cancel", [
             'cancel_reason' => 'Changed my mind',
         ]);
@@ -489,7 +490,7 @@ class RideBookingTest extends TestCase
         $token = $this->rider->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/rides/{$ride->id}/cancel");
 
         $response->assertStatus(422);
@@ -558,7 +559,7 @@ class RideBookingTest extends TestCase
         $token = $this->rider->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson('/api/v1/rides/active');
 
         $response->assertStatus(200)
@@ -567,7 +568,7 @@ class RideBookingTest extends TestCase
                 'ride' => [
                     'id' => $ride->id,
                     'status' => 'accepted',
-                ]
+                ],
             ]);
     }
 
@@ -599,7 +600,7 @@ class RideBookingTest extends TestCase
         $token = $driver['user']->createToken('driver-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson('/api/v1/driver/active-ride');
 
         $response->assertStatus(200)
@@ -609,7 +610,7 @@ class RideBookingTest extends TestCase
                     'id' => $ride->id,
                     'status' => 'accepted',
                     'driver_profile_id' => $driverProfile->id,
-                ]
+                ],
             ]);
     }
 }

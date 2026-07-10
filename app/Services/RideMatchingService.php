@@ -4,11 +4,11 @@ namespace App\Services;
 
 use App\Enums\RideRequestStatus;
 use App\Enums\RideStatus;
+use App\Enums\UserStatus;
+use App\Enums\VehicleStatus;
 use App\Models\DriverProfile;
 use App\Models\Ride;
 use App\Models\RideRequest;
-use App\Enums\UserStatus;
-use App\Enums\VehicleStatus;
 
 class RideMatchingService
 {
@@ -22,7 +22,7 @@ class RideMatchingService
     public function matchDriversForRide(Ride $ride): int
     {
         $radiusKm = config('rides.matching_radius_km', 5.0);
-        
+
         // Find nearby drivers via Redis GEOSEARCH
         $nearbyDrivers = $this->locationService->getNearbyDrivers(
             (float) $ride->pickup_latitude,
@@ -55,7 +55,7 @@ class RideMatchingService
             })
             ->whereHas('vehicles', function ($q) use ($ride) {
                 $q->where('status', VehicleStatus::APPROVED)
-                  ->where('vehicle_type_id', $ride->vehicle_type_id);
+                    ->where('vehicle_type_id', $ride->vehicle_type_id);
             })
             ->get();
 

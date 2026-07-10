@@ -1,26 +1,26 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\AdminAuditLogController;
 use App\Http\Controllers\Admin\AdminAuthController;
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\AdminDashboardController;
-use App\Http\Controllers\Admin\AdminRiderController;
 use App\Http\Controllers\Admin\AdminDriverController;
-use App\Http\Controllers\Admin\AdminRideController;
-use App\Http\Controllers\Admin\AdminWalletController;
-use App\Http\Controllers\Admin\AdminWithdrawalController;
-use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminNotificationController;
 use App\Http\Controllers\Admin\AdminPromoCodeController;
+use App\Http\Controllers\Admin\AdminReviewController;
+use App\Http\Controllers\Admin\AdminRideController;
+use App\Http\Controllers\Admin\AdminRiderController;
 use App\Http\Controllers\Admin\AdminSystemSettingsController;
-use App\Http\Controllers\Admin\AdminAuditLogController;
+use App\Http\Controllers\Admin\AdminWalletController;
+use App\Http\Controllers\Admin\AdminWithdrawalController;
+use Illuminate\Support\Facades\Route;
 
 // 1. Admin login does not require auth:sanctum
 Route::post('/admin/login', [AdminAuthController::class, 'login']);
 
 // 2. Protected admin routes
 Route::middleware(['auth:sanctum', 'ability:role:admin'])->prefix('admin')->group(function () {
-    
+
     // Auth & Profile
     Route::post('/logout', [AdminAuthController::class, 'logout']);
     Route::get('/profile', [AdminAuthController::class, 'profile']);

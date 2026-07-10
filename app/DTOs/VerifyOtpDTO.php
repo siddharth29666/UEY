@@ -3,6 +3,7 @@
 namespace App\DTOs;
 
 use App\Enums\OtpType;
+use Illuminate\Http\Request;
 
 class VerifyOtpDTO
 {
@@ -12,7 +13,7 @@ class VerifyOtpDTO
         public readonly OtpType $type
     ) {}
 
-    public static function fromRequest(\Illuminate\Http\Request $request): self
+    public static function fromRequest(Request $request): self
     {
         return new self(
             phone: $request->input('phone'),

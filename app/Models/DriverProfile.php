@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\VehicleStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -96,5 +97,14 @@ class DriverProfile extends Model
     public function bankAccount(): HasOne
     {
         return $this->hasOne(DriverBankAccount::class, 'driver_profile_id');
+    }
+
+    /**
+     * Get the active approved vehicle.
+     */
+    public function activeVehicle(): HasOne
+    {
+        return $this->hasOne(Vehicle::class, 'driver_profile_id')
+            ->where('status', VehicleStatus::APPROVED);
     }
 }

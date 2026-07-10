@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Driver;
 
 use App\Http\Controllers\Controller;
 use App\Models\DriverDocument;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use OpenApi\Attributes as OA;
@@ -27,7 +26,7 @@ class DriverDocumentController extends Controller
                 required: true,
                 description: 'The ID of the driver document.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -40,7 +39,7 @@ class DriverDocumentController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Unauthorized.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Unauthorized.'),
                     ]
                 )
             ),
@@ -50,32 +49,32 @@ class DriverDocumentController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Document file not found.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Document file not found.'),
                     ]
                 )
             ),
             new OA\Response(
                 response: 401,
                 ref: '#/components/responses/UnauthorizedResponse'
-            )
+            ),
         ]
     )]
     public function view(Request $request, DriverDocument $document)
     {
         // 1. Ownership validation
         $driverProfile = $request->user()->driverProfile;
-        if (!$driverProfile || $document->driver_profile_id !== $driverProfile->id) {
+        if (! $driverProfile || $document->driver_profile_id !== $driverProfile->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized.'
+                'message' => 'Unauthorized.',
             ], 403);
         }
 
         // 2. Physical file existence validation
-        if (!Storage::disk('local')->exists($document->document_path)) {
+        if (! Storage::disk('local')->exists($document->document_path)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Document file not found.'
+                'message' => 'Document file not found.',
             ], 404);
         }
 
@@ -98,7 +97,7 @@ class DriverDocumentController extends Controller
                 required: true,
                 description: 'The ID of the driver document.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -111,7 +110,7 @@ class DriverDocumentController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Unauthorized.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Unauthorized.'),
                     ]
                 )
             ),
@@ -121,32 +120,32 @@ class DriverDocumentController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Document file not found.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Document file not found.'),
                     ]
                 )
             ),
             new OA\Response(
                 response: 401,
                 ref: '#/components/responses/UnauthorizedResponse'
-            )
+            ),
         ]
     )]
     public function download(Request $request, DriverDocument $document)
     {
         // 1. Ownership validation
         $driverProfile = $request->user()->driverProfile;
-        if (!$driverProfile || $document->driver_profile_id !== $driverProfile->id) {
+        if (! $driverProfile || $document->driver_profile_id !== $driverProfile->id) {
             return response()->json([
                 'success' => false,
-                'message' => 'Unauthorized.'
+                'message' => 'Unauthorized.',
             ], 403);
         }
 
         // 2. Physical file existence validation
-        if (!Storage::disk('local')->exists($document->document_path)) {
+        if (! Storage::disk('local')->exists($document->document_path)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Document file not found.'
+                'message' => 'Document file not found.',
             ], 404);
         }
 

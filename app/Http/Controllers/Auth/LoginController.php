@@ -8,6 +8,7 @@ use App\Http\Requests\LoginRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 class LoginController extends Controller
@@ -54,20 +55,20 @@ class LoginController extends Controller
                                     properties: [
                                         new OA\Property(property: 'email', type: 'boolean', example: true),
                                         new OA\Property(property: 'sms', type: 'boolean', example: true),
-                                        new OA\Property(property: 'push', type: 'boolean', example: true)
+                                        new OA\Property(property: 'push', type: 'boolean', example: true),
                                     ]
                                 ),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
             new OA\Response(
                 response: 422,
                 ref: '#/components/responses/ValidationErrorResponse'
-            )
+            ),
         ]
     )]
     public function __invoke(LoginRequest $request): JsonResponse
@@ -82,7 +83,7 @@ class LoginController extends Controller
                 'token' => $authData['token'],
                 'user' => new UserResource($authData['user']),
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

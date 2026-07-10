@@ -47,15 +47,15 @@ class AdminController extends Controller
                                     new OA\Property(property: 'rejection_reason', type: 'string', nullable: true, example: null),
                                     new OA\Property(property: 'expires_at', type: 'string', format: 'date', example: '2028-12-31'),
                                     new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                    new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                    new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                                 ]
                             )
-                        )
+                        ),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
-            new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse')
+            new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
         ]
     )]
     public function pendingDocuments(Request $request): JsonResponse
@@ -86,7 +86,7 @@ class AdminController extends Controller
                 required: true,
                 description: 'The ID of the driver document to verify.',
                 schema: new OA\Schema(type: 'integer', example: 1)
-            )
+            ),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -112,15 +112,15 @@ class AdminController extends Controller
                                 new OA\Property(property: 'rejection_reason', type: 'string', nullable: true, example: null),
                                 new OA\Property(property: 'expires_at', type: 'string', format: 'date', example: '2028-12-31'),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function verifyDocument(VerifyDocumentRequest $request, $documentId): JsonResponse
@@ -141,8 +141,12 @@ class AdminController extends Controller
 
     // Remaining admin stubs for future phases
     public function listDrivers(Request $request) {}
+
     public function listRiders(Request $request) {}
+
     public function activeRides(Request $request) {}
+
     public function updatePricing(Request $request, $vehicleType) {}
+
     public function createPromo(Request $request) {}
 }

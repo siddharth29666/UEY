@@ -41,24 +41,24 @@ class AdminAuthController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'token', type: 'string', example: '1|abcdef...'),
-                        new OA\Property(property: 'user', ref: '#/components/schemas/User')
+                        new OA\Property(property: 'user', ref: '#/components/schemas/User'),
                     ]
                 )
             ),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function login(AdminLoginRequest $request): JsonResponse
     {
         $user = User::where('phone', $request->input('phone'))->first();
 
-        if (!$user || !Hash::check($request->input('password'), $user->password)) {
+        if (! $user || ! Hash::check($request->input('password'), $user->password)) {
             throw ValidationException::withMessages([
                 'phone' => ['Invalid phone number or password.'],
             ]);
         }
 
-        if (!$user->isAdmin()) {
+        if (! $user->isAdmin()) {
             throw ValidationException::withMessages([
                 'phone' => ['You are not authorized to access the Admin Panel.'],
             ]);
@@ -97,10 +97,10 @@ class AdminAuthController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Logged out successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Logged out successfully.'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function logout(Request $request): JsonResponse
@@ -132,10 +132,10 @@ class AdminAuthController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'user', ref: '#/components/schemas/User')
+                        new OA\Property(property: 'user', ref: '#/components/schemas/User'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function profile(Request $request): JsonResponse
@@ -166,10 +166,10 @@ class AdminAuthController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'user', ref: '#/components/schemas/User')
+                        new OA\Property(property: 'user', ref: '#/components/schemas/User'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function updateProfile(UpdateAdminProfileRequest $request): JsonResponse
@@ -215,18 +215,18 @@ class AdminAuthController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Password updated successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Password updated successfully.'),
                     ]
                 )
             ),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
         $admin = $request->user();
 
-        if (!Hash::check($request->input('current_password'), $admin->password)) {
+        if (! Hash::check($request->input('current_password'), $admin->password)) {
             throw ValidationException::withMessages([
                 'current_password' => ['The provided password does not match your current password.'],
             ]);

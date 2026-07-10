@@ -7,6 +7,7 @@ use App\Http\Resources\RideResource;
 use App\Models\Ride;
 use App\Models\RideStatusLog;
 use App\Services\AdminService;
+use App\Services\AuditLogService;
 use App\Services\RideService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,7 @@ class AdminRideController extends Controller
             new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'sort', in: 'query', schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest'])),
             new OA\Parameter(name: 'date_from', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'date_to', in: 'query', schema: new OA\Schema(type: 'string', format: 'date'))
+            new OA\Parameter(name: 'date_to', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
         ],
         responses: [
             new OA\Response(
@@ -45,10 +46,10 @@ class AdminRideController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'rides', type: 'array', items: new OA\Items(ref: '#/components/schemas/RideResource')),
-                        new OA\Property(property: 'meta', type: 'object')
+                        new OA\Property(property: 'meta', type: 'object'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse
@@ -59,13 +60,13 @@ class AdminRideController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('pickup_address', 'like', "%{$search}%")
-                  ->orWhere('destination_address', 'like', "%{$search}%")
-                  ->orWhereHas('rider', function ($qr) use ($search) {
-                      $qr->where('name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('driverProfile.user', function ($qd) use ($search) {
-                      $qd->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('destination_address', 'like', "%{$search}%")
+                    ->orWhereHas('rider', function ($qr) use ($search) {
+                        $qr->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('driverProfile.user', function ($qd) use ($search) {
+                        $qd->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -110,7 +111,7 @@ class AdminRideController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Ride Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -118,7 +119,7 @@ class AdminRideController extends Controller
                 description: 'Ride details retrieved.',
                 content: new OA\JsonContent(ref: '#/components/schemas/RideResource')
             ),
-            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse')
+            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
         ]
     )]
     public function show($id): JsonResponse
@@ -141,18 +142,18 @@ class AdminRideController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Ride Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'cancel_reason', type: 'string', example: 'Rider booked by mistake.')
+                    new OA\Property(property: 'cancel_reason', type: 'string', example: 'Rider booked by mistake.'),
                 ]
             )
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Ride cancelled successfully.')
+            new OA\Response(response: 200, description: 'Ride cancelled successfully.'),
         ]
     )]
     public function cancel(Request $request, $id): JsonResponse
@@ -163,7 +164,7 @@ class AdminRideController extends Controller
         $this->rideService->cancelRide($ride, $request->user(), $reason);
 
         // Audit Log
-        app(\App\Services\AuditLogService::class)->log(
+        app(AuditLogService::class)->log(
             $request->user(),
             'rides',
             'ride_cancel',
@@ -189,10 +190,10 @@ class AdminRideController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Ride Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Payment refunded successfully.')
+            new OA\Response(response: 200, description: 'Payment refunded successfully.'),
         ]
     )]
     public function refund(Request $request, $id): JsonResponse
@@ -224,7 +225,7 @@ class AdminRideController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Ride Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -243,13 +244,13 @@ class AdminRideController extends Controller
                                     new OA\Property(property: 'new_status', type: 'string'),
                                     new OA\Property(property: 'reason', type: 'string', nullable: true),
                                     new OA\Property(property: 'changed_by_id', type: 'integer', nullable: true),
-                                    new OA\Property(property: 'created_at', type: 'string', format: 'date-time')
+                                    new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
                                 ]
                             )
-                        )
+                        ),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function timeline($id): JsonResponse

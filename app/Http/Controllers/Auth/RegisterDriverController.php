@@ -8,6 +8,7 @@ use App\Http\Requests\RegisterDriverRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 class RegisterDriverController extends Controller
@@ -54,7 +55,7 @@ class RegisterDriverController extends Controller
                                     properties: [
                                         new OA\Property(property: 'email', type: 'boolean', example: true),
                                         new OA\Property(property: 'sms', type: 'boolean', example: true),
-                                        new OA\Property(property: 'push', type: 'boolean', example: true)
+                                        new OA\Property(property: 'push', type: 'boolean', example: true),
                                     ]
                                 ),
                                 new OA\Property(
@@ -75,7 +76,7 @@ class RegisterDriverController extends Controller
                                             type: 'object',
                                             properties: [
                                                 new OA\Property(property: 'default_navigation', type: 'string', example: 'google_maps'),
-                                                new OA\Property(property: 'auto_accept', type: 'boolean', example: false)
+                                                new OA\Property(property: 'auto_accept', type: 'boolean', example: false),
                                             ]
                                         ),
                                         new OA\Property(
@@ -89,23 +90,23 @@ class RegisterDriverController extends Controller
                                                     new OA\Property(property: 'year', type: 'integer', example: 2022),
                                                     new OA\Property(property: 'color', type: 'string', example: 'Silver'),
                                                     new OA\Property(property: 'plate_number', type: 'string', example: 'ABC-999'),
-                                                    new OA\Property(property: 'status', type: 'string', example: 'pending')
+                                                    new OA\Property(property: 'status', type: 'string', example: 'pending'),
                                                 ]
                                             )
-                                        )
+                                        ),
                                     ]
                                 ),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
             new OA\Response(
                 response: 422,
                 ref: '#/components/responses/ValidationErrorResponse'
-            )
+            ),
         ]
     )]
     public function __invoke(RegisterDriverRequest $request): JsonResponse
@@ -123,7 +124,7 @@ class RegisterDriverController extends Controller
                 'token' => $token,
                 'user' => new UserResource($user->load('driverProfile.vehicles')),
             ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

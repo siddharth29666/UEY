@@ -2,6 +2,8 @@
 
 namespace App\DTOs;
 
+use Illuminate\Http\Request;
+
 class RegisterDriverDTO
 {
     public function __construct(
@@ -11,7 +13,7 @@ class RegisterDriverDTO
         public readonly string $password,
         public readonly string $license_number,
         public readonly string $license_expiry,
-        
+
         // Vehicle details
         public readonly string $vehicle_make,
         public readonly string $vehicle_model,
@@ -21,7 +23,7 @@ class RegisterDriverDTO
         public readonly int $vehicle_type_id
     ) {}
 
-    public static function fromRequest(\Illuminate\Http\Request $request): self
+    public static function fromRequest(Request $request): self
     {
         return new self(
             name: $request->input('name'),

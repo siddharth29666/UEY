@@ -2,9 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\RideStatus;
+use App\Events\DriverLocationUpdated;
+use App\Events\DriverStatusChanged;
+use App\Models\DriverLocation;
 use App\Models\DriverProfile;
-use Illuminate\Support\Facades\Redis;
+use App\Models\Ride;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 
 class DriverLocationService
 {
@@ -23,7 +28,7 @@ class DriverLocationService
         try {
             if ($online) {
                 // Only add to Redis if coordinates are present
-                if (!is_null($driverProfile->current_longitude) && !is_null($driverProfile->current_latitude)) {
+                if (! is_null($driverProfile->current_longitude) && ! is_null($driverProfile->current_latitude)) {
                     Redis::geoadd(
                         $this->redisKey,
                         (float) $driverProfile->current_longitude,
@@ -35,15 +40,24 @@ class DriverLocationService
                 Redis::zrem($this->redisKey, (string) $driverProfile->id);
             }
         } catch (\Exception $e) {
-            Log::error("Redis connection failed during online status toggle: " . $e->getMessage());
+            Log::error('Redis connection failed during online status toggle: '.$e->getMessage());
         }
+
+        event(new DriverStatusChanged($driverProfile->user, $online ? 'online' : 'offline'));
     }
 
     /**
      * Update driver location and sync with Redis GEO index if online.
      */
-    public function updateLocation(DriverProfile $driverProfile, float $latitude, float $longitude, ?float $bearing = null): void
-    {
+    public function updateLocation(
+        DriverProfile $driverProfile,
+        float $latitude,
+        float $longitude,
+        ?float $bearing = null,
+        ?float $speed = null,
+        ?float $accuracy = null,
+        ?int $timestamp = null
+    ): void {
         $driverProfile->update([
             'current_latitude' => $latitude,
             'current_longitude' => $longitude,
@@ -62,7 +76,33 @@ class DriverLocationService
                 );
             }
         } catch (\Exception $e) {
-            Log::error("Redis connection failed during location update: " . $e->getMessage());
+            Log::error('Redis connection failed during location update: '.$e->getMessage());
+        }
+
+        // Only active rides should be tracked
+        $ride = Ride::where('driver_profile_id', $driverProfile->id)
+            ->whereIn('status', [
+                RideStatus::ACCEPTED,
+                RideStatus::ARRIVING,
+                RideStatus::ARRIVED,
+                RideStatus::IN_PROGRESS,
+            ])->first();
+
+        if ($ride) {
+            // Save history
+            DriverLocation::create([
+                'driver_id' => $driverProfile->user_id,
+                'ride_id' => $ride->id,
+                'latitude' => $latitude,
+                'longitude' => $longitude,
+                'heading' => $bearing,
+                'speed' => $speed,
+                'accuracy' => $accuracy,
+                'timestamp' => $timestamp ?: time(),
+            ]);
+
+            // Dispatch event which broadcasts automatically
+            event(new DriverLocationUpdated($ride, $latitude, $longitude, $bearing, $speed, $accuracy, $timestamp));
         }
     }
 
@@ -86,10 +126,10 @@ class DriverLocationService
                 (string) $radiusKm,
                 'km',
                 'WITHDIST',
-                'WITHCOORD'
+                'WITHCOORD',
             ]);
 
-            if (!is_array($results)) {
+            if (! is_array($results)) {
                 return [];
             }
 
@@ -112,7 +152,7 @@ class DriverLocationService
             return $nearbyDrivers;
 
         } catch (\Exception $e) {
-            Log::warning("Redis connection failed during nearby driver search: " . $e->getMessage() . ". Falling back to database-based matching.");
+            Log::warning('Redis connection failed during nearby driver search: '.$e->getMessage().'. Falling back to database-based matching.');
 
             try {
                 // Fetch all online driver profiles with coordinates
@@ -147,7 +187,8 @@ class DriverLocationService
 
                 return $nearbyDrivers;
             } catch (\Exception $dbEx) {
-                Log::error("Database fallback matching failed: " . $dbEx->getMessage());
+                Log::error('Database fallback matching failed: '.$dbEx->getMessage());
+
                 return [];
             }
         }

@@ -33,7 +33,7 @@ class AdminDriverController extends Controller
             new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string', enum: ['active', 'suspended', 'pending'])),
             new OA\Parameter(name: 'sort', in: 'query', schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest'])),
             new OA\Parameter(name: 'date_from', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'date_to', in: 'query', schema: new OA\Schema(type: 'string', format: 'date'))
+            new OA\Parameter(name: 'date_to', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
         ],
         responses: [
             new OA\Response(
@@ -43,10 +43,10 @@ class AdminDriverController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'drivers', type: 'array', items: new OA\Items(ref: '#/components/schemas/DriverResource')),
-                        new OA\Property(property: 'meta', type: 'object')
+                        new OA\Property(property: 'meta', type: 'object'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse
@@ -57,8 +57,8 @@ class AdminDriverController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -103,7 +103,7 @@ class AdminDriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Driver Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -111,7 +111,7 @@ class AdminDriverController extends Controller
                 description: 'Driver details retrieved.',
                 content: new OA\JsonContent(ref: '#/components/schemas/DriverResource')
             ),
-            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse')
+            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
         ]
     )]
     public function show($id): JsonResponse
@@ -134,19 +134,19 @@ class AdminDriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Driver Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'Jane Driver'),
-                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'jane.driver@example.com')
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'jane.driver@example.com'),
                 ]
             )
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Driver profile updated.')
+            new OA\Response(response: 200, description: 'Driver profile updated.'),
         ]
     )]
     public function update(Request $request, $id): JsonResponse
@@ -155,7 +155,7 @@ class AdminDriverController extends Controller
 
         $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
-            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,' . $driver->id],
+            'email' => ['sometimes', 'required', 'email', 'max:255', 'unique:users,email,'.$driver->id],
         ]);
 
         $driver->update(array_filter($request->only(['name', 'email'])));
@@ -177,10 +177,10 @@ class AdminDriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Driver Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Driver approved successfully.')
+            new OA\Response(response: 200, description: 'Driver approved successfully.'),
         ]
     )]
     public function approve(Request $request, $id): JsonResponse
@@ -204,18 +204,18 @@ class AdminDriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Driver Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'rejection_reason', type: 'string', example: 'Driver license photo blurry.')
+                    new OA\Property(property: 'rejection_reason', type: 'string', example: 'Driver license photo blurry.'),
                 ]
             )
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Driver rejected successfully.')
+            new OA\Response(response: 200, description: 'Driver rejected successfully.'),
         ]
     )]
     public function reject(Request $request, $id): JsonResponse
@@ -241,10 +241,10 @@ class AdminDriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Driver Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Driver blocked successfully.')
+            new OA\Response(response: 200, description: 'Driver blocked successfully.'),
         ]
     )]
     public function block(Request $request, $id): JsonResponse
@@ -268,10 +268,10 @@ class AdminDriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Driver Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Driver unblocked successfully.')
+            new OA\Response(response: 200, description: 'Driver unblocked successfully.'),
         ]
     )]
     public function unblock(Request $request, $id): JsonResponse
@@ -295,7 +295,7 @@ class AdminDriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Driver Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -304,10 +304,10 @@ class AdminDriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'documents', type: 'array', items: new OA\Items(ref: '#/components/schemas/DriverDocumentResource'))
+                        new OA\Property(property: 'documents', type: 'array', items: new OA\Items(ref: '#/components/schemas/DriverDocumentResource')),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function documents($id): JsonResponse

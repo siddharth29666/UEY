@@ -12,9 +12,8 @@ class OtpService
     /**
      * Generate and store an OTP for the given phone number.
      *
-     * @param string $phone
-     * @param OtpType $type
      * @return string|null Returns the OTP string if APP_ENV is local, otherwise null.
+     *
      * @throws \Exception If the resend cooldown has not expired.
      */
     public function sendOtp(string $phone, OtpType $type): ?string
@@ -27,7 +26,7 @@ class OtpService
             ->first();
 
         if ($recentOtp) {
-            throw new \Exception("Please wait at least 60 seconds before requesting a new OTP.");
+            throw new \Exception('Please wait at least 60 seconds before requesting a new OTP.');
         }
 
         // 2. Generate a 6-digit OTP
@@ -61,11 +60,6 @@ class OtpService
 
     /**
      * Verify the OTP code for a phone number.
-     *
-     * @param string $phone
-     * @param string $code
-     * @param OtpType $type
-     * @return bool
      */
     public function verifyOtp(string $phone, string $code, OtpType $type): bool
     {
@@ -78,7 +72,7 @@ class OtpService
             ->orderBy('id', 'desc')
             ->first();
 
-        if (!$otpRecord) {
+        if (! $otpRecord) {
             return false;
         }
 
@@ -93,10 +87,6 @@ class OtpService
     /**
      * Check if a phone number has been verified for registration/login.
      * Used as a guard check before allowing profile registration.
-     *
-     * @param string $phone
-     * @param OtpType $type
-     * @return bool
      */
     public function isVerified(string $phone, OtpType $type): bool
     {

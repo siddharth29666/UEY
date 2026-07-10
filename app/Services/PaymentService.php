@@ -2,11 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationType;
 use App\Enums\PaymentStatus;
+use App\Events\PaymentFailedEvent;
+use App\Events\PaymentSucceededEvent;
 use App\Models\Payment;
 use App\Models\Ride;
-use App\Services\Payments\PaymentGatewayInterface;
 use App\Services\Payments\CashGateway;
+use App\Services\Payments\PaymentGatewayInterface;
 use App\Services\Payments\WalletGateway;
 use Illuminate\Support\Facades\DB;
 
@@ -18,8 +21,8 @@ class PaymentService
     public function resolveGateway(string $method): PaymentGatewayInterface
     {
         return match ($method) {
-            'cash' => new CashGateway(),
-            'wallet' => new WalletGateway(),
+            'cash' => new CashGateway,
+            'wallet' => new WalletGateway,
             default => throw new \Exception("Unsupported payment method: {$method}"),
         };
     }
@@ -80,7 +83,7 @@ class PaymentService
                     'payment_status' => 'paid',
                 ]);
 
-                event(new \App\Events\PaymentSucceededEvent($ride->rider, \App\Enums\NotificationType::PAYMENT_SUCCESS, null, null, ['amount' => $total, 'ride_id' => $ride->id]));
+                event(new PaymentSucceededEvent($ride->rider, NotificationType::PAYMENT_SUCCESS, null, null, ['amount' => $total, 'ride_id' => $ride->id]));
 
                 return $payment;
             });
@@ -106,7 +109,7 @@ class PaymentService
                 'payment_status' => 'failed',
             ]);
 
-            event(new \App\Events\PaymentFailedEvent($ride->rider, \App\Enums\NotificationType::PAYMENT_FAILED, null, null, ['amount' => $total, 'ride_id' => $ride->id]));
+            event(new PaymentFailedEvent($ride->rider, NotificationType::PAYMENT_FAILED, null, null, ['amount' => $total, 'ride_id' => $ride->id]));
 
             throw $e;
         }
@@ -118,8 +121,8 @@ class PaymentService
     public function generateInvoice(Ride $ride): array
     {
         $payment = $ride->payment;
-        if (!$payment) {
-            throw new \Exception("No payment record found for this ride.");
+        if (! $payment) {
+            throw new \Exception('No payment record found for this ride.');
         }
 
         return [

@@ -2,9 +2,10 @@
 
 namespace App\Services\Payments;
 
+use App\Enums\WalletTransactionType;
 use App\Models\Payment;
 use App\Models\Ride;
-use App\Models\WalletTransaction;
+use App\Services\WalletService;
 
 class CashGateway implements PaymentGatewayInterface
 {
@@ -21,18 +22,18 @@ class CashGateway implements PaymentGatewayInterface
                     ['balance' => 0.00]
                 );
 
-                $walletService = app(\App\Services\WalletService::class);
+                $walletService = app(WalletService::class);
                 $walletService->debit(
                     $wallet,
                     (float) $payment->platform_commission,
-                    \App\Enums\WalletTransactionType::ADMIN_DEBIT,
-                    'ride_' . $ride->id,
+                    WalletTransactionType::ADMIN_DEBIT,
+                    'ride_'.$ride->id,
                     "Commission debited for cash Ride #{$ride->id}"
                 );
             }
         }
 
         // Generate unique transaction reference
-        return 'PAY-' . now()->format('Ymd') . '-' . str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT);
+        return 'PAY-'.now()->format('Ymd').'-'.str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT);
     }
 }

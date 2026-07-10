@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\WalletResource;
-use App\Http\Resources\WalletTransactionResource;
 use App\Http\Resources\WalletTopupResource;
+use App\Http\Resources\WalletTransactionResource;
 use App\Http\Resources\WithdrawalResource;
-use App\Models\WalletTopup;
 use App\Models\WalletTransaction;
 use App\Models\WithdrawalRequest;
 use App\Services\StripeService;
@@ -14,6 +13,7 @@ use App\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
+use Stripe\Exception\SignatureVerificationException;
 
 class WalletController extends Controller
 {
@@ -38,11 +38,11 @@ class WalletController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'wallet', ref: '#/components/schemas/Wallet')
+                        new OA\Property(property: 'wallet', ref: '#/components/schemas/Wallet'),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function show(Request $request): JsonResponse
@@ -71,7 +71,7 @@ class WalletController extends Controller
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1)),
             new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15)),
-            new OA\Parameter(name: 'sort', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest'], default: 'latest'))
+            new OA\Parameter(name: 'sort', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest'], default: 'latest')),
         ],
         responses: [
             new OA\Response(
@@ -88,7 +88,7 @@ class WalletController extends Controller
                                 new OA\Property(property: 'current_page', type: 'integer', example: 1),
                                 new OA\Property(property: 'per_page', type: 'integer', example: 15),
                                 new OA\Property(property: 'total', type: 'integer', example: 5),
-                                new OA\Property(property: 'last_page', type: 'integer', example: 1)
+                                new OA\Property(property: 'last_page', type: 'integer', example: 1),
                             ]
                         ),
                         new OA\Property(
@@ -98,13 +98,13 @@ class WalletController extends Controller
                                 new OA\Property(property: 'first', type: 'string'),
                                 new OA\Property(property: 'last', type: 'string'),
                                 new OA\Property(property: 'prev', type: 'string', nullable: true),
-                                new OA\Property(property: 'next', type: 'string', nullable: true)
+                                new OA\Property(property: 'next', type: 'string', nullable: true),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function transactions(Request $request): JsonResponse
@@ -138,7 +138,7 @@ class WalletController extends Controller
                 'last' => $paginator->url($paginator->lastPage()),
                 'prev' => $paginator->previousPageUrl(),
                 'next' => $paginator->nextPageUrl(),
-            ]
+            ],
         ]);
     }
 
@@ -155,7 +155,7 @@ class WalletController extends Controller
             required: true,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'amount', type: 'number', format: 'float', minimum: 5.00, maximum: 5000.00, example: 50.00)
+                    new OA\Property(property: 'amount', type: 'number', format: 'float', minimum: 5.00, maximum: 5000.00, example: 50.00),
                 ]
             )
         ),
@@ -170,12 +170,12 @@ class WalletController extends Controller
                         new OA\Property(property: 'payment_intent', type: 'string', example: 'pi_3MtwJD2eZvKYlo2C0DGk4'),
                         new OA\Property(property: 'amount', type: 'number', format: 'float', example: 50.00),
                         new OA\Property(property: 'currency', type: 'string', example: 'USD'),
-                        new OA\Property(property: 'wallet_topup', ref: '#/components/schemas/WalletTopup')
+                        new OA\Property(property: 'wallet_topup', ref: '#/components/schemas/WalletTopup'),
                     ]
                 )
             ),
             new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function topUp(Request $request): JsonResponse
@@ -196,7 +196,7 @@ class WalletController extends Controller
 
             return response()->json([
                 'success' => true,
-                'client_secret' => $topup->stripe_payment_intent . '_secret_' . rand(1000, 9999), // Mock client secret structure
+                'client_secret' => $topup->stripe_payment_intent.'_secret_'.rand(1000, 9999), // Mock client secret structure
                 'payment_intent' => $topup->stripe_payment_intent,
                 'amount' => $amount,
                 'currency' => $wallet->currency,
@@ -205,7 +205,7 @@ class WalletController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }
@@ -224,7 +224,7 @@ class WalletController extends Controller
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'amount', type: 'number', format: 'float', minimum: 10.00, example: 100.00),
-                    new OA\Property(property: 'bank_account_id', type: 'integer', nullable: true, example: 2)
+                    new OA\Property(property: 'bank_account_id', type: 'integer', nullable: true, example: 2),
                 ]
             )
         ),
@@ -236,12 +236,12 @@ class WalletController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Withdrawal request submitted successfully.'),
-                        new OA\Property(property: 'withdrawal', ref: '#/components/schemas/WithdrawalRequest')
+                        new OA\Property(property: 'withdrawal', ref: '#/components/schemas/WithdrawalRequest'),
                     ]
                 )
             ),
             new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function withdraw(Request $request): JsonResponse
@@ -269,7 +269,7 @@ class WalletController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }
@@ -286,7 +286,7 @@ class WalletController extends Controller
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1)),
             new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15)),
-            new OA\Parameter(name: 'sort', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest'], default: 'latest'))
+            new OA\Parameter(name: 'sort', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest'], default: 'latest')),
         ],
         responses: [
             new OA\Response(
@@ -303,7 +303,7 @@ class WalletController extends Controller
                                 new OA\Property(property: 'current_page', type: 'integer', example: 1),
                                 new OA\Property(property: 'per_page', type: 'integer', example: 15),
                                 new OA\Property(property: 'total', type: 'integer', example: 2),
-                                new OA\Property(property: 'last_page', type: 'integer', example: 1)
+                                new OA\Property(property: 'last_page', type: 'integer', example: 1),
                             ]
                         ),
                         new OA\Property(
@@ -313,13 +313,13 @@ class WalletController extends Controller
                                 new OA\Property(property: 'first', type: 'string'),
                                 new OA\Property(property: 'last', type: 'string'),
                                 new OA\Property(property: 'prev', type: 'string', nullable: true),
-                                new OA\Property(property: 'next', type: 'string', nullable: true)
+                                new OA\Property(property: 'next', type: 'string', nullable: true),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function withdrawals(Request $request): JsonResponse
@@ -353,7 +353,7 @@ class WalletController extends Controller
                 'last' => $paginator->url($paginator->lastPage()),
                 'prev' => $paginator->previousPageUrl(),
                 'next' => $paginator->nextPageUrl(),
-            ]
+            ],
         ]);
     }
 
@@ -373,7 +373,7 @@ class WalletController extends Controller
                 required: true,
                 description: 'The ID of the withdrawal request.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -382,12 +382,12 @@ class WalletController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'withdrawal', ref: '#/components/schemas/WithdrawalRequest')
+                        new OA\Property(property: 'withdrawal', ref: '#/components/schemas/WithdrawalRequest'),
                     ]
                 )
             ),
             new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function showWithdrawal(Request $request, $id): JsonResponse
@@ -400,7 +400,7 @@ class WalletController extends Controller
 
         $withdrawal = WithdrawalRequest::where('wallet_id', $wallet->id)->find($id);
 
-        if (!$withdrawal) {
+        if (! $withdrawal) {
             return response()->json([
                 'success' => false,
                 'message' => 'Withdrawal request not found.',
@@ -423,7 +423,7 @@ class WalletController extends Controller
         tags: ['Wallet'],
         responses: [
             new OA\Response(response: 200, description: 'Webhook consumed successfully.'),
-            new OA\Response(response: 400, description: 'Signature verification failed.')
+            new OA\Response(response: 400, description: 'Signature verification failed.'),
         ]
     )]
     public function stripeWebhook(Request $request): JsonResponse
@@ -443,15 +443,15 @@ class WalletController extends Controller
             $this->walletService->processWebhookEvent($eventArray);
 
             return response()->json(['success' => true]);
-        } catch (\Stripe\Exception\SignatureVerificationException $e) {
+        } catch (SignatureVerificationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid signature.'
+                'message' => 'Invalid signature.',
             ], 400);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 400);
         }
     }

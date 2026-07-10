@@ -35,14 +35,14 @@ class SendOtpController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'OTP sent successfully.'),
-                        new OA\Property(property: 'otp', type: 'string', example: '123456', description: 'Returned only in local/testing environments.')
+                        new OA\Property(property: 'otp', type: 'string', example: '123456', description: 'Returned only in local/testing environments.'),
                     ]
                 )
             ),
             new OA\Response(
                 response: 422,
                 ref: '#/components/responses/ValidationErrorResponse'
-            )
+            ),
         ]
     )]
     public function __invoke(SendOtpRequest $request): JsonResponse
@@ -57,7 +57,7 @@ class SendOtpController extends Controller
             ];
 
             // If local environment, return the generated OTP in response
-            if (!is_null($otp)) {
+            if (! is_null($otp)) {
                 $response['otp'] = $otp;
             }
 

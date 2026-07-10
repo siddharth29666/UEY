@@ -32,7 +32,7 @@ class AdminWalletController extends Controller
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', default: 1)),
             new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 15)),
-            new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string'))
+            new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string')),
         ],
         responses: [
             new OA\Response(
@@ -42,10 +42,10 @@ class AdminWalletController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'wallets', type: 'array', items: new OA\Items(ref: '#/components/schemas/WalletResource')),
-                        new OA\Property(property: 'meta', type: 'object')
+                        new OA\Property(property: 'meta', type: 'object'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse
@@ -56,7 +56,7 @@ class AdminWalletController extends Controller
             $search = $request->input('search');
             $query->whereHas('user', function ($qu) use ($search) {
                 $qu->where('name', 'like', "%{$search}%")
-                   ->orWhere('phone', 'like', "%{$search}%");
+                    ->orWhere('phone', 'like', "%{$search}%");
             });
         }
 
@@ -85,7 +85,7 @@ class AdminWalletController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Wallet Administration'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -93,7 +93,7 @@ class AdminWalletController extends Controller
                 description: 'Wallet details retrieved.',
                 content: new OA\JsonContent(ref: '#/components/schemas/WalletResource')
             ),
-            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse')
+            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
         ]
     )]
     public function show($id): JsonResponse
@@ -116,14 +116,14 @@ class AdminWalletController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Wallet Administration'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(ref: '#/components/schemas/CreditWalletRequest')
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Wallet credited successfully.')
+            new OA\Response(response: 200, description: 'Wallet credited successfully.'),
         ]
     )]
     public function credit(CreditWalletRequest $request, $id): JsonResponse
@@ -151,7 +151,7 @@ class AdminWalletController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Wallet Administration'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -159,7 +159,7 @@ class AdminWalletController extends Controller
         ),
         responses: [
             new OA\Response(response: 200, description: 'Wallet debited successfully.'),
-            new OA\Response(response: 422, description: 'Insufficient funds.')
+            new OA\Response(response: 422, description: 'Insufficient funds.'),
         ]
     )]
     public function debit(DebitWalletRequest $request, $id): JsonResponse
@@ -199,7 +199,7 @@ class AdminWalletController extends Controller
             new OA\Parameter(name: 'type', in: 'query', schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'date_from', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'date_to', in: 'query', schema: new OA\Schema(type: 'string', format: 'date'))
+            new OA\Parameter(name: 'date_to', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
         ],
         responses: [
             new OA\Response(
@@ -209,10 +209,10 @@ class AdminWalletController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'transactions', type: 'array', items: new OA\Items(ref: '#/components/schemas/WalletTransactionResource')),
-                        new OA\Property(property: 'meta', type: 'object')
+                        new OA\Property(property: 'meta', type: 'object'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function transactions(Request $request): JsonResponse
@@ -227,10 +227,10 @@ class AdminWalletController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('description', 'like', "%{$search}%")
-                  ->orWhere('reference', 'like', "%{$search}%")
-                  ->orWhereHas('wallet.user', function ($qu) use ($search) {
-                      $qu->where('name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('reference', 'like', "%{$search}%")
+                    ->orWhereHas('wallet.user', function ($qu) use ($search) {
+                        $qu->where('name', 'like', "%{$search}%");
+                    });
             });
         }
 

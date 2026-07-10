@@ -2,7 +2,9 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationType;
 use App\Enums\RideStatus;
+use App\Events\ReviewReceivedEvent;
 use App\Models\Ride;
 use App\Models\RideReview;
 use App\Models\User;
@@ -20,7 +22,7 @@ class ReviewService
         // 1. Validation: Ride must be completed
         if ($ride->status !== RideStatus::COMPLETED) {
             throw ValidationException::withMessages([
-                'ride' => ['Reviews are only allowed for completed rides.']
+                'ride' => ['Reviews are only allowed for completed rides.'],
             ]);
         }
 
@@ -33,7 +35,7 @@ class ReviewService
         $isRider = ($ride->rider_id === $reviewer->id);
         $isDriver = ($ride->driverProfile && $ride->driverProfile->user_id === $reviewer->id);
 
-        if (!$isRider && !$isDriver) {
+        if (! $isRider && ! $isDriver) {
             throw new AccessDeniedHttpException('You are not authorized to review this ride.');
         }
 
@@ -43,13 +45,13 @@ class ReviewService
             ->exists();
         if ($exists) {
             throw ValidationException::withMessages([
-                'review' => ['You have already reviewed this ride.']
+                'review' => ['You have already reviewed this ride.'],
             ]);
         }
 
         // 5. Determine Reviewee
-        $revieweeId = $isRider 
-            ? $ride->driverProfile->user_id 
+        $revieweeId = $isRider
+            ? $ride->driverProfile->user_id
             : $ride->rider_id;
 
         return DB::transaction(function () use ($ride, $reviewer, $revieweeId, $data) {
@@ -95,8 +97,8 @@ class ReviewService
         });
 
         // Notify Reviewee
-        $reviewee = \App\Models\User::findOrFail($revieweeId);
-        event(new \App\Events\ReviewReceivedEvent($reviewee, \App\Enums\NotificationType::REVIEW_RECEIVED, null, null, ['rating' => $review->rating, 'ride_id' => $ride->id]));
+        $reviewee = User::findOrFail($revieweeId);
+        event(new ReviewReceivedEvent($reviewee, NotificationType::REVIEW_RECEIVED, null, null, ['rating' => $review->rating, 'ride_id' => $ride->id]));
 
         return $review;
     }
@@ -110,7 +112,7 @@ class ReviewService
         $isRider = ($ride->rider_id === $user->id);
         $isDriver = ($ride->driverProfile && $ride->driverProfile->user_id === $user->id);
 
-        if (!$isRider && !$isDriver) {
+        if (! $isRider && ! $isDriver) {
             throw new AccessDeniedHttpException('You are not authorized to view reviews for this ride.');
         }
 

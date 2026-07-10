@@ -2,7 +2,16 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationType;
+use App\Enums\PaymentStatus;
 use App\Enums\RideStatus;
+use App\Events\DriverStatusChanged;
+use App\Events\PaymentFailedEvent;
+use App\Events\RideArrivedEvent;
+use App\Events\RideArrivingEvent;
+use App\Events\RideCompletedEvent;
+use App\Events\RideStartedEvent;
+use App\Models\Payment;
 use App\Models\Ride;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -17,18 +26,12 @@ class RideLifecycleService
 
     /**
      * Update the status of a ride through its execution lifecycle.
-     *
-     * @param Ride $ride
-     * @param string $status
-     * @param array $data
-     * @param User $driverUser
-     * @return Ride
      */
     public function updateStatus(Ride $ride, string $status, array $data, User $driverUser): Ride
     {
         // 1. Authorize that the driver user owns the driver profile assigned to the ride
         $driverProfile = $driverUser->driverProfile;
-        if (!$driverProfile || $ride->driver_profile_id !== $driverProfile->id) {
+        if (! $driverProfile || $ride->driver_profile_id !== $driverProfile->id) {
             throw new AccessDeniedHttpException('You are not authorized to update this ride.');
         }
 
@@ -46,7 +49,7 @@ class RideLifecycleService
             $valid = true;
         }
 
-        if (!$valid) {
+        if (! $valid) {
             throw ValidationException::withMessages([
                 'status' => ["Invalid transition from {$currentStatus->value} to {$status}."],
             ]);
@@ -61,13 +64,13 @@ class RideLifecycleService
                     $ride->update([
                         'status' => RideStatus::ARRIVING,
                     ]);
-                    event(new \App\Events\RideArrivingEvent($ride->rider, \App\Enums\NotificationType::DRIVER_ARRIVING, null, null, ['ride_id' => $ride->id]));
+                    event(new RideArrivingEvent($ride->rider, NotificationType::DRIVER_ARRIVING, null, null, ['ride_id' => $ride->id]));
                 } elseif ($status === 'arrived') {
                     $ride->update([
                         'status' => RideStatus::ARRIVED,
                         'arrived_at' => now(),
                     ]);
-                    event(new \App\Events\RideArrivedEvent($ride->rider, \App\Enums\NotificationType::DRIVER_ARRIVED, null, null, ['ride_id' => $ride->id]));
+                    event(new RideArrivedEvent($ride->rider, NotificationType::DRIVER_ARRIVED, null, null, ['ride_id' => $ride->id]));
                 } elseif ($status === 'in_progress') {
                     // Verify OTP
                     $otp = $data['otp'] ?? null;
@@ -83,7 +86,7 @@ class RideLifecycleService
                         'otp_verified_at' => now(),
                         'otp_verified_by' => $driverUser->id,
                     ]);
-                    event(new \App\Events\RideStartedEvent($ride->rider, \App\Enums\NotificationType::RIDE_STARTED, null, null, ['ride_id' => $ride->id]));
+                    event(new RideStartedEvent($ride->rider, NotificationType::RIDE_STARTED, null, null, ['ride_id' => $ride->id]));
                 } elseif ($status === 'completed') {
                     $distance = (float) $data['actual_distance'];
                     $duration = (int) $data['actual_duration'];
@@ -97,7 +100,7 @@ class RideLifecycleService
                     $distanceFare = $perKmRate * $distance;
                     $durationFare = $perMinuteRate * $duration;
                     $calculatedFare = $baseFare + $distanceFare + $durationFare;
-                    
+
                     $appliedMinimumFare = false;
                     $finalFare = $calculatedFare;
                     if ($finalFare < $minimumFare) {
@@ -139,7 +142,10 @@ class RideLifecycleService
                         (float) $ride->destination_latitude,
                         (float) $ride->destination_longitude
                     );
-                    event(new \App\Events\RideCompletedEvent($ride->rider, \App\Enums\NotificationType::RIDE_COMPLETED, null, null, ['ride_id' => $ride->id]));
+                    event(new RideCompletedEvent($ride->rider, NotificationType::RIDE_COMPLETED, null, null, ['ride_id' => $ride->id]));
+
+                    // Dispatch status change
+                    event(new DriverStatusChanged($driverUser, 'available'));
                 }
 
                 return $ride;
@@ -166,13 +172,13 @@ class RideLifecycleService
                 $commission = round($subtotal * ($commissionRate / 100), 2);
                 $driverEarning = round($subtotal - $commission, 2);
 
-                \App\Models\Payment::updateOrCreate(
+                Payment::updateOrCreate(
                     ['ride_id' => $ride->id],
                     [
                         'rider_id' => $ride->rider_id,
                         'driver_profile_id' => $ride->driver_profile_id,
                         'payment_method' => $ride->payment_method,
-                        'payment_status' => \App\Enums\PaymentStatus::FAILED,
+                        'payment_status' => PaymentStatus::FAILED,
                         'subtotal' => $subtotal,
                         'tax' => 0.00,
                         'discount' => 0.00,
@@ -186,7 +192,7 @@ class RideLifecycleService
                     'payment_status' => 'failed',
                 ]);
 
-                event(new \App\Events\PaymentFailedEvent($ride->rider, \App\Enums\NotificationType::PAYMENT_FAILED, null, null, ['amount' => $subtotal, 'ride_id' => $ride->id]));
+                event(new PaymentFailedEvent($ride->rider, NotificationType::PAYMENT_FAILED, null, null, ['amount' => $subtotal, 'ride_id' => $ride->id]));
             }
             throw $e;
         }

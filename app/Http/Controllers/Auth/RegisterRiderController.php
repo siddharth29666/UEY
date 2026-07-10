@@ -8,6 +8,7 @@ use App\Http\Requests\RegisterRiderRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 class RegisterRiderController extends Controller
@@ -54,20 +55,20 @@ class RegisterRiderController extends Controller
                                     properties: [
                                         new OA\Property(property: 'email', type: 'boolean', example: true),
                                         new OA\Property(property: 'sms', type: 'boolean', example: true),
-                                        new OA\Property(property: 'push', type: 'boolean', example: true)
+                                        new OA\Property(property: 'push', type: 'boolean', example: true),
                                     ]
                                 ),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
             new OA\Response(
                 response: 422,
                 ref: '#/components/responses/ValidationErrorResponse'
-            )
+            ),
         ]
     )]
     public function __invoke(RegisterRiderRequest $request): JsonResponse
@@ -85,7 +86,7 @@ class RegisterRiderController extends Controller
                 'token' => $token,
                 'user' => new UserResource($user),
             ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

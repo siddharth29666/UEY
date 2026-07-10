@@ -13,11 +13,12 @@ use App\Models\DriverProfile;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\Wallet;
+use App\Notifications\PasswordResetNotification;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
-use App\Notifications\PasswordResetNotification;
-use App\Services\DriverLocationService;
 
 class AuthService
 {
@@ -28,14 +29,12 @@ class AuthService
     /**
      * Register a new Rider.
      *
-     * @param RegisterRiderDTO $dto
-     * @return User
      * @throws ValidationException
      */
     public function registerRider(RegisterRiderDTO $dto): User
     {
         // 1. Guard check: Verify OTP was successfully verified for this phone
-        if (!$this->otpService->isVerified($dto->phone, OtpType::REGISTER)) {
+        if (! $this->otpService->isVerified($dto->phone, OtpType::REGISTER)) {
             throw ValidationException::withMessages([
                 'phone' => ['Phone number has not been verified via OTP.'],
             ]);
@@ -65,14 +64,12 @@ class AuthService
     /**
      * Register a new Driver.
      *
-     * @param RegisterDriverDTO $dto
-     * @return User
      * @throws ValidationException
      */
     public function registerDriver(RegisterDriverDTO $dto): User
     {
         // 1. Guard check: Verify OTP was successfully verified for this phone
-        if (!$this->otpService->isVerified($dto->phone, OtpType::REGISTER)) {
+        if (! $this->otpService->isVerified($dto->phone, OtpType::REGISTER)) {
             throw ValidationException::withMessages([
                 'phone' => ['Phone number has not been verified via OTP.'],
             ]);
@@ -123,15 +120,15 @@ class AuthService
     /**
      * Authenticate a user and generate standard Sanctum tokens.
      *
-     * @param LoginDTO $dto
      * @return array Contains 'user', 'token', and 'abilities'
+     *
      * @throws ValidationException
      */
     public function login(LoginDTO $dto): array
     {
         $user = User::with('driverProfile')->where('phone', $dto->phone)->first();
 
-        if (!$user || !Hash::check($dto->password, $user->password)) {
+        if (! $user || ! Hash::check($dto->password, $user->password)) {
             throw ValidationException::withMessages([
                 'phone' => ['Invalid phone number or password.'],
             ]);
@@ -144,7 +141,7 @@ class AuthService
         }
 
         // Generate Sanctum token with role-specific ability
-        $ability = 'role:' . $user->role->value;
+        $ability = 'role:'.$user->role->value;
         $token = $user->createToken('uey-auth-token', [$ability])->plainTextToken;
 
         return [
@@ -156,10 +153,6 @@ class AuthService
 
     /**
      * Update user profile settings.
-     *
-     * @param User $user
-     * @param array $data
-     * @return User
      */
     public function updateProfile(User $user, array $data): User
     {
@@ -187,14 +180,14 @@ class AuthService
     /**
      * Send password reset OTP via email.
      *
-     * @param string $email
      * @return string Returns generated OTP
+     *
      * @throws ValidationException
      */
     public function sendPasswordResetOtp(string $email): string
     {
         $user = User::where('email', $email)->first();
-        if (!$user) {
+        if (! $user) {
             throw ValidationException::withMessages([
                 'email' => ['User with this email does not exist.'],
             ]);
@@ -221,30 +214,26 @@ class AuthService
     /**
      * Verify OTP and reset password.
      *
-     * @param string $email
-     * @param string $otp
-     * @param string $password
-     * @return void
      * @throws ValidationException
      */
     public function resetPassword(string $email, string $otp, string $password): void
     {
         $user = User::where('email', $email)->first();
-        if (!$user) {
+        if (! $user) {
             throw ValidationException::withMessages([
                 'email' => ['User with this email does not exist.'],
             ]);
         }
 
         $record = DB::table('password_reset_tokens')->where('email', $email)->first();
-        if (!$record) {
+        if (! $record) {
             throw ValidationException::withMessages([
                 'otp' => ['No active password reset request found for this email.'],
             ]);
         }
 
         // Check expiry (10 minutes)
-        if (\Carbon\Carbon::parse($record->created_at)->addMinutes(10)->isPast()) {
+        if (Carbon::parse($record->created_at)->addMinutes(10)->isPast()) {
             DB::table('password_reset_tokens')->where('email', $email)->delete();
             throw ValidationException::withMessages([
                 'otp' => ['Password reset OTP has expired.'],
@@ -252,7 +241,7 @@ class AuthService
         }
 
         // Verify OTP code
-        if (!Hash::check($otp, $record->token)) {
+        if (! Hash::check($otp, $record->token)) {
             throw ValidationException::withMessages([
                 'otp' => ['The provided OTP is invalid.'],
             ]);
@@ -273,15 +262,12 @@ class AuthService
     /**
      * Permanently/soft delete user account.
      *
-     * @param User $user
-     * @param string $password
-     * @return void
      * @throws ValidationException
      */
     public function deleteAccount(User $user, string $password): void
     {
         // Require password confirmation before deletion
-        if (!Hash::check($password, $user->password)) {
+        if (! Hash::check($password, $user->password)) {
             throw ValidationException::withMessages([
                 'password' => ['Invalid password.'],
             ]);
@@ -306,7 +292,7 @@ class AuthService
         }
 
         // Delete saved addresses
-        if (\Illuminate\Support\Facades\Schema::hasTable('saved_addresses')) {
+        if (Schema::hasTable('saved_addresses')) {
             $user->savedAddresses()->delete();
         }
 

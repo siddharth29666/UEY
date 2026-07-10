@@ -7,11 +7,11 @@ use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Models\OtpVerification;
 use App\Models\User;
-use App\Models\VehicleType;
-use App\Models\DriverProfile;
 use App\Models\Vehicle;
+use App\Models\VehicleType;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -311,7 +311,7 @@ class AuthFlowTest extends TestCase
         $token = $user->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/logout');
 
         $response->assertStatus(200)
@@ -339,7 +339,7 @@ class AuthFlowTest extends TestCase
         $token = $user->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/token/refresh');
 
         $response->assertStatus(200)
@@ -368,7 +368,7 @@ class AuthFlowTest extends TestCase
         $token = $user->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson('/api/v1/profile');
 
         $response->assertStatus(200)
@@ -394,7 +394,7 @@ class AuthFlowTest extends TestCase
         $token = $user->createToken('test-token', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->putJson('/api/v1/profile', [
             'name' => 'John Updated',
             'email' => 'john.updated@example.com',
@@ -441,17 +441,17 @@ class AuthFlowTest extends TestCase
 
         // 1. Driver tries to access rider dashboard (should be forbidden: 403)
         $response1 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $driverToken,
+            'Authorization' => 'Bearer '.$driverToken,
         ])->getJson('/api/v1/rider/dashboard');
 
         $response1->assertStatus(403);
 
         // Reset auth state for the next request
-        \Illuminate\Support\Facades\Auth::forgetGuards();
+        Auth::forgetGuards();
 
         // 2. Rider accesses rider dashboard (should succeed: 200)
         $response2 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $riderToken,
+            'Authorization' => 'Bearer '.$riderToken,
         ])->getJson('/api/v1/rider/dashboard');
 
         $response2->assertStatus(200);

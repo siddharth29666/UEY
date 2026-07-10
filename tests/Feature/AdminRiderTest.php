@@ -14,6 +14,7 @@ class AdminRiderTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $rider;
 
     protected function setUp(): void

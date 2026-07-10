@@ -11,9 +11,9 @@ use App\Models\Ride;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 use Tests\TestCase;
 
 class RideLifecycleTest extends TestCase
@@ -21,6 +21,7 @@ class RideLifecycleTest extends TestCase
     use RefreshDatabase;
 
     protected User $rider;
+
     protected VehicleType $standardVehicleType;
 
     protected function setUp(): void
@@ -65,7 +66,7 @@ class RideLifecycleTest extends TestCase
 
         $profile = DriverProfile::create([
             'user_id' => $user->id,
-            'license_number' => 'DL-' . rand(100000, 999999),
+            'license_number' => 'DL-'.rand(100000, 999999),
             'license_expiry' => Carbon::now()->addYears(2),
             'is_online' => $online,
             'rating' => 4.9,
@@ -82,7 +83,7 @@ class RideLifecycleTest extends TestCase
             'model' => 'Prius',
             'year' => 2021,
             'color' => 'White',
-            'plate_number' => 'PL-' . rand(1000, 9999),
+            'plate_number' => 'PL-'.rand(1000, 9999),
             'status' => VehicleStatus::APPROVED,
         ]);
 
@@ -115,7 +116,7 @@ class RideLifecycleTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/driver/rides/{$ride->id}/arriving");
 
         $response->assertStatus(200)
@@ -153,7 +154,7 @@ class RideLifecycleTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/driver/rides/{$ride->id}/arrived");
 
         $response->assertStatus(200)
@@ -193,7 +194,7 @@ class RideLifecycleTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/driver/rides/{$ride->id}/start", [
             'otp' => '654321', // Wrong OTP
         ]);
@@ -230,7 +231,7 @@ class RideLifecycleTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/driver/rides/{$ride->id}/start", [
             'otp' => '123456',
         ]);
@@ -277,7 +278,7 @@ class RideLifecycleTest extends TestCase
         // standard rates: base_fare=5.00, per_km_rate=1.50, per_minute_rate=0.50
         // expected: 5.00 + (1.50 * 3.5) + (0.50 * 10) = 5.00 + 5.25 + 5.00 = 15.25
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/driver/rides/{$ride->id}/complete", [
             'actual_distance' => 3.5,
             'actual_duration' => 10,
@@ -340,7 +341,7 @@ class RideLifecycleTest extends TestCase
         // expected calculated: 5.00 + (1.50 * 0.5) + (0.50 * 2) = 5.00 + 0.75 + 1.00 = 6.75
         // expected final (capped): 7.00
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/driver/rides/{$ride->id}/complete", [
             'actual_distance' => 0.5,
             'actual_duration' => 2,
@@ -380,7 +381,7 @@ class RideLifecycleTest extends TestCase
 
         // Attempting to skip arriving/arrived and start ride directly
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson("/api/v1/driver/rides/{$ride->id}/start", [
             'otp' => '123456',
         ]);
@@ -417,7 +418,7 @@ class RideLifecycleTest extends TestCase
 
         // driver2 attempts to update the ride status
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token2,
+            'Authorization' => 'Bearer '.$token2,
         ])->postJson("/api/v1/driver/rides/{$ride->id}/arriving");
 
         $response->assertStatus(403);

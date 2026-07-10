@@ -31,7 +31,7 @@ class AdminWithdrawalController extends Controller
             new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', default: 1)),
             new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 15)),
             new OA\Parameter(name: 'status', in: 'query', schema: new OA\Schema(type: 'string', enum: ['pending', 'completed', 'rejected'])),
-            new OA\Parameter(name: 'sort', in: 'query', schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest']))
+            new OA\Parameter(name: 'sort', in: 'query', schema: new OA\Schema(type: 'string', enum: ['latest', 'oldest'])),
         ],
         responses: [
             new OA\Response(
@@ -41,10 +41,10 @@ class AdminWithdrawalController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'withdrawals', type: 'array', items: new OA\Items(ref: '#/components/schemas/WithdrawalRequest')),
-                        new OA\Property(property: 'meta', type: 'object')
+                        new OA\Property(property: 'meta', type: 'object'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse
@@ -84,7 +84,7 @@ class AdminWithdrawalController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Withdrawal Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -92,7 +92,7 @@ class AdminWithdrawalController extends Controller
                 description: 'Withdrawal details retrieved.',
                 content: new OA\JsonContent(ref: '#/components/schemas/WithdrawalRequest')
             ),
-            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse')
+            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
         ]
     )]
     public function show($id): JsonResponse
@@ -115,19 +115,19 @@ class AdminWithdrawalController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Withdrawal Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: false,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'admin_note', type: 'string', example: 'Transfer approved.')
+                    new OA\Property(property: 'admin_note', type: 'string', example: 'Transfer approved.'),
                 ]
             )
         ),
         responses: [
             new OA\Response(response: 200, description: 'Withdrawal approved successfully.'),
-            new OA\Response(response: 422, description: 'Withdrawal request is not pending.')
+            new OA\Response(response: 422, description: 'Withdrawal request is not pending.'),
         ]
     )]
     public function approve(Request $request, $id): JsonResponse
@@ -171,19 +171,19 @@ class AdminWithdrawalController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Withdrawal Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'admin_note', type: 'string', example: 'Invalid bank account routing details.')
+                    new OA\Property(property: 'admin_note', type: 'string', example: 'Invalid bank account routing details.'),
                 ]
             )
         ),
         responses: [
             new OA\Response(response: 200, description: 'Withdrawal rejected successfully.'),
-            new OA\Response(response: 422, description: 'Withdrawal request is not pending.')
+            new OA\Response(response: 422, description: 'Withdrawal request is not pending.'),
         ]
     )]
     public function reject(Request $request, $id): JsonResponse

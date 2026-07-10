@@ -4,8 +4,8 @@ namespace App\DTOs;
 
 use App\Enums\DriverDocumentType;
 use App\Http\Requests\UploadDocumentRequest;
-use Illuminate\Http\UploadedFile;
 use Carbon\Carbon;
+use Illuminate\Http\UploadedFile;
 
 class UploadDocumentDTO
 {

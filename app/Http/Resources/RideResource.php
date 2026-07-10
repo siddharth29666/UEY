@@ -43,7 +43,7 @@ class RideResource extends JsonResource
             'fare_breakdown' => $this->fare_breakdown,
             'created_at' => $this->created_at ? $this->created_at->toIso8601String() : null,
             'updated_at' => $this->updated_at ? $this->updated_at->toIso8601String() : null,
-            
+
             // Nested relations if loaded
             'rider' => new UserResource($this->whenLoaded('rider')),
             'driver_profile' => new DriverProfileResource($this->whenLoaded('driverProfile')),

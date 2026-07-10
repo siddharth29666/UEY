@@ -20,7 +20,7 @@ class RideRequestResource extends JsonResource
             'expires_at' => $this->expires_at ? $this->expires_at->toIso8601String() : null,
             'created_at' => $this->created_at ? $this->created_at->toIso8601String() : null,
             'updated_at' => $this->updated_at ? $this->updated_at->toIso8601String() : null,
-            
+
             // Nested relations if loaded
             'ride' => new RideResource($this->whenLoaded('ride')),
             'driver_profile' => new DriverProfileResource($this->whenLoaded('driverProfile')),

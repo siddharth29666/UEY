@@ -13,8 +13,11 @@ class SendAdminNotification implements ShouldQueue
     use InteractsWithQueue;
 
     public string $queue = 'notifications';
+
     public int $tries = 3;
+
     public int $timeout = 120;
+
     public array $backoff = [60, 120, 300];
 
     public function __construct(
@@ -35,7 +38,7 @@ class SendAdminNotification implements ShouldQueue
                 $event->data
             );
         } catch (\Exception $e) {
-            Log::error("SendAdminNotification failed: " . $e->getMessage());
+            Log::error('SendAdminNotification failed: '.$e->getMessage());
             throw $e;
         }
     }

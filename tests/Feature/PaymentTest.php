@@ -15,11 +15,10 @@ use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Models\Wallet;
-use App\Models\WalletTransaction;
 use App\Services\PaymentService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 use Tests\TestCase;
 
 class PaymentTest extends TestCase
@@ -27,6 +26,7 @@ class PaymentTest extends TestCase
     use RefreshDatabase;
 
     protected User $rider;
+
     protected VehicleType $standardVehicleType;
 
     protected function setUp(): void
@@ -71,7 +71,7 @@ class PaymentTest extends TestCase
 
         $profile = DriverProfile::create([
             'user_id' => $user->id,
-            'license_number' => 'DL-' . rand(100000, 999999),
+            'license_number' => 'DL-'.rand(100000, 999999),
             'license_expiry' => Carbon::now()->addYears(2),
             'is_online' => true,
             'rating' => 4.9,
@@ -88,7 +88,7 @@ class PaymentTest extends TestCase
             'model' => 'Prius',
             'year' => 2021,
             'color' => 'White',
-            'plate_number' => 'PL-' . rand(1000, 9999),
+            'plate_number' => 'PL-'.rand(1000, 9999),
             'status' => VehicleStatus::APPROVED,
         ]);
 
@@ -125,7 +125,7 @@ class PaymentTest extends TestCase
         $token = $driver['user']->createToken('test', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/driver/rides/{$ride->id}/complete", [
             'actual_distance' => 5.0,
             'actual_duration' => 15,
@@ -140,7 +140,7 @@ class PaymentTest extends TestCase
                 'id',
                 'payment_method',
                 'payment_status',
-            ]
+            ],
         ]);
 
         // Verification Calculations
@@ -185,7 +185,7 @@ class PaymentTest extends TestCase
         $token = $driver['user']->createToken('test', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/driver/rides/{$ride->id}/complete", [
             'actual_distance' => 5.0,
             'actual_duration' => 15,
@@ -231,7 +231,7 @@ class PaymentTest extends TestCase
         $token = $driver['user']->createToken('test', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/driver/rides/{$ride->id}/complete", [
             'actual_distance' => 5.0,
             'actual_duration' => 15,
@@ -260,8 +260,6 @@ class PaymentTest extends TestCase
             'payment_status' => 'failed',
         ]);
     }
-
-
 
     public function test_view_payment_details()
     {
@@ -295,7 +293,7 @@ class PaymentTest extends TestCase
         // 1. Rider Access
         $riderToken = $this->rider->createToken('test', ['role:rider'])->plainTextToken;
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$riderToken}"
+            'Authorization' => "Bearer {$riderToken}",
         ])->getJson("/api/v1/payments/{$ride->id}");
 
         $response->assertStatus(200);
@@ -308,13 +306,13 @@ class PaymentTest extends TestCase
                 'payment_status',
                 'total',
                 'transaction_reference',
-            ]
+            ],
         ]);
 
         // 2. Driver Access
         $driverToken = $driver['user']->createToken('test', ['role:driver'])->plainTextToken;
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$driverToken}"
+            'Authorization' => "Bearer {$driverToken}",
         ])->getJson("/api/v1/payments/{$ride->id}");
 
         $response->assertStatus(200);
@@ -360,7 +358,7 @@ class PaymentTest extends TestCase
         $maliciousToken = $maliciousUser->createToken('test', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$maliciousToken}"
+            'Authorization' => "Bearer {$maliciousToken}",
         ])->getJson("/api/v1/payments/{$ride->id}");
 
         $response->assertStatus(403);
@@ -401,7 +399,7 @@ class PaymentTest extends TestCase
 
         $riderToken = $this->rider->createToken('test', ['role:rider'])->plainTextToken;
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$riderToken}"
+            'Authorization' => "Bearer {$riderToken}",
         ])->getJson("/api/v1/payments/invoice/{$ride->id}");
 
         $response->assertStatus(200);
@@ -428,7 +426,7 @@ class PaymentTest extends TestCase
                     'total',
                 ],
                 'paid_at',
-            ]
+            ],
         ]);
     }
 
@@ -465,8 +463,8 @@ class PaymentTest extends TestCase
 
         // 1. Basic check and Pagination Metadata
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$riderToken}"
-        ])->getJson("/api/v1/payments/history?per_page=1");
+            'Authorization' => "Bearer {$riderToken}",
+        ])->getJson('/api/v1/payments/history?per_page=1');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -477,7 +475,7 @@ class PaymentTest extends TestCase
                 'per_page',
                 'total',
                 'last_page',
-            ]
+            ],
         ]);
         $response->assertJsonFragment([
             'current_page' => 1,
@@ -488,24 +486,24 @@ class PaymentTest extends TestCase
 
         // 2. Query Filters: status
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$riderToken}"
-        ])->getJson("/api/v1/payments/history?status=paid");
+            'Authorization' => "Bearer {$riderToken}",
+        ])->getJson('/api/v1/payments/history?status=paid');
         $response->assertJsonCount(1, 'payments');
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$riderToken}"
-        ])->getJson("/api/v1/payments/history?status=failed");
+            'Authorization' => "Bearer {$riderToken}",
+        ])->getJson('/api/v1/payments/history?status=failed');
         $response->assertJsonCount(0, 'payments');
 
         // 3. Query Filters: payment_method
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$riderToken}"
-        ])->getJson("/api/v1/payments/history?payment_method=cash");
+            'Authorization' => "Bearer {$riderToken}",
+        ])->getJson('/api/v1/payments/history?payment_method=cash');
         $response->assertJsonCount(1, 'payments');
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$riderToken}"
-        ])->getJson("/api/v1/payments/history?payment_method=wallet");
+            'Authorization' => "Bearer {$riderToken}",
+        ])->getJson('/api/v1/payments/history?payment_method=wallet');
         $response->assertJsonCount(0, 'payments');
 
         // 4. Query Filters: from & to
@@ -514,12 +512,12 @@ class PaymentTest extends TestCase
         $tomorrow = Carbon::now()->addDay()->format('Y-m-d');
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$riderToken}"
+            'Authorization' => "Bearer {$riderToken}",
         ])->getJson("/api/v1/payments/history?from={$yesterday}&to={$tomorrow}");
         $response->assertJsonCount(1, 'payments');
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$riderToken}"
+            'Authorization' => "Bearer {$riderToken}",
         ])->getJson("/api/v1/payments/history?from={$tomorrow}");
         $response->assertJsonCount(0, 'payments');
     }
@@ -533,7 +531,7 @@ class PaymentTest extends TestCase
 
         // First completion (completes + processes payment)
         $this->withHeaders([
-            'Authorization' => "Bearer {$driverToken}"
+            'Authorization' => "Bearer {$driverToken}",
         ])->postJson("/api/v1/driver/rides/{$ride->id}/complete", [
             'actual_distance' => 5.0,
             'actual_duration' => 15,

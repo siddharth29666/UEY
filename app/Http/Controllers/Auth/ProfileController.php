@@ -3,12 +3,13 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Requests\DeleteAccountRequest;
+use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 class ProfileController extends Controller
@@ -50,26 +51,26 @@ class ProfileController extends Controller
                                     properties: [
                                         new OA\Property(property: 'email', type: 'boolean', example: true),
                                         new OA\Property(property: 'sms', type: 'boolean', example: true),
-                                        new OA\Property(property: 'push', type: 'boolean', example: true)
+                                        new OA\Property(property: 'push', type: 'boolean', example: true),
                                     ]
                                 ),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
             new OA\Response(
                 response: 401,
                 ref: '#/components/responses/UnauthorizedResponse'
-            )
+            ),
         ]
     )]
     public function show(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         if ($user->isDriver()) {
             $user->load('driverProfile.vehicles');
         }
@@ -118,13 +119,13 @@ class ProfileController extends Controller
                                     properties: [
                                         new OA\Property(property: 'email', type: 'boolean', example: true),
                                         new OA\Property(property: 'sms', type: 'boolean', example: false),
-                                        new OA\Property(property: 'push', type: 'boolean', example: true)
+                                        new OA\Property(property: 'push', type: 'boolean', example: true),
                                     ]
                                 ),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
@@ -135,7 +136,7 @@ class ProfileController extends Controller
             new OA\Response(
                 response: 422,
                 ref: '#/components/responses/ValidationErrorResponse'
-            )
+            ),
         ]
     )]
     public function update(UpdateProfileRequest $request): JsonResponse
@@ -164,7 +165,7 @@ class ProfileController extends Controller
             content: new OA\JsonContent(
                 required: ['password'],
                 properties: [
-                    new OA\Property(property: 'password', type: 'string', example: 'CurrentPassword123!', description: 'The user\'s current password for confirmation.')
+                    new OA\Property(property: 'password', type: 'string', example: 'CurrentPassword123!', description: 'The user\'s current password for confirmation.'),
                 ]
             )
         ),
@@ -175,7 +176,7 @@ class ProfileController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Account deleted successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Account deleted successfully.'),
                     ]
                 )
             ),
@@ -185,14 +186,14 @@ class ProfileController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Invalid password.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Invalid password.'),
                     ]
                 )
             ),
             new OA\Response(
                 response: 401,
                 ref: '#/components/responses/UnauthorizedResponse'
-            )
+            ),
         ]
     )]
     public function deleteAccount(DeleteAccountRequest $request): JsonResponse
@@ -206,7 +207,7 @@ class ProfileController extends Controller
                 'success' => true,
                 'message' => 'Account deleted successfully.',
             ]);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid password.',

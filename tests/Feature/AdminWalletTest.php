@@ -15,7 +15,9 @@ class AdminWalletTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $rider;
+
     protected Wallet $wallet;
 
     protected function setUp(): void

@@ -2,12 +2,12 @@
 
 namespace Tests\Feature;
 
+use App\Enums\PaymentMethod;
 use App\Enums\RideStatus;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use App\Enums\VehicleStatus;
 use App\Enums\WalletTransactionType;
-use App\Enums\WalletTransactionStatus;
 use App\Enums\WithdrawalStatus;
 use App\Models\DriverProfile;
 use App\Models\Ride;
@@ -16,12 +16,14 @@ use App\Models\Vehicle;
 use App\Models\VehicleType;
 use App\Models\Wallet;
 use App\Models\WalletTopup;
-use App\Models\WalletTransaction;
 use App\Models\WithdrawalRequest;
+use App\Services\PaymentService;
 use App\Services\StripeService;
 use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Stripe\Exception\SignatureVerificationException;
+use Stripe\PaymentIntent;
 use Tests\TestCase;
 
 class WalletTest extends TestCase
@@ -29,7 +31,9 @@ class WalletTest extends TestCase
     use RefreshDatabase;
 
     protected User $rider;
+
     protected Wallet $riderWallet;
+
     protected VehicleType $standardVehicleType;
 
     protected function setUp(): void
@@ -78,7 +82,7 @@ class WalletTest extends TestCase
 
         $profile = DriverProfile::create([
             'user_id' => $user->id,
-            'license_number' => 'DL-' . rand(100000, 999999),
+            'license_number' => 'DL-'.rand(100000, 999999),
             'license_expiry' => now()->addYears(2),
             'is_online' => true,
             'rating' => 5.00,
@@ -93,7 +97,7 @@ class WalletTest extends TestCase
             'model' => 'Prius',
             'year' => 2021,
             'color' => 'White',
-            'plate_number' => 'PL-' . rand(1000, 9999),
+            'plate_number' => 'PL-'.rand(1000, 9999),
             'status' => VehicleStatus::APPROVED,
         ]);
 
@@ -112,7 +116,7 @@ class WalletTest extends TestCase
         $token = $this->rider->createToken('test', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->getJson('/api/v1/wallet');
 
         $response->assertStatus(200);
@@ -122,7 +126,7 @@ class WalletTest extends TestCase
                 'balance' => 0.00,
                 'currency' => 'USD',
                 'last_transaction' => null,
-            ]
+            ],
         ]);
     }
 
@@ -132,14 +136,14 @@ class WalletTest extends TestCase
 
         // Mock Stripe
         $stripeMock = $this->mock(StripeService::class);
-        $intentFake = \Stripe\PaymentIntent::constructFrom(['id' => 'pi_test_123']);
+        $intentFake = PaymentIntent::constructFrom(['id' => 'pi_test_123']);
         $stripeMock->shouldReceive('createPaymentIntent')
             ->once()
             ->with(50.00, 'USD', \Mockery::any())
             ->andReturn($intentFake);
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson('/api/v1/wallet/top-up', [
             'amount' => 50.00,
         ]);
@@ -154,7 +158,7 @@ class WalletTest extends TestCase
                 'amount' => 50.00,
                 'stripe_payment_intent' => 'pi_test_123',
                 'payment_status' => 'pending',
-            ]
+            ],
         ]);
 
         $this->assertDatabaseHas('wallet_topups', [
@@ -183,8 +187,8 @@ class WalletTest extends TestCase
                     'id' => 'pi_webhook_success',
                     'amount' => 10000,
                     'currency' => 'usd',
-                ]
-            ]
+                ],
+            ],
         ];
 
         $response = $this->postJson('/api/v1/stripe/webhook', $payload);
@@ -225,8 +229,8 @@ class WalletTest extends TestCase
             'data' => [
                 'object' => [
                     'id' => 'pi_webhook_failed',
-                ]
-            ]
+                ],
+            ],
         ];
 
         $response = $this->postJson('/api/v1/stripe/webhook', $payload);
@@ -255,8 +259,8 @@ class WalletTest extends TestCase
             'data' => [
                 'object' => [
                     'id' => 'pi_webhook_dup',
-                ]
-            ]
+                ],
+            ],
         ];
 
         // First call
@@ -275,16 +279,16 @@ class WalletTest extends TestCase
         // When Stripe-Signature header is present, it must trigger verifyWebhook which throws SignatureVerificationException
         $stripeMock = $this->mock(StripeService::class);
         $stripeMock->shouldReceive('verifyWebhook')
-            ->andThrow(\Stripe\Exception\SignatureVerificationException::factory('Invalid signature', 'sig_header'));
+            ->andThrow(SignatureVerificationException::factory('Invalid signature', 'sig_header'));
 
         $response = $this->withHeaders([
-            'Stripe-Signature' => 'invalid_sig'
+            'Stripe-Signature' => 'invalid_sig',
         ])->postJson('/api/v1/stripe/webhook', []);
 
         $response->assertStatus(400);
         $response->assertJson([
             'success' => false,
-            'message' => 'Invalid signature.'
+            'message' => 'Invalid signature.',
         ]);
     }
 
@@ -297,7 +301,7 @@ class WalletTest extends TestCase
 
         // 1. Valid request
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson('/api/v1/wallet/withdraw', [
             'amount' => 50.00,
             'bank_account_id' => 1,
@@ -311,7 +315,7 @@ class WalletTest extends TestCase
                 'amount' => 50.00,
                 'status' => 'pending',
                 'bank_account_id' => 1,
-            ]
+            ],
         ]);
 
         $this->assertDatabaseHas('withdrawal_requests', [
@@ -322,14 +326,14 @@ class WalletTest extends TestCase
 
         // 2. Insufficient balance withdrawal check
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson('/api/v1/wallet/withdraw', [
             'amount' => 300.00,
         ]);
 
         $response->assertStatus(422);
         $response->assertJsonFragment([
-            'message' => 'Withdrawal amount exceeds wallet balance.'
+            'message' => 'Withdrawal amount exceeds wallet balance.',
         ]);
     }
 
@@ -372,7 +376,7 @@ class WalletTest extends TestCase
 
         // Try to withdraw when balance is 0
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson('/api/v1/wallet/withdraw', [
             'amount' => 50.00,
         ]);
@@ -391,13 +395,13 @@ class WalletTest extends TestCase
                 $this->riderWallet,
                 10.00,
                 WalletTransactionType::ADMIN_CREDIT,
-                'ref_' . $i,
-                'Admin credit #' . $i
+                'ref_'.$i,
+                'Admin credit #'.$i
             );
         }
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->getJson('/api/v1/wallet/transactions?per_page=2&sort=latest');
 
         $response->assertStatus(200);
@@ -406,7 +410,7 @@ class WalletTest extends TestCase
             'success',
             'transactions',
             'meta' => ['current_page', 'per_page', 'total', 'last_page'],
-            'links' => ['first', 'last', 'prev', 'next']
+            'links' => ['first', 'last', 'prev', 'next'],
         ]);
 
         // Sorting: latest first (ID 3, then ID 2)
@@ -436,12 +440,12 @@ class WalletTest extends TestCase
             'estimated_distance' => 2.5,
             'estimated_duration' => 10,
             'estimated_fare' => 12.00,
-            'payment_method' => \App\Enums\PaymentMethod::WALLET,
+            'payment_method' => PaymentMethod::WALLET,
             'actual_fare' => 20.00,
             'completed_at' => now(),
         ]);
 
-        $paymentService = app(\App\Services\PaymentService::class);
+        $paymentService = app(PaymentService::class);
         $paymentService->processPaymentForRide($ride);
 
         // Rider debited

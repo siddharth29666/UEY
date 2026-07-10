@@ -30,7 +30,7 @@ class AdminReviewController extends Controller
             new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 15)),
             new OA\Parameter(name: 'rating', in: 'query', schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'type', in: 'query', schema: new OA\Schema(type: 'string', enum: ['rider', 'driver'])),
-            new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string'))
+            new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string')),
         ],
         responses: [
             new OA\Response(
@@ -40,10 +40,10 @@ class AdminReviewController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'reviews', type: 'array', items: new OA\Items(ref: '#/components/schemas/ReviewResource')),
-                        new OA\Property(property: 'meta', type: 'object')
+                        new OA\Property(property: 'meta', type: 'object'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse
@@ -93,7 +93,7 @@ class AdminReviewController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Review Moderation'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -101,7 +101,7 @@ class AdminReviewController extends Controller
                 description: 'Review details retrieved.',
                 content: new OA\JsonContent(ref: '#/components/schemas/ReviewResource')
             ),
-            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse')
+            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
         ]
     )]
     public function show($id): JsonResponse
@@ -124,10 +124,10 @@ class AdminReviewController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Review Moderation'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Review deleted successfully.')
+            new OA\Response(response: 200, description: 'Review deleted successfully.'),
         ]
     )]
     public function destroy(Request $request, $id): JsonResponse

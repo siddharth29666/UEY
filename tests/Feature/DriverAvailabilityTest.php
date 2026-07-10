@@ -18,6 +18,7 @@ class DriverAvailabilityTest extends TestCase
     use RefreshDatabase;
 
     protected User $driverUser;
+
     protected DriverProfile $driverProfile;
 
     protected function setUp(): void
@@ -54,7 +55,7 @@ class DriverAvailabilityTest extends TestCase
         $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/status', [
             'is_online' => true,
         ]);
@@ -82,7 +83,7 @@ class DriverAvailabilityTest extends TestCase
         $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/status', [
             'is_online' => true,
         ]);
@@ -122,7 +123,7 @@ class DriverAvailabilityTest extends TestCase
         $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/status', [
             'is_online' => false,
         ]);
@@ -156,7 +157,7 @@ class DriverAvailabilityTest extends TestCase
         $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/location', [
             'current_latitude' => 51.5204,
             'current_longitude' => -0.1482,
@@ -200,7 +201,7 @@ class DriverAvailabilityTest extends TestCase
         $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/location', [
             'current_latitude' => 51.5204,
             'current_longitude' => -0.1482,
@@ -225,7 +226,7 @@ class DriverAvailabilityTest extends TestCase
         $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson('/api/v1/driver/dashboard');
 
         $response->assertStatus(200)
@@ -248,8 +249,8 @@ class DriverAvailabilityTest extends TestCase
                         'phone' => '+447911999999',
                         'email' => null,
                         'avatar_url' => null,
-                    ]
-                ]
+                    ],
+                ],
             ]);
     }
 
@@ -263,10 +264,10 @@ class DriverAvailabilityTest extends TestCase
             ->once()
             ->with(\Mockery::type('array'))
             ->andReturn([
-                ['1', '1.2500', ['-0.1250', '51.5060']]
+                ['1', '1.2500', ['-0.1250', '51.5060']],
             ]);
 
-        $service = new DriverLocationService();
+        $service = new DriverLocationService;
         $results = $service->getNearbyDrivers(51.5074, -0.1278, 5);
 
         $this->assertCount(1, $results);

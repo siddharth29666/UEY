@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\NotificationType;
+use App\Events\AdminAnnouncementEvent;
 use App\Http\Requests\RegisterDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Resources\DeviceResource;
@@ -34,12 +36,12 @@ class DeviceController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Device registered successfully.'),
-                        new OA\Property(property: 'device', ref: '#/components/schemas/UserDevice')
+                        new OA\Property(property: 'device', ref: '#/components/schemas/UserDevice'),
                     ]
                 )
             ),
             new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function register(RegisterDeviceRequest $request): JsonResponse
@@ -66,8 +68,8 @@ class DeviceController extends Controller
             ]
         );
 
-        if (!$exists) {
-            event(new \App\Events\AdminAnnouncementEvent($user, \App\Enums\NotificationType::SYSTEM, 'Security Alert', __('notifications.auth.login_new_device')));
+        if (! $exists) {
+            event(new AdminAnnouncementEvent($user, NotificationType::SYSTEM, 'Security Alert', __('notifications.auth.login_new_device')));
         }
 
         return response()->json([
@@ -93,7 +95,7 @@ class DeviceController extends Controller
                 required: true,
                 description: 'The ID of the user device.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -107,12 +109,12 @@ class DeviceController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Device updated successfully.'),
-                        new OA\Property(property: 'device', ref: '#/components/schemas/UserDevice')
+                        new OA\Property(property: 'device', ref: '#/components/schemas/UserDevice'),
                     ]
                 )
             ),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function update(UserDevice $device, UpdateDeviceRequest $request): JsonResponse
@@ -146,7 +148,7 @@ class DeviceController extends Controller
                 required: true,
                 description: 'The ID of the user device.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -155,12 +157,12 @@ class DeviceController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Device deleted successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Device deleted successfully.'),
                     ]
                 )
             ),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function destroy(UserDevice $device, Request $request): JsonResponse

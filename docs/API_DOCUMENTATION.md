@@ -3244,6 +3244,257 @@ Returned when input fields fail to meet specified validation rules.
     }
     ```
 
+---
+
+## Module 12: Laravel Reverb, Live Tracking & Real-Time Communication
+
+This module defines the API endpoints, broadcast channels, and real-time events that power UEY's real-time ride tracking, messaging, and status updates.
+
+### 69. Broadcast Channel Authentication
+*   **API Name:** Broadcast Channel Authentication
+*   **Purpose:** Authenticates private and presence channel subscriptions using Laravel Echo / Reverb.
+*   **Endpoint URL:** `/broadcasting/auth` (Relative to `/api` root: `/api/broadcasting/auth`)
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Sanctum)
+*   **Request Payload:**
+    ```json
+    {
+      "channel_name": "private-rider.2",
+      "socket_id": "1234.5678"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "auth": "your-app-key:signature-hash",
+      "channel_data": "optional-presence-user-info-string"
+    }
+    ```
+
+### 70. Update Driver Live Location
+*   **API Name:** Update Driver Location
+*   **Purpose:** Updates the current location coordinates and metadata for online drivers. Logs history and broadcasts to the active ride channel.
+*   **Endpoint URL:** `/driver/location`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Driver role)
+*   **Request Payload:**
+    ```json
+    {
+      "latitude": 51.5080,
+      "longitude": -0.1280,
+      "heading": 120.0,
+      "speed": 45.5,
+      "accuracy": 5.0,
+      "timestamp": 1700000000
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Driver location updated successfully."
+    }
+    ```
+
+### 71. Get Live Ride Tracking
+*   **API Name:** Get Live Tracking
+*   **Purpose:** Retrieves real-time coordinates, driver details, active vehicle details, heading, speed, and calculated ETA metrics for an active ride.
+*   **Endpoint URL:** `/rides/{ride}/tracking`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Rider involved in ride, or Admin)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "tracking": {
+        "driver": {
+          "id": 2,
+          "name": "Bob Driver"
+        },
+        "vehicle": {
+          "make": "Toyota",
+          "model": "Prius",
+          "plate": "AB12 CDE"
+        },
+        "coordinates": {
+          "latitude": 51.5080,
+          "longitude": -0.1280
+        },
+        "heading": 120.0,
+        "speed": 45.5,
+        "eta": {
+          "remaining_distance": 2.50,
+          "remaining_time": 5,
+          "estimated_arrival": "2026-07-10T18:51:30Z"
+        },
+        "status": "accepted",
+        "last_updated": "2026-07-10T18:51:30Z"
+      }
+    }
+    ```
+
+### 72. Create/Get Chat Conversation
+*   **API Name:** Create Conversation
+*   **Purpose:** Establishes a new chat thread for an active ride or loads the existing one.
+*   **Endpoint URL:** `/conversations`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Rider/Driver involved in ride)
+*   **Request Payload:**
+    ```json
+    {
+      "ride_id": 1
+    }
+    ```
+*   **Success Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "conversation": {
+        "id": 1,
+        "ride_id": 1,
+        "driver_id": 2,
+        "rider_id": 3,
+        "created_at": "2026-07-10T18:51:30Z",
+        "updated_at": "2026-07-10T18:51:30Z"
+      }
+    }
+    ```
+
+### 73. Send Message
+*   **API Name:** Send Message
+*   **Purpose:** Sends a message in a conversation. Supports text, image, or location coordinates.
+*   **Endpoint URL:** `/messages`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Involved parties)
+*   **Request Payload:**
+    ```json
+    {
+      "conversation_id": 1,
+      "message": "Hello, I am waiting near the red building.",
+      "type": "text"
+    }
+    ```
+*   **Success Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": {
+        "id": 10,
+        "conversation_thread_id": 1,
+        "sender_id": 3,
+        "message": "Hello, I am waiting near the red building.",
+        "type": "text",
+        "status": "sent",
+        "delivered_at": null,
+        "read_at": null,
+        "created_at": "2026-07-10T18:51:32Z"
+      }
+    }
+    ```
+
+### 74. Get Messages
+*   **API Name:** Get Messages
+*   **Purpose:** Retrieves message logs for a conversation thread.
+*   **Endpoint URL:** `/messages`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Involved parties)
+*   **Query Parameters:**
+    *   `conversation_id` (integer, optional)
+    *   `ride_id` (integer, optional)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "messages": [
+        {
+          "id": 10,
+          "conversation_thread_id": 1,
+          "sender_id": 3,
+          "message": "Hello, I am waiting near the red building.",
+          "type": "text",
+          "status": "sent",
+          "delivered_at": null,
+          "read_at": null,
+          "created_at": "2026-07-10T18:51:32Z"
+        }
+      ]
+    }
+    ```
+
+### 75. Mark Message as Delivered
+*   **API Name:** Mark Delivered
+*   **Purpose:** Confirms message delivery, updates status, and broadcasts receipt event.
+*   **Endpoint URL:** `/messages/{id}/delivered`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Recipient user)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Message marked as delivered.",
+      "data": null
+    }
+    ```
+
+### 76. Mark Message as Read
+*   **API Name:** Mark Read
+*   **Purpose:** Confirms message read status, updates status, and broadcasts receipt event.
+*   **Endpoint URL:** `/messages/{id}/read`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Recipient user)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Message marked as read.",
+      "data": null
+    }
+    ```
+
+### 77. Typing Started / Stopped
+*   **API Name:** Typing Start / Typing Stop
+*   **Endpoints:**
+    *   `/rides/{ride}/typing/start`
+    *   `/rides/{ride}/typing/stop`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Involved parties)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Typing started broadcasted."
+    }
+    ```
+
+---
+
+## Real-Time Channel & Event Specifications
+
+### WebSocket Channels
+*   **Private Channels:**
+    *   `rider.{userId}`: Emits rider-specific updates.
+    *   `driver.{userId}`: Emits driver-specific updates.
+    *   `wallet.{walletId}`: Emits wallet balance updates.
+    *   `notification.{userId}`: Emits real-time in-app notification logs.
+    *   `ride.{rideId}`: Shared channel for active ride telemetry, coordinates, typing indicators, and message logs.
+*   **Presence Channels:**
+    *   `drivers`: Online drivers availability and locations index.
+    *   `admins`: Real-time analytics feeds and operations dashboard logs.
+
+### Broadcast Events
+1.  `DriverLocationUpdated`: Broadcasts live coordinates on `ride.{rideId}`.
+2.  `RideRequested`: Emits new ride booking details on `presence-admins`.
+3.  `RideAccepted`: Broadcasts acceptance details on `rider.{riderId}` and `presence-admins`.
+4.  `DriverArriving` / `DriverArrived`: Emits status events on `rider.{riderId}`.
+5.  `RideStarted` / `RideCompleted`: Broadcasts ride execution updates.
+6.  `RideCancelled`: Emits cancel reasons on rider, driver, and admin channels.
+7.  `WalletUpdated` / `PaymentCompleted`: Emits wallet balance modifications.
+8.  `ReviewSubmitted`: Broadcasts ratings on admin presence feed.
+9.  `MessageSent` / `MessageDelivered` / `MessageRead`: Emits chat states on `ride.{rideId}`.
+10. `TypingStarted` / `TypingStopped`: Emits client typing indicators on `ride.{rideId}`.
+11. `DriverStatusChanged`: Emits driver online, offline, busy states on `presence-drivers` and `presence-admins`.
+
+
 
 
 

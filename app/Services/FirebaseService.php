@@ -21,7 +21,7 @@ class FirebaseService
         $clientEmail = config('services.firebase.client_email');
         $privateKey = config('services.firebase.private_key');
 
-        return !empty($projectId) && !empty($clientEmail) && !empty($privateKey);
+        return ! empty($projectId) && ! empty($clientEmail) && ! empty($privateKey);
     }
 
     /**
@@ -49,20 +49,20 @@ class FirebaseService
         $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
 
         $signature = '';
-        if (!openssl_sign($base64UrlHeader . "." . $base64UrlPayload, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+        if (! openssl_sign($base64UrlHeader.'.'.$base64UrlPayload, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
             throw new \Exception('Failed to sign OAuth2 JWT token. Verify FIREBASE_PRIVATE_KEY.');
         }
         $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
 
-        $jwt = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
+        $jwt = $base64UrlHeader.'.'.$base64UrlPayload.'.'.$base64UrlSignature;
 
         $response = Http::asForm()->post('https://oauth2.googleapis.com/token', [
             'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
             'assertion' => $jwt,
         ]);
 
-        if (!$response->successful()) {
-            throw new \Exception('Failed to retrieve Firebase access token: ' . $response->body());
+        if (! $response->successful()) {
+            throw new \Exception('Failed to retrieve Firebase access token: '.$response->body());
         }
 
         return $response->json('access_token');
@@ -73,11 +73,12 @@ class FirebaseService
      */
     public function send(string $token, string $title, string $body, array $data = []): array
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             Log::info("FCM MOCK [Single] -> Token: {$token}, Title: {$title}, Body: {$body}", $data);
+
             return [
                 'success' => true,
-                'message_id' => 'mock_msg_' . uniqid(),
+                'message_id' => 'mock_msg_'.uniqid(),
             ];
         }
 
@@ -102,23 +103,23 @@ class FirebaseService
                     'android' => [
                         'notification' => [
                             'sound' => 'default',
-                        ]
+                        ],
                     ],
                     'apns' => [
                         'payload' => [
                             'aps' => [
                                 'sound' => 'default',
                                 'badge' => isset($data['badge']) ? (int) $data['badge'] : 1,
-                            ]
-                        ]
-                    ]
-                ]
+                            ],
+                        ],
+                    ],
+                ],
             ];
 
             $response = Http::withToken($accessToken)
                 ->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", $payload);
 
-            Log::info("FCM Response: Status={$response->status()} Body=" . $response->body());
+            Log::info("FCM Response: Status={$response->status()} Body=".$response->body());
 
             if ($response->successful()) {
                 return [
@@ -141,7 +142,8 @@ class FirebaseService
                 'error' => $message ?: 'FCM sending failed',
             ];
         } catch (\Exception $e) {
-            Log::error("FCM Exception: " . $e->getMessage());
+            Log::error('FCM Exception: '.$e->getMessage());
+
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -158,6 +160,7 @@ class FirebaseService
         foreach ($tokens as $token) {
             $results[$token] = $this->send($token, $title, $body, $data);
         }
+
         return $results;
     }
 
@@ -166,11 +169,12 @@ class FirebaseService
      */
     public function sendToTopic(string $topic, string $title, string $body, array $data = []): array
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             Log::info("FCM MOCK [Topic: {$topic}] -> Title: {$title}, Body: {$body}", $data);
+
             return [
                 'success' => true,
-                'message_id' => 'mock_topic_msg_' . uniqid(),
+                'message_id' => 'mock_topic_msg_'.uniqid(),
             ];
         }
 
@@ -191,13 +195,13 @@ class FirebaseService
                         'body' => $body,
                     ],
                     'data' => $stringData ?: null,
-                ]
+                ],
             ];
 
             $response = Http::withToken($accessToken)
                 ->post("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send", $payload);
 
-            Log::info("FCM Topic Response: Status={$response->status()} Body=" . $response->body());
+            Log::info("FCM Topic Response: Status={$response->status()} Body=".$response->body());
 
             if ($response->successful()) {
                 return [
@@ -211,7 +215,8 @@ class FirebaseService
                 'error' => $response->json('error.message') ?: 'FCM topic send failed',
             ];
         } catch (\Exception $e) {
-            Log::error("FCM Topic Exception: " . $e->getMessage());
+            Log::error('FCM Topic Exception: '.$e->getMessage());
+
             return [
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -228,8 +233,9 @@ class FirebaseService
             return true;
         }
 
-        if (!$this->isEnabled()) {
-            Log::info("FCM MOCK [Subscribe: {$topic}] -> Tokens: " . implode(', ', $tokens));
+        if (! $this->isEnabled()) {
+            Log::info("FCM MOCK [Subscribe: {$topic}] -> Tokens: ".implode(', ', $tokens));
+
             return true;
         }
 
@@ -239,13 +245,14 @@ class FirebaseService
             $response = Http::withToken($accessToken)
                 ->withHeaders(['access_token_auth' => 'true'])
                 ->post('https://iid.googleapis.com/iid/v1:batchAdd', [
-                    'to' => '/topics/' . $topic,
+                    'to' => '/topics/'.$topic,
                     'registration_tokens' => $tokens,
                 ]);
 
             return $response->successful();
         } catch (\Exception $e) {
-            Log::error("FCM Subscribe Exception: " . $e->getMessage());
+            Log::error('FCM Subscribe Exception: '.$e->getMessage());
+
             return false;
         }
     }
@@ -259,8 +266,9 @@ class FirebaseService
             return true;
         }
 
-        if (!$this->isEnabled()) {
-            Log::info("FCM MOCK [Unsubscribe: {$topic}] -> Tokens: " . implode(', ', $tokens));
+        if (! $this->isEnabled()) {
+            Log::info("FCM MOCK [Unsubscribe: {$topic}] -> Tokens: ".implode(', ', $tokens));
+
             return true;
         }
 
@@ -270,13 +278,14 @@ class FirebaseService
             $response = Http::withToken($accessToken)
                 ->withHeaders(['access_token_auth' => 'true'])
                 ->post('https://iid.googleapis.com/iid/v1:batchRemove', [
-                    'to' => '/topics/' . $topic,
+                    'to' => '/topics/'.$topic,
                     'registration_tokens' => $tokens,
                 ]);
 
             return $response->successful();
         } catch (\Exception $e) {
-            Log::error("FCM Unsubscribe Exception: " . $e->getMessage());
+            Log::error('FCM Unsubscribe Exception: '.$e->getMessage());
+
             return false;
         }
     }
@@ -286,7 +295,7 @@ class FirebaseService
      */
     public function validateToken(string $token): bool
     {
-        if (!$this->isEnabled()) {
+        if (! $this->isEnabled()) {
             return true;
         }
 

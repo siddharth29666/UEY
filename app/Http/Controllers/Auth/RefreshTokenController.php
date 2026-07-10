@@ -25,14 +25,14 @@ class RefreshTokenController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'token', type: 'string', example: '2|zYxWvUtSrQ...', description: 'New Sanctum plain text token.')
+                        new OA\Property(property: 'token', type: 'string', example: '2|zYxWvUtSrQ...', description: 'New Sanctum plain text token.'),
                     ]
                 )
             ),
             new OA\Response(
                 response: 401,
                 ref: '#/components/responses/UnauthorizedResponse'
-            )
+            ),
         ]
     )]
     public function __invoke(Request $request): JsonResponse
@@ -40,7 +40,7 @@ class RefreshTokenController extends Controller
         $user = $request->user();
         $user->currentAccessToken()->delete();
 
-        $ability = 'role:' . $user->role->value;
+        $ability = 'role:'.$user->role->value;
         $token = $user->createToken('uey-auth-token', [$ability])->plainTextToken;
 
         return response()->json([

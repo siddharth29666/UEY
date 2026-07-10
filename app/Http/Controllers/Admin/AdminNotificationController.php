@@ -35,11 +35,11 @@ class AdminNotificationController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Broadcast queued successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Broadcast queued successfully.'),
                     ]
                 )
             ),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function broadcast(BroadcastNotificationRequest $request): JsonResponse

@@ -1397,6 +1397,193 @@ This section details how to verify device token registrations and notification l
     }
     ```
 
+---
+
+## Phase 12: Laravel Reverb, Live Tracking & Real-Time Communication
+
+This module describes the verification sequence for real-time ride tracking, chat messages, typing indicators, read receipts, and Presence channels authentication.
+
+### 1. Broadcast Auth Route (Channels Subscription)
+*   **Method / Route:** `POST {{base_url}}/../api/broadcasting/auth`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}` or `Bearer {{driver_token}}`
+    *   `Content-Type: application/json`
+*   **Body (JSON):**
+    ```json
+    {
+      "channel_name": "private-rider.2",
+      "socket_id": "1234.5678"
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "auth": "your-reverb-app-key:signature-hash"
+    }
+    ```
+
+### 2. Update Location Coordinates (Driver)
+*   **Method / Route:** `POST {{base_url}}/driver/location`
+*   **Headers:**
+    *   `Authorization: Bearer {{driver_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "latitude": 51.5080,
+      "longitude": -0.1280,
+      "heading": 120.0,
+      "speed": 45.0,
+      "accuracy": 5.0,
+      "timestamp": 1700000000
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Driver location updated successfully."
+    }
+    ```
+
+### 3. Get Live Tracking Details (Rider)
+*   **Method / Route:** `GET {{base_url}}/rides/{ride_id}/tracking`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "tracking": {
+        "driver": {
+          "id": 2,
+          "name": "Bob Driver"
+        },
+        "vehicle": {
+          "make": "Toyota",
+          "model": "Prius",
+          "plate": "AB12 CDE"
+        },
+        "coordinates": {
+          "latitude": 51.5080,
+          "longitude": -0.1280
+        },
+        "heading": 120.0,
+        "speed": 45.0,
+        "eta": {
+          "remaining_distance": 2.50,
+          "remaining_time": 5,
+          "estimated_arrival": "2026-07-10T18:51:30Z"
+        },
+        "status": "accepted",
+        "last_updated": "2026-07-10T18:51:30Z"
+      }
+    }
+    ```
+
+### 4. Setup Conversation Thread
+*   **Method / Route:** `POST {{base_url}}/conversations`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}` or `Bearer {{driver_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "ride_id": 1
+    }
+    ```
+*   **Expected Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "conversation": {
+        "id": 1,
+        "ride_id": 1,
+        "driver_id": 2,
+        "rider_id": 3
+      }
+    }
+    ```
+
+### 5. Send Message
+*   **Method / Route:** `POST {{base_url}}/messages`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "conversation_id": 1,
+      "message": "I am standing at the main gate.",
+      "type": "text"
+    }
+    ```
+*   **Expected Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": {
+        "id": 1,
+        "conversation_thread_id": 1,
+        "sender_id": 3,
+        "message": "I am standing at the main gate.",
+        "type": "text",
+        "status": "sent",
+        "delivered_at": null,
+        "read_at": null
+      }
+    }
+    ```
+
+### 6. Get Chat History Messages
+*   **Method / Route:** `GET {{base_url}}/messages?conversation_id=1`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "messages": [
+        {
+          "id": 1,
+          "conversation_thread_id": 1,
+          "sender_id": 3,
+          "message": "I am standing at the main gate.",
+          "type": "text",
+          "status": "sent"
+        }
+      ]
+    }
+    ```
+
+### 7. Mark Message Delivered / Read
+*   **Methods / Routes:**
+    *   `POST {{base_url}}/messages/{message_id}/delivered`
+    *   `POST {{base_url}}/messages/{message_id}/read`
+*   **Headers:**
+    *   `Authorization: Bearer {{driver_token}}` (Recipient marking sender's message)
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Message marked as read.",
+      "data": null
+    }
+    ```
+
+### 8. Send Typing Indicator (Start / Stop)
+*   **Methods / Routes:**
+    *   `POST {{base_url}}/rides/{ride_id}/typing/start`
+    *   `POST {{base_url}}/rides/{ride_id}/typing/stop`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Typing started broadcasted.",
+      "data": null
+    }
+    ```
+
+
 
 
 

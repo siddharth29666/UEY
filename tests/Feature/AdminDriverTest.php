@@ -15,7 +15,9 @@ class AdminDriverTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $driver;
+
     protected DriverProfile $driverProfile;
 
     protected function setUp(): void

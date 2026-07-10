@@ -1,15 +1,15 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\SendOtpController;
-use App\Http\Controllers\Auth\VerifyOtpController;
-use App\Http\Controllers\Auth\RegisterRiderController;
-use App\Http\Controllers\Auth\RegisterDriverController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RefreshTokenController;
-use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\RegisterDriverController;
+use App\Http\Controllers\Auth\RegisterRiderController;
+use App\Http\Controllers\Auth\SendOtpController;
+use App\Http\Controllers\Auth\VerifyOtpController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('throttle:auth')->group(function () {
     Route::post('/register/rider', RegisterRiderController::class);

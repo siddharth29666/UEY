@@ -33,6 +33,7 @@ class DriverBankAccountResource extends JsonResource
         if ($length <= 4) {
             return str_repeat('*', $length);
         }
-        return str_repeat('*', $length - 4) . substr($number, -4);
+
+        return str_repeat('*', $length - 4).substr($number, -4);
     }
 }

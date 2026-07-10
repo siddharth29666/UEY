@@ -82,7 +82,7 @@ class DashboardTest extends TestCase
                         'payment_method_distribution',
                         'wallet_topup_chart',
                     ],
-                ]
+                ],
             ]);
     }
 }

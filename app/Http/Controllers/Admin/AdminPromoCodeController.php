@@ -29,7 +29,7 @@ class AdminPromoCodeController extends Controller
         parameters: [
             new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', default: 1)),
             new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 15)),
-            new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string'))
+            new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string')),
         ],
         responses: [
             new OA\Response(
@@ -39,10 +39,10 @@ class AdminPromoCodeController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'promo_codes', type: 'array', items: new OA\Items(ref: '#/components/schemas/PromoCodeResource')),
-                        new OA\Property(property: 'meta', type: 'object')
+                        new OA\Property(property: 'meta', type: 'object'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse
@@ -81,7 +81,7 @@ class AdminPromoCodeController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Promo Code Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -89,7 +89,7 @@ class AdminPromoCodeController extends Controller
                 description: 'Promo Code details.',
                 content: new OA\JsonContent(ref: '#/components/schemas/PromoCodeResource')
             ),
-            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse')
+            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
         ]
     )]
     public function show($id): JsonResponse
@@ -122,10 +122,10 @@ class AdminPromoCodeController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'promo_code', ref: '#/components/schemas/PromoCodeResource')
+                        new OA\Property(property: 'promo_code', ref: '#/components/schemas/PromoCodeResource'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function store(PromoCodeRequest $request): JsonResponse
@@ -158,14 +158,14 @@ class AdminPromoCodeController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Promo Code Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(ref: '#/components/schemas/PromoCodeRequest')
         ),
         responses: [
-            new OA\Response(response: 200, description: 'Promo Code updated successfully.')
+            new OA\Response(response: 200, description: 'Promo Code updated successfully.'),
         ]
     )]
     public function update(PromoCodeRequest $request, $id): JsonResponse
@@ -202,10 +202,10 @@ class AdminPromoCodeController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Promo Code Management'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Promo Code deleted successfully.')
+            new OA\Response(response: 200, description: 'Promo Code deleted successfully.'),
         ]
     )]
     public function destroy(Request $request, $id): JsonResponse

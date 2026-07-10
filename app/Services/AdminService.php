@@ -75,8 +75,8 @@ class AdminService
     public function approveDriver(User $driverUser, User $admin): void
     {
         $profile = $driverUser->driverProfile;
-        if (!$profile) {
-            throw new \Exception("User does not have a driver profile.");
+        if (! $profile) {
+            throw new \Exception('User does not have a driver profile.');
         }
 
         DB::transaction(function () use ($driverUser, $profile, $admin) {
@@ -106,8 +106,8 @@ class AdminService
     public function rejectDriver(User $driverUser, ?string $reason, User $admin): void
     {
         $profile = $driverUser->driverProfile;
-        if (!$profile) {
-            throw new \Exception("User does not have a driver profile.");
+        if (! $profile) {
+            throw new \Exception('User does not have a driver profile.');
         }
 
         DB::transaction(function () use ($driverUser, $profile, $reason, $admin) {
@@ -144,7 +144,7 @@ class AdminService
                 $wallet,
                 $amount,
                 WalletTransactionType::ADMIN_CREDIT,
-                'admin_credit_' . uniqid(),
+                'admin_credit_'.uniqid(),
                 $reason
             );
 
@@ -172,7 +172,7 @@ class AdminService
                 $wallet,
                 $amount,
                 WalletTransactionType::ADMIN_DEBIT,
-                'admin_debit_' . uniqid(),
+                'admin_debit_'.uniqid(),
                 $reason
             );
 
@@ -194,11 +194,11 @@ class AdminService
     public function refundRide(Ride $ride, User $admin): Payment
     {
         $payment = $ride->payment;
-        if (!$payment) {
-            throw new \Exception("No payment found to refund.");
+        if (! $payment) {
+            throw new \Exception('No payment found to refund.');
         }
         if ($payment->payment_status === PaymentStatus::REFUNDED) {
-            throw new \Exception("Payment is already refunded.");
+            throw new \Exception('Payment is already refunded.');
         }
 
         return DB::transaction(function () use ($ride, $payment, $admin) {
@@ -211,8 +211,8 @@ class AdminService
                 $riderWallet,
                 (float) $payment->total,
                 WalletTransactionType::REFUND,
-                'refund_' . $payment->id,
-                'Refund for ride #' . $ride->id
+                'refund_'.$payment->id,
+                'Refund for ride #'.$ride->id
             );
 
             // 2. Debit Driver
@@ -226,8 +226,8 @@ class AdminService
                     $driverWallet,
                     (float) $payment->driver_earning,
                     WalletTransactionType::REFUND,
-                    'refund_debit_' . $payment->id,
-                    'Reverse earnings for ride #' . $ride->id
+                    'refund_debit_'.$payment->id,
+                    'Reverse earnings for ride #'.$ride->id
                 );
             }
 

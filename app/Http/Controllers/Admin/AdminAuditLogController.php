@@ -27,7 +27,7 @@ class AdminAuditLogController extends Controller
             new OA\Parameter(name: 'admin_id', in: 'query', schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'date_from', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
             new OA\Parameter(name: 'date_to', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
-            new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string'))
+            new OA\Parameter(name: 'search', in: 'query', schema: new OA\Schema(type: 'string')),
         ],
         responses: [
             new OA\Response(
@@ -37,10 +37,10 @@ class AdminAuditLogController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'audit_logs', type: 'array', items: new OA\Items(ref: '#/components/schemas/AuditLogResource')),
-                        new OA\Property(property: 'meta', type: 'object')
+                        new OA\Property(property: 'meta', type: 'object'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse
@@ -67,8 +67,8 @@ class AdminAuditLogController extends Controller
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
                 $q->where('admin_name', 'like', "%{$search}%")
-                  ->orWhere('action', 'like', "%{$search}%")
-                  ->orWhere('module', 'like', "%{$search}%");
+                    ->orWhere('action', 'like', "%{$search}%")
+                    ->orWhere('module', 'like', "%{$search}%");
             });
         }
 
@@ -99,7 +99,7 @@ class AdminAuditLogController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Admin Audit Logs'],
         parameters: [
-            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -107,7 +107,7 @@ class AdminAuditLogController extends Controller
                 description: 'Audit log details.',
                 content: new OA\JsonContent(ref: '#/components/schemas/AuditLogResource')
             ),
-            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse')
+            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
         ]
     )]
     public function show($id): JsonResponse

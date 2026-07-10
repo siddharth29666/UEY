@@ -28,7 +28,7 @@ class PasswordResetController extends Controller
             content: new OA\JsonContent(
                 required: ['email'],
                 properties: [
-                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com', description: 'The registered email address.')
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com', description: 'The registered email address.'),
                 ]
             )
         ),
@@ -39,14 +39,14 @@ class PasswordResetController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Password reset OTP sent successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Password reset OTP sent successfully.'),
                     ]
                 )
             ),
             new OA\Response(
                 response: 422,
                 ref: '#/components/responses/ValidationErrorResponse'
-            )
+            ),
         ]
     )]
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
@@ -75,7 +75,7 @@ class PasswordResetController extends Controller
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com'),
                     new OA\Property(property: 'otp', type: 'string', example: '123456', description: 'The 6-digit OTP code received via email.'),
                     new OA\Property(property: 'password', type: 'string', format: 'password', example: 'NewPassword123!'),
-                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'NewPassword123!')
+                    new OA\Property(property: 'password_confirmation', type: 'string', format: 'password', example: 'NewPassword123!'),
                 ]
             )
         ),
@@ -86,14 +86,14 @@ class PasswordResetController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Password reset successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Password reset successfully.'),
                     ]
                 )
             ),
             new OA\Response(
                 response: 422,
                 ref: '#/components/responses/ValidationErrorResponse'
-            )
+            ),
         ]
     )]
     public function resetPassword(ResetPasswordRequest $request): JsonResponse

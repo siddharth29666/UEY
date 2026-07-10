@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\SubmitReviewRequest;
 use App\Http\Resources\ReviewResource;
 use App\Models\Ride;
-use App\Models\User;
 use App\Models\RideReview;
+use App\Models\User;
 use App\Services\ReviewService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class ReviewController extends Controller
 {
@@ -34,7 +36,7 @@ class ReviewController extends Controller
                 required: true,
                 description: 'The ID of the ride.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -43,7 +45,7 @@ class ReviewController extends Controller
                     new OA\Property(property: 'rating', type: 'integer', minimum: 1, maximum: 5, example: 5),
                     new OA\Property(property: 'review', type: 'string', nullable: true, maxLength: 1000, example: 'Great driver! Very polite.'),
                     new OA\Property(property: 'review_tags', type: 'array', items: new OA\Items(type: 'string'), nullable: true, example: ['polite', 'clean_car']),
-                    new OA\Property(property: 'is_anonymous', type: 'boolean', default: false, example: false)
+                    new OA\Property(property: 'is_anonymous', type: 'boolean', default: false, example: false),
                 ]
             )
         ),
@@ -61,9 +63,9 @@ class ReviewController extends Controller
                             type: 'object',
                             properties: [
                                 new OA\Property(property: 'average_rating', type: 'number', format: 'float', example: 4.85),
-                                new OA\Property(property: 'total_reviews', type: 'integer', example: 12)
+                                new OA\Property(property: 'total_reviews', type: 'integer', example: 12),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
@@ -74,7 +76,7 @@ class ReviewController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
                         new OA\Property(property: 'message', type: 'string', example: 'The given data was invalid.'),
-                        new OA\Property(property: 'errors', type: 'object')
+                        new OA\Property(property: 'errors', type: 'object'),
                     ]
                 )
             ),
@@ -84,11 +86,11 @@ class ReviewController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'You are not authorized to review this ride.')
+                        new OA\Property(property: 'message', type: 'string', example: 'You are not authorized to review this ride.'),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function store(SubmitReviewRequest $request, Ride $ride): JsonResponse
@@ -113,15 +115,15 @@ class ReviewController extends Controller
                 'reviewee_stats' => [
                     'average_rating' => $avg,
                     'total_reviews' => $total,
-                ]
+                ],
             ], 201);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
                 'errors' => $e->errors(),
             ], 422);
-        } catch (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e) {
+        } catch (AccessDeniedHttpException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -150,7 +152,7 @@ class ReviewController extends Controller
                 required: true,
                 description: 'The ID of the ride.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -160,7 +162,7 @@ class ReviewController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'rider_review', ref: '#/components/schemas/RideReview', nullable: true),
-                        new OA\Property(property: 'driver_review', ref: '#/components/schemas/RideReview', nullable: true)
+                        new OA\Property(property: 'driver_review', ref: '#/components/schemas/RideReview', nullable: true),
                     ]
                 )
             ),
@@ -170,11 +172,11 @@ class ReviewController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'You are not authorized to view reviews for this ride.')
+                        new OA\Property(property: 'message', type: 'string', example: 'You are not authorized to view reviews for this ride.'),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function show(Request $request, Ride $ride): JsonResponse
@@ -187,7 +189,7 @@ class ReviewController extends Controller
                 'rider_review' => $reviews['riderReview'] ? new ReviewResource($reviews['riderReview']) : null,
                 'driver_review' => $reviews['driverReview'] ? new ReviewResource($reviews['driverReview']) : null,
             ]);
-        } catch (\Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException $e) {
+        } catch (AccessDeniedHttpException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -214,7 +216,7 @@ class ReviewController extends Controller
             ),
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1)),
             new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15)),
-            new OA\Parameter(name: 'sort', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['latest', 'highest_rating', 'lowest_rating'], default: 'latest'))
+            new OA\Parameter(name: 'sort', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['latest', 'highest_rating', 'lowest_rating'], default: 'latest')),
         ],
         responses: [
             new OA\Response(
@@ -231,18 +233,18 @@ class ReviewController extends Controller
                                 new OA\Property(property: 'current_page', type: 'integer', example: 1),
                                 new OA\Property(property: 'per_page', type: 'integer', example: 15),
                                 new OA\Property(property: 'total', type: 'integer', example: 25),
-                                new OA\Property(property: 'last_page', type: 'integer', example: 2)
+                                new OA\Property(property: 'last_page', type: 'integer', example: 2),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function driverReviews(Request $request, User $driver): JsonResponse
     {
-        if (!$driver->isDriver()) {
+        if (! $driver->isDriver()) {
             return response()->json([
                 'success' => false,
                 'message' => 'User is not a driver.',
@@ -291,7 +293,7 @@ class ReviewController extends Controller
                 'last' => $paginator->url($paginator->lastPage()),
                 'prev' => $paginator->previousPageUrl(),
                 'next' => $paginator->nextPageUrl(),
-            ]
+            ],
         ]);
     }
 
@@ -314,7 +316,7 @@ class ReviewController extends Controller
             ),
             new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1)),
             new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15)),
-            new OA\Parameter(name: 'sort', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['latest', 'highest_rating', 'lowest_rating'], default: 'latest'))
+            new OA\Parameter(name: 'sort', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['latest', 'highest_rating', 'lowest_rating'], default: 'latest')),
         ],
         responses: [
             new OA\Response(
@@ -331,18 +333,18 @@ class ReviewController extends Controller
                                 new OA\Property(property: 'current_page', type: 'integer', example: 1),
                                 new OA\Property(property: 'per_page', type: 'integer', example: 15),
                                 new OA\Property(property: 'total', type: 'integer', example: 10),
-                                new OA\Property(property: 'last_page', type: 'integer', example: 1)
+                                new OA\Property(property: 'last_page', type: 'integer', example: 1),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function riderReviews(Request $request, User $rider): JsonResponse
     {
-        if (!$rider->isRider()) {
+        if (! $rider->isRider()) {
             return response()->json([
                 'success' => false,
                 'message' => 'User is not a rider.',
@@ -390,7 +392,7 @@ class ReviewController extends Controller
                 'last' => $paginator->url($paginator->lastPage()),
                 'prev' => $paginator->previousPageUrl(),
                 'next' => $paginator->nextPageUrl(),
-            ]
+            ],
         ]);
     }
 

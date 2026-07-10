@@ -3573,6 +3573,380 @@
                 }
             }
         },
+        "/conversations": {
+            "post": {
+                "tags": [
+                    "Real-Time Chat"
+                ],
+                "summary": "Create or Get Chat Conversation",
+                "description": "Creates a new chat conversation thread for an active ride or returns the existing one.",
+                "operationId": "f310fb1cbec0817920bc536354b244f9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "ride_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Conversation created or retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "conversation": {
+                                            "$ref": "#/components/schemas/Conversation"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden access to the ride conversation."
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/messages": {
+            "get": {
+                "tags": [
+                    "Real-Time Chat"
+                ],
+                "summary": "Get Conversation Messages",
+                "description": "Retrieves all messages for a specific conversation thread.",
+                "operationId": "8587d74a244cbad17552228bbf4c0175",
+                "parameters": [
+                    {
+                        "name": "conversation_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "ride_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Messages retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "messages": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Message"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden access to the conversation."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Real-Time Chat"
+                ],
+                "summary": "Send Chat Message",
+                "description": "Sends a chat message to a conversation thread.",
+                "operationId": "a68bf4f2b0694cebc995958c08eb1a28",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "message": {
+                                        "type": "string",
+                                        "example": "Hello, I am at the pickup point."
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "text",
+                                        "enum": [
+                                            "text",
+                                            "image",
+                                            "location"
+                                        ]
+                                    },
+                                    "conversation_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    },
+                                    "ride_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Message sent successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "$ref": "#/components/schemas/Message"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden access to the conversation."
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/messages/{id}/delivered": {
+            "post": {
+                "tags": [
+                    "Real-Time Chat"
+                ],
+                "summary": "Mark Message as Delivered",
+                "description": "Updates a message status to delivered and broadcasts the delivered state event.",
+                "operationId": "c15975ac4c47cc745988be6476fc2ccd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message status updated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BroadcastStatus"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden access to update this message status."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/messages/{id}/read": {
+            "post": {
+                "tags": [
+                    "Real-Time Chat"
+                ],
+                "summary": "Mark Message as Read",
+                "description": "Updates a message status to read and broadcasts the read state event.",
+                "operationId": "0806b1fddb28eddac84acb030e0dd669",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Message status updated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BroadcastStatus"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden access to update this message status."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides/{ride}/typing/start": {
+            "post": {
+                "tags": [
+                    "Real-Time Chat"
+                ],
+                "summary": "Send Typing Started Indicator",
+                "description": "Broadcasts a client typing started event on the private ride channel.",
+                "operationId": "fc59c047d40f539214700bf776fa5a79",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Typing started event broadcasted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BroadcastStatus"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden access to this ride conversation."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides/{ride}/typing/stop": {
+            "post": {
+                "tags": [
+                    "Real-Time Chat"
+                ],
+                "summary": "Send Typing Stopped Indicator",
+                "description": "Broadcasts a client typing stopped event on the private ride channel.",
+                "operationId": "00eae27c24bd6441acd06b87b332e061",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Typing stopped event broadcasted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BroadcastStatus"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden access to this ride conversation."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/devices/register": {
             "post": {
                 "tags": [
@@ -6798,6 +7172,58 @@
                 ]
             }
         },
+        "/rides/{ride}/tracking": {
+            "get": {
+                "tags": [
+                    "Rider Rides"
+                ],
+                "summary": "Get Live Tracking Details",
+                "description": "Retrieves current driver coordinates, heading, speed, and calculated ETA metrics for an active ride.",
+                "operationId": "c720affa48290151eabc02889d4eb1d7",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tracking payload retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "tracking": {
+                                            "$ref": "#/components/schemas/Tracking"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "description": "Forbidden access to track this ride."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/wallet": {
             "get": {
                 "tags": [
@@ -8309,6 +8735,188 @@
                 },
                 "type": "object"
             },
+            "Conversation": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "ride_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "driver_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "rider_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Message": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "conversation_thread_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "sender_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Hello, where are you?"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "text"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "sent"
+                    },
+                    "delivered_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "read_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Tracking": {
+                "properties": {
+                    "driver": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Bob Driver"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "vehicle": {
+                        "properties": {
+                            "make": {
+                                "type": "string",
+                                "example": "Toyota"
+                            },
+                            "model": {
+                                "type": "string",
+                                "example": "Prius"
+                            },
+                            "plate": {
+                                "type": "string",
+                                "example": "AB12 CDE"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "coordinates": {
+                        "properties": {
+                            "latitude": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 51.5074
+                            },
+                            "longitude": {
+                                "type": "number",
+                                "format": "float",
+                                "example": -0.1278
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "heading": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 120,
+                        "nullable": true
+                    },
+                    "speed": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 45,
+                        "nullable": true
+                    },
+                    "eta": {
+                        "properties": {
+                            "remaining_distance": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 2.5
+                            },
+                            "remaining_time": {
+                                "type": "integer",
+                                "example": 5
+                            },
+                            "estimated_arrival": {
+                                "type": "string",
+                                "format": "date-time",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "accepted"
+                    },
+                    "last_updated": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "BroadcastStatus": {
+                "properties": {
+                    "success": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Operation completed successfully."
+                    },
+                    "data": {
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "SendOtpRequest": {
                 "required": [
                     "phone",
@@ -9193,6 +9801,10 @@
             "description": "Driver Onboarding"
         },
         {
+            "name": "Real-Time Chat",
+            "description": "Real-Time Chat"
+        },
+        {
             "name": "Notifications",
             "description": "Notifications"
         },
@@ -9227,6 +9839,10 @@
         {
             "name": "Ride Booking",
             "description": "Ride Booking"
+        },
+        {
+            "name": "Rider Rides",
+            "description": "Rider Rides"
         },
         {
             "name": "Wallet",

@@ -17,8 +17,11 @@ class WithdrawalApprovalTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $driver;
+
     protected Wallet $wallet;
+
     protected WithdrawalRequest $withdrawal;
 
     protected function setUp(): void

@@ -8,11 +8,18 @@ use App\Enums\NotificationStatus;
 use App\Enums\NotificationType;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
+use App\Events\ReviewReceivedEvent;
+use App\Events\RideAcceptedEvent;
+use App\Events\RideCompletedEvent;
 use App\Events\RideRequestedEvent;
+use App\Events\RideStartedEvent;
+use App\Events\WalletTopupCompletedEvent;
+use App\Events\WithdrawalRequestedEvent;
 use App\Listeners\SendRideNotification;
 use App\Models\NotificationLog;
 use App\Models\User;
 use App\Models\UserDevice;
+use Illuminate\Events\CallQueuedListener;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
@@ -76,7 +83,7 @@ class NotificationTest extends TestCase
                     'app_version',
                     'language',
                     'timezone',
-                ]
+                ],
             ]);
 
         $this->assertDatabaseHas('user_devices', [
@@ -373,7 +380,7 @@ class NotificationTest extends TestCase
         ));
 
         // In Laravel, listener handles of events are wrapped in CallQueuedListener instances when pushed to the queue
-        Queue::assertPushedOn('notifications', \Illuminate\Events\CallQueuedListener::class, function ($job) {
+        Queue::assertPushedOn('notifications', CallQueuedListener::class, function ($job) {
             return $job->class === SendRideNotification::class;
         });
     }
@@ -383,9 +390,9 @@ class NotificationTest extends TestCase
      */
     public function test_automatic_ride_accepted_notification()
     {
-        event(new \App\Events\RideAcceptedEvent(
+        event(new RideAcceptedEvent(
             $this->user,
-            \App\Enums\NotificationType::RIDE_ACCEPTED,
+            NotificationType::RIDE_ACCEPTED,
             null,
             null,
             ['ride_id' => 123]
@@ -393,12 +400,12 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notification_logs', [
             'user_id' => $this->user->id,
-            'type' => \App\Enums\NotificationType::RIDE_ACCEPTED->value,
-            'status' => \App\Enums\NotificationStatus::SENT->value,
+            'type' => NotificationType::RIDE_ACCEPTED->value,
+            'status' => NotificationStatus::SENT->value,
         ]);
 
         $log = NotificationLog::where('user_id', $this->user->id)
-            ->where('type', \App\Enums\NotificationType::RIDE_ACCEPTED)
+            ->where('type', NotificationType::RIDE_ACCEPTED)
             ->first();
         $this->assertEquals(123, $log->payload['ride_id']);
     }
@@ -408,9 +415,9 @@ class NotificationTest extends TestCase
      */
     public function test_automatic_ride_started_notification()
     {
-        event(new \App\Events\RideStartedEvent(
+        event(new RideStartedEvent(
             $this->user,
-            \App\Enums\NotificationType::RIDE_STARTED,
+            NotificationType::RIDE_STARTED,
             null,
             null,
             ['ride_id' => 456]
@@ -418,12 +425,12 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notification_logs', [
             'user_id' => $this->user->id,
-            'type' => \App\Enums\NotificationType::RIDE_STARTED->value,
-            'status' => \App\Enums\NotificationStatus::SENT->value,
+            'type' => NotificationType::RIDE_STARTED->value,
+            'status' => NotificationStatus::SENT->value,
         ]);
 
         $log = NotificationLog::where('user_id', $this->user->id)
-            ->where('type', \App\Enums\NotificationType::RIDE_STARTED)
+            ->where('type', NotificationType::RIDE_STARTED)
             ->first();
         $this->assertEquals(456, $log->payload['ride_id']);
     }
@@ -433,9 +440,9 @@ class NotificationTest extends TestCase
      */
     public function test_automatic_ride_completed_notification()
     {
-        event(new \App\Events\RideCompletedEvent(
+        event(new RideCompletedEvent(
             $this->user,
-            \App\Enums\NotificationType::RIDE_COMPLETED,
+            NotificationType::RIDE_COMPLETED,
             null,
             null,
             ['ride_id' => 789]
@@ -443,12 +450,12 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notification_logs', [
             'user_id' => $this->user->id,
-            'type' => \App\Enums\NotificationType::RIDE_COMPLETED->value,
-            'status' => \App\Enums\NotificationStatus::SENT->value,
+            'type' => NotificationType::RIDE_COMPLETED->value,
+            'status' => NotificationStatus::SENT->value,
         ]);
 
         $log = NotificationLog::where('user_id', $this->user->id)
-            ->where('type', \App\Enums\NotificationType::RIDE_COMPLETED)
+            ->where('type', NotificationType::RIDE_COMPLETED)
             ->first();
         $this->assertEquals(789, $log->payload['ride_id']);
     }
@@ -458,9 +465,9 @@ class NotificationTest extends TestCase
      */
     public function test_automatic_wallet_topup_completed_notification()
     {
-        event(new \App\Events\WalletTopupCompletedEvent(
+        event(new WalletTopupCompletedEvent(
             $this->user,
-            \App\Enums\NotificationType::WALLET_TOPUP,
+            NotificationType::WALLET_TOPUP,
             null,
             null,
             ['amount' => 100.00]
@@ -468,12 +475,12 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notification_logs', [
             'user_id' => $this->user->id,
-            'type' => \App\Enums\NotificationType::WALLET_TOPUP->value,
-            'status' => \App\Enums\NotificationStatus::SENT->value,
+            'type' => NotificationType::WALLET_TOPUP->value,
+            'status' => NotificationStatus::SENT->value,
         ]);
 
         $log = NotificationLog::where('user_id', $this->user->id)
-            ->where('type', \App\Enums\NotificationType::WALLET_TOPUP)
+            ->where('type', NotificationType::WALLET_TOPUP)
             ->first();
         $this->assertEquals(100.00, $log->payload['amount']);
     }
@@ -483,9 +490,9 @@ class NotificationTest extends TestCase
      */
     public function test_automatic_withdrawal_requested_notification()
     {
-        event(new \App\Events\WithdrawalRequestedEvent(
+        event(new WithdrawalRequestedEvent(
             $this->user,
-            \App\Enums\NotificationType::WITHDRAW_REQUESTED,
+            NotificationType::WITHDRAW_REQUESTED,
             null,
             null,
             ['amount' => 50.00]
@@ -493,12 +500,12 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notification_logs', [
             'user_id' => $this->user->id,
-            'type' => \App\Enums\NotificationType::WITHDRAW_REQUESTED->value,
-            'status' => \App\Enums\NotificationStatus::SENT->value,
+            'type' => NotificationType::WITHDRAW_REQUESTED->value,
+            'status' => NotificationStatus::SENT->value,
         ]);
 
         $log = NotificationLog::where('user_id', $this->user->id)
-            ->where('type', \App\Enums\NotificationType::WITHDRAW_REQUESTED)
+            ->where('type', NotificationType::WITHDRAW_REQUESTED)
             ->first();
         $this->assertEquals(50.00, $log->payload['amount']);
     }
@@ -508,9 +515,9 @@ class NotificationTest extends TestCase
      */
     public function test_automatic_review_submitted_notification()
     {
-        event(new \App\Events\ReviewReceivedEvent(
+        event(new ReviewReceivedEvent(
             $this->user,
-            \App\Enums\NotificationType::REVIEW_RECEIVED,
+            NotificationType::REVIEW_RECEIVED,
             null,
             null,
             ['rating' => 5, 'ride_id' => 999]
@@ -518,12 +525,12 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notification_logs', [
             'user_id' => $this->user->id,
-            'type' => \App\Enums\NotificationType::REVIEW_RECEIVED->value,
-            'status' => \App\Enums\NotificationStatus::SENT->value,
+            'type' => NotificationType::REVIEW_RECEIVED->value,
+            'status' => NotificationStatus::SENT->value,
         ]);
 
         $log = NotificationLog::where('user_id', $this->user->id)
-            ->where('type', \App\Enums\NotificationType::REVIEW_RECEIVED)
+            ->where('type', NotificationType::REVIEW_RECEIVED)
             ->first();
         $this->assertEquals(5, $log->payload['rating']);
         $this->assertEquals(999, $log->payload['ride_id']);

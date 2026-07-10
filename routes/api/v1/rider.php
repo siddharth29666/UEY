@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Rider\RiderController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'ability:role:rider'])->prefix('rider')->group(function () {
     Route::get('/dashboard', [RiderController::class, 'dashboard']);

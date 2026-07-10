@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use Stripe\Stripe;
-use Stripe\PaymentIntent;
-use Stripe\Webhook;
-use Stripe\Refund;
 use Stripe\Event;
+use Stripe\PaymentIntent;
+use Stripe\Refund;
+use Stripe\Stripe;
+use Stripe\Webhook;
 
 class StripeService
 {
@@ -33,6 +33,7 @@ class StripeService
     public function verifyWebhook(string $payload, string $signatureHeader): Event
     {
         $webhookSecret = config('services.stripe.webhook_secret');
+
         return Webhook::constructEvent($payload, $signatureHeader, $webhookSecret);
     }
 
@@ -45,6 +46,7 @@ class StripeService
         if ($amount !== null) {
             $params['amount'] = (int) ($amount * 100);
         }
+
         return Refund::create($params);
     }
 }

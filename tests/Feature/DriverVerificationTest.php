@@ -26,8 +26,11 @@ class DriverVerificationTest extends TestCase
     use RefreshDatabase;
 
     protected User $driverUser;
+
     protected DriverProfile $driverProfile;
+
     protected Vehicle $vehicle;
+
     protected User $adminUser;
 
     protected function setUp(): void
@@ -92,7 +95,7 @@ class DriverVerificationTest extends TestCase
         $file = UploadedFile::fake()->create('license.pdf', 500);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/onboarding/documents', [
             'document_type' => 'driving_license',
             'document' => $file,
@@ -125,7 +128,7 @@ class DriverVerificationTest extends TestCase
         $file = UploadedFile::fake()->create('license.pdf', 500);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/onboarding/documents', [
             'document_type' => 'driving_license',
             'document' => $file,
@@ -154,7 +157,7 @@ class DriverVerificationTest extends TestCase
         $file = UploadedFile::fake()->create('new_license.pdf', 500);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/onboarding/documents', [
             'document_type' => 'driving_license',
             'document' => $file,
@@ -178,7 +181,7 @@ class DriverVerificationTest extends TestCase
         $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson('/api/v1/driver/onboarding/status');
 
         $response->assertStatus(200)
@@ -202,7 +205,7 @@ class DriverVerificationTest extends TestCase
 
         // 1. Save Bank account
         $response1 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/bank-account', [
             'bank_name' => 'Chase Bank',
             'account_holder_name' => 'Bob Driver',
@@ -232,7 +235,7 @@ class DriverVerificationTest extends TestCase
 
         // 2. Read Bank account
         $response2 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson('/api/v1/driver/bank-account');
 
         $response2->assertStatus(200)
@@ -261,7 +264,7 @@ class DriverVerificationTest extends TestCase
         $adminToken = $this->adminUser->createToken('admin-token', ['role:admin'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $adminToken,
+            'Authorization' => 'Bearer '.$adminToken,
         ])->getJson('/api/v1/admin/documents/pending');
 
         $response->assertStatus(200)
@@ -288,7 +291,7 @@ class DriverVerificationTest extends TestCase
 
         // 2. Reject document with reason
         $response1 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $adminToken,
+            'Authorization' => 'Bearer '.$adminToken,
         ])->postJson("/api/v1/admin/documents/{$doc->id}/verify", [
             'status' => 'rejected',
             'rejection_reason' => 'Signature is missing.',
@@ -309,7 +312,7 @@ class DriverVerificationTest extends TestCase
 
         // 3. Approve document
         $response2 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $adminToken,
+            'Authorization' => 'Bearer '.$adminToken,
         ])->postJson("/api/v1/admin/documents/{$doc->id}/verify", [
             'status' => 'approved',
         ]);
@@ -340,7 +343,7 @@ class DriverVerificationTest extends TestCase
         $driverToken = $this->driverUser->createToken('driver-token', ['role:driver'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $driverToken,
+            'Authorization' => 'Bearer '.$driverToken,
         ])->postJson("/api/v1/admin/documents/{$doc->id}/verify", [
             'status' => 'approved',
         ]);
@@ -383,7 +386,7 @@ class DriverVerificationTest extends TestCase
 
         // 2. Approve the final pending document
         $this->withHeaders([
-            'Authorization' => 'Bearer ' . $adminToken,
+            'Authorization' => 'Bearer '.$adminToken,
         ])->postJson("/api/v1/admin/documents/{$pendingDoc->id}/verify", [
             'status' => 'approved',
         ])->assertStatus(200);
@@ -414,7 +417,7 @@ class DriverVerificationTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson("/api/v1/driver/documents/{$document->id}/view");
 
         $response->assertStatus(200);
@@ -439,7 +442,7 @@ class DriverVerificationTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson("/api/v1/driver/documents/{$document->id}/download");
 
         $response->assertStatus(200);
@@ -479,7 +482,7 @@ class DriverVerificationTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token, // Bob trying to view Charlie's document
+            'Authorization' => 'Bearer '.$token, // Bob trying to view Charlie's document
         ])->getJson("/api/v1/driver/documents/{$document->id}/view");
 
         $response->assertStatus(403)
@@ -521,7 +524,7 @@ class DriverVerificationTest extends TestCase
         ]);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson("/api/v1/driver/documents/{$document->id}/download");
 
         $response->assertStatus(403)
@@ -547,7 +550,7 @@ class DriverVerificationTest extends TestCase
 
         // 1. Check view
         $response1 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson("/api/v1/driver/documents/{$document->id}/view");
 
         $response1->assertStatus(404)
@@ -558,7 +561,7 @@ class DriverVerificationTest extends TestCase
 
         // 2. Check download
         $response2 = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->getJson("/api/v1/driver/documents/{$document->id}/download");
 
         $response2->assertStatus(404)
@@ -578,7 +581,7 @@ class DriverVerificationTest extends TestCase
         $file = UploadedFile::fake()->create('license.pdf', 500);
 
         $response = $this->withHeaders([
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->postJson('/api/v1/driver/onboarding/documents', [
             'document_type' => 'driving_license',
             'document' => $file,
@@ -591,10 +594,10 @@ class DriverVerificationTest extends TestCase
         $viewUrl = $response->json('document.view_url');
         $downloadUrl = $response->json('document.download_url');
 
-        $this->assertStringStartsWith(rtrim(config('app.url'), '/') . '/api/v1/driver/documents/', $viewUrl);
+        $this->assertStringStartsWith(rtrim(config('app.url'), '/').'/api/v1/driver/documents/', $viewUrl);
         $this->assertStringEndsWith('/view', $viewUrl);
 
-        $this->assertStringStartsWith(rtrim(config('app.url'), '/') . '/api/v1/driver/documents/', $downloadUrl);
+        $this->assertStringStartsWith(rtrim(config('app.url'), '/').'/api/v1/driver/documents/', $downloadUrl);
         $this->assertStringEndsWith('/download', $downloadUrl);
     }
 }

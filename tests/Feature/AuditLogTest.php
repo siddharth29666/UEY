@@ -15,6 +15,7 @@ class AuditLogTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected AuditLog $auditLog;
 
     protected function setUp(): void

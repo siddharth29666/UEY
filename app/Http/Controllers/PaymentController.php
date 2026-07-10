@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PaymentResource;
-use App\Models\Ride;
 use App\Models\Payment;
+use App\Models\Ride;
 use App\Services\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -32,7 +32,7 @@ class PaymentController extends Controller
                 required: true,
                 description: 'The ID of the ride.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -41,7 +41,7 @@ class PaymentController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'payment', ref: '#/components/schemas/Payment')
+                        new OA\Property(property: 'payment', ref: '#/components/schemas/Payment'),
                     ]
                 )
             ),
@@ -51,11 +51,11 @@ class PaymentController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Unauthorized.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Unauthorized.'),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function show(Request $request, Ride $ride): JsonResponse
@@ -64,7 +64,7 @@ class PaymentController extends Controller
         $isRider = ($ride->rider_id === $user->id);
         $isDriver = ($ride->driverProfile && $ride->driver_profile_id === $user->driverProfile?->id);
 
-        if (!$isRider && !$isDriver) {
+        if (! $isRider && ! $isDriver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized.',
@@ -72,7 +72,7 @@ class PaymentController extends Controller
         }
 
         $payment = $ride->payment;
-        if (!$payment) {
+        if (! $payment) {
             return response()->json([
                 'success' => false,
                 'message' => 'Payment record not found for this ride.',
@@ -105,22 +105,22 @@ class PaymentController extends Controller
                             property: 'payments',
                             type: 'array',
                             items: new OA\Items(ref: '#/components/schemas/Payment')
-                        )
+                        ),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function history(Request $request): JsonResponse
     {
         $user = $request->user();
-        
+
         $query = Payment::query();
 
         if ($user->isDriver()) {
             $driverProfile = $user->driverProfile;
-            if (!$driverProfile) {
+            if (! $driverProfile) {
                 return response()->json([
                     'success' => true,
                     'payments' => [],
@@ -129,7 +129,7 @@ class PaymentController extends Controller
                         'per_page' => (int) $request->query('per_page', 15),
                         'total' => 0,
                         'last_page' => 1,
-                    ]
+                    ],
                 ]);
             }
             $query->where('driver_profile_id', $driverProfile->id);
@@ -166,7 +166,7 @@ class PaymentController extends Controller
                 'per_page' => $paginator->perPage(),
                 'total' => $paginator->total(),
                 'last_page' => $paginator->lastPage(),
-            ]
+            ],
         ]);
     }
 
@@ -186,7 +186,7 @@ class PaymentController extends Controller
                 required: true,
                 description: 'The ID of the ride.',
                 schema: new OA\Schema(type: 'integer')
-            )
+            ),
         ],
         responses: [
             new OA\Response(
@@ -213,7 +213,7 @@ class PaymentController extends Controller
                                     type: 'object',
                                     properties: [
                                         new OA\Property(property: 'id', type: 'integer', example: 1),
-                                        new OA\Property(property: 'name', type: 'string', example: 'Alice Rider')
+                                        new OA\Property(property: 'name', type: 'string', example: 'Alice Rider'),
                                     ]
                                 ),
                                 new OA\Property(
@@ -222,7 +222,7 @@ class PaymentController extends Controller
                                     nullable: true,
                                     properties: [
                                         new OA\Property(property: 'id', type: 'integer', example: 3),
-                                        new OA\Property(property: 'name', type: 'string', example: 'Bob Driver')
+                                        new OA\Property(property: 'name', type: 'string', example: 'Bob Driver'),
                                     ]
                                 ),
                                 new OA\Property(
@@ -234,12 +234,12 @@ class PaymentController extends Controller
                                         new OA\Property(property: 'discount', type: 'number', format: 'float', example: 0.00),
                                         new OA\Property(property: 'platform_commission', type: 'number', format: 'float', example: 2.25),
                                         new OA\Property(property: 'driver_earning', type: 'number', format: 'float', example: 12.75),
-                                        new OA\Property(property: 'total', type: 'number', format: 'float', example: 15.00)
+                                        new OA\Property(property: 'total', type: 'number', format: 'float', example: 15.00),
                                     ]
                                 ),
-                                new OA\Property(property: 'paid_at', type: 'string', format: 'date-time')
+                                new OA\Property(property: 'paid_at', type: 'string', format: 'date-time'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
@@ -249,11 +249,11 @@ class PaymentController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Unauthorized.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Unauthorized.'),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function invoice(Request $request, Ride $ride): JsonResponse
@@ -262,7 +262,7 @@ class PaymentController extends Controller
         $isRider = ($ride->rider_id === $user->id);
         $isDriver = ($ride->driverProfile && $ride->driver_profile_id === $user->driverProfile?->id);
 
-        if (!$isRider && !$isDriver) {
+        if (! $isRider && ! $isDriver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized.',
@@ -271,6 +271,7 @@ class PaymentController extends Controller
 
         try {
             $invoiceData = $this->paymentService->generateInvoice($ride->load(['rider', 'driverProfile.user', 'payment']));
+
             return response()->json([
                 'success' => true,
                 'invoice' => $invoiceData,

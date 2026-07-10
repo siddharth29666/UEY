@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers\Rider;
 
+use App\Enums\RideStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CancelRideRequest;
 use App\Http\Requests\EstimateRideRequest;
 use App\Http\Requests\RequestRideRequest;
-use App\Http\Requests\CancelRideRequest;
 use App\Http\Resources\RideResource;
+use App\Http\Resources\TrackingResource;
 use App\Models\Ride;
-use App\Enums\RideStatus;
 use App\Services\RideService;
+use App\Services\TrackingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class RiderController extends Controller
 {
@@ -46,15 +49,15 @@ class RiderController extends Controller
                                     new OA\Property(property: 'capacity', type: 'integer', example: 4),
                                     new OA\Property(property: 'estimated_distance', type: 'number', format: 'float', example: 2.34),
                                     new OA\Property(property: 'estimated_duration', type: 'integer', example: 4),
-                                    new OA\Property(property: 'estimated_fare', type: 'number', format: 'float', example: 8.50)
+                                    new OA\Property(property: 'estimated_fare', type: 'number', format: 'float', example: 8.50),
                                 ]
                             )
-                        )
+                        ),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function estimateRide(EstimateRideRequest $request): JsonResponse
@@ -66,6 +69,7 @@ class RiderController extends Controller
             (float) $request->input('destination_latitude'),
             (float) $request->input('destination_longitude')
         );
+
         return response()->json([
             'success' => true,
             'estimates' => $estimates,
@@ -93,18 +97,19 @@ class RiderController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Ride requested successfully.'),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function requestRide(RequestRideRequest $request): JsonResponse
     {
         $service = app(RideService::class);
         $ride = $service->createRide($request->user(), $request->validated());
+
         return response()->json([
             'success' => true,
             'message' => 'Ride requested successfully.',
@@ -122,7 +127,7 @@ class RiderController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Ride Booking'],
         parameters: [
-            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: false,
@@ -136,18 +141,19 @@ class RiderController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Ride cancelled successfully.'),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function cancelRide(CancelRideRequest $request, Ride $ride): JsonResponse
     {
         $service = app(RideService::class);
         $cancelledRide = $service->cancelRide($ride, $request->user(), $request->input('cancel_reason'));
+
         return response()->json([
             'success' => true,
             'message' => 'Ride cancelled successfully.',
@@ -165,7 +171,7 @@ class RiderController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Ride Booking'],
         parameters: [
-            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -174,17 +180,18 @@ class RiderController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
-            new OA\Response(response: 404, description: 'Ride not found.')
+            new OA\Response(response: 404, description: 'Ride not found.'),
         ]
     )]
     public function showRide(Ride $ride): JsonResponse
     {
         $ride->load(['rider', 'driverProfile.user']);
+
         return response()->json([
             'success' => true,
             'ride' => new RideResource($ride),
@@ -211,11 +218,11 @@ class RiderController extends Controller
                             property: 'rides',
                             type: 'array',
                             items: new OA\Items(ref: '#/components/schemas/Ride')
-                        )
+                        ),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function rideHistory(Request $request): JsonResponse
@@ -224,6 +231,7 @@ class RiderController extends Controller
             ->with(['rider', 'driverProfile.user'])
             ->latest()
             ->get();
+
         return response()->json([
             'success' => true,
             'rides' => RideResource::collection($rides),
@@ -246,7 +254,7 @@ class RiderController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
@@ -257,10 +265,10 @@ class RiderController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'No active ride found.')
+                        new OA\Property(property: 'message', type: 'string', example: 'No active ride found.'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function activeRide(Request $request): JsonResponse
@@ -271,7 +279,7 @@ class RiderController extends Controller
             ->latest()
             ->first();
 
-        if (!$ride) {
+        if (! $ride) {
             return response()->json([
                 'success' => false,
                 'message' => 'No active ride found.',
@@ -286,15 +294,68 @@ class RiderController extends Controller
 
     // Existing stub methods preserved to prevent breaking other routes or stubs
     public function dashboard(Request $request) {}
+
     public function vehicleTypes(Request $request) {}
+
     public function fareEstimate(Request $request) {}
+
     public function scheduleRide(Request $request) {}
+
     public function currentRide(Request $request) {}
+
     public function driverDetails(Request $request, $ride) {}
+
     public function rideReceipt(Request $request, $ride) {}
+
     public function reviewDriver(Request $request, $ride) {}
+
     public function getWallet(Request $request) {}
+
     public function walletTopup(Request $request) {}
+
     public function paymentMethods(Request $request) {}
+
     public function addPaymentMethod(Request $request) {}
+
+    #[OA\Get(
+        path: '/rides/{ride}/tracking',
+        summary: 'Get Live Tracking Details',
+        description: 'Retrieves current driver coordinates, heading, speed, and calculated ETA metrics for an active ride.',
+        security: [['bearerAuth' => []]],
+        tags: ['Rider Rides'],
+        parameters: [
+            new OA\Parameter(name: 'ride', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Tracking payload retrieved successfully.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'tracking', ref: '#/components/schemas/Tracking'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+            new OA\Response(response: 403, description: 'Forbidden access to track this ride.'),
+        ]
+    )]
+    public function getTrackingDetails(Request $request, $rideId): JsonResponse
+    {
+        $ride = Ride::findOrFail($rideId);
+        $user = $request->user();
+
+        if ($user->role->value !== 'admin' && (int) $ride->rider_id !== (int) $user->id) {
+            throw new AccessDeniedHttpException('You are not authorized to track this ride.');
+        }
+
+        $trackingService = app(TrackingService::class);
+        $payload = $trackingService->getTrackingPayload($ride);
+
+        return response()->json([
+            'success' => true,
+            'tracking' => new TrackingResource($payload),
+        ]);
+    }
 }

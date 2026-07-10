@@ -4,22 +4,34 @@ namespace App\Http\Controllers\Driver;
 
 use App\DTOs\SaveBankAccountDTO;
 use App\DTOs\UploadDocumentDTO;
+use App\Enums\NotificationType;
+use App\Enums\RideRequestStatus;
+use App\Enums\RideStatus;
+use App\Enums\UserStatus;
+use App\Events\DriverStatusChanged;
+use App\Events\RideAcceptedEvent;
+use App\Exceptions\InsufficientWalletBalanceException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\SaveBankAccountRequest;
-use App\Http\Requests\UploadDocumentRequest;
-use App\Http\Requests\UpdateDriverStatusRequest;
 use App\Http\Requests\UpdateDriverLocationRequest;
+use App\Http\Requests\UpdateDriverStatusRequest;
+use App\Http\Requests\UpdateRideStatusRequest;
+use App\Http\Requests\UploadDocumentRequest;
 use App\Http\Resources\DriverBankAccountResource;
+use App\Http\Resources\DriverDashboardResource;
 use App\Http\Resources\DriverDocumentResource;
 use App\Http\Resources\DriverOnboardingStatusResource;
-use App\Http\Resources\DriverDashboardResource;
-use App\Services\DriverVerificationService;
+use App\Http\Resources\RideRequestResource;
+use App\Http\Resources\RideResource;
+use App\Models\Ride;
+use App\Models\RideRequest;
 use App\Services\DriverLocationService;
+use App\Services\DriverVerificationService;
 use App\Services\RideLifecycleService;
-use App\Http\Requests\UpdateRideStatusRequest;
-use App\Enums\UserStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use OpenApi\Attributes as OA;
 
 class DriverController extends Controller
@@ -49,7 +61,7 @@ class DriverController extends Controller
                     properties: [
                         new OA\Property(property: 'document_type', type: 'string', enum: ['driving_license', 'vehicle_registration', 'insurance'], example: 'driving_license', description: 'Type of the document.'),
                         new OA\Property(property: 'document', type: 'string', format: 'binary', description: 'The file to upload.'),
-                        new OA\Property(property: 'expires_at', type: 'string', format: 'date', example: '2028-12-31', description: 'Optional expiration date.')
+                        new OA\Property(property: 'expires_at', type: 'string', format: 'date', example: '2028-12-31', description: 'Optional expiration date.'),
                     ]
                 )
             )
@@ -74,9 +86,9 @@ class DriverController extends Controller
                                 new OA\Property(property: 'rejection_reason', type: 'string', nullable: true, example: null),
                                 new OA\Property(property: 'expires_at', type: 'string', format: 'date', example: '2028-12-31'),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
@@ -88,18 +100,18 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Driver profile not found.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Driver profile not found.'),
                     ]
                 )
             ),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function uploadDocuments(UploadDocumentRequest $request): JsonResponse
     {
         $driver = $request->user()->driverProfile;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
@@ -147,7 +159,7 @@ class DriverController extends Controller
                                     properties: [
                                         new OA\Property(property: 'documents_approved', type: 'boolean', example: false),
                                         new OA\Property(property: 'vehicle_approved', type: 'boolean', example: false),
-                                        new OA\Property(property: 'bank_account_linked', type: 'boolean', example: false)
+                                        new OA\Property(property: 'bank_account_linked', type: 'boolean', example: false),
                                     ]
                                 ),
                                 new OA\Property(
@@ -161,7 +173,7 @@ class DriverController extends Controller
                                             new OA\Property(property: 'document_url', type: 'string', format: 'url', example: 'http://uey.test/storage/documents/driving_license_123.jpg'),
                                             new OA\Property(property: 'status', type: 'string', example: 'pending'),
                                             new OA\Property(property: 'rejection_reason', type: 'string', nullable: true, example: null),
-                                            new OA\Property(property: 'expires_at', type: 'string', format: 'date', example: '2028-12-31')
+                                            new OA\Property(property: 'expires_at', type: 'string', format: 'date', example: '2028-12-31'),
                                         ]
                                     )
                                 ),
@@ -175,11 +187,11 @@ class DriverController extends Controller
                                         new OA\Property(property: 'year', type: 'integer', example: 2022),
                                         new OA\Property(property: 'color', type: 'string', example: 'Silver'),
                                         new OA\Property(property: 'plate_number', type: 'string', example: 'ABC-999'),
-                                        new OA\Property(property: 'status', type: 'string', example: 'pending')
+                                        new OA\Property(property: 'status', type: 'string', example: 'pending'),
                                     ]
-                                )
+                                ),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
@@ -191,17 +203,17 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Driver profile not found.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Driver profile not found.'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function onboardingStatus(Request $request): JsonResponse
     {
         $driver = $request->user()->driverProfile;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
@@ -244,9 +256,9 @@ class DriverController extends Controller
                                 new OA\Property(property: 'routing_number', type: 'string', example: '987654321'),
                                 new OA\Property(property: 'swift_code', type: 'string', example: 'CHASUS33'),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
@@ -258,17 +270,17 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Bank account details not found.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Bank account details not found.'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function getBankAccount(Request $request): JsonResponse
     {
         $driver = $request->user()->driverProfile;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
@@ -277,7 +289,7 @@ class DriverController extends Controller
 
         $bankAccount = $driver->bankAccount;
 
-        if (!$bankAccount) {
+        if (! $bankAccount) {
             return response()->json([
                 'success' => false,
                 'message' => 'Bank account details not found.',
@@ -322,9 +334,9 @@ class DriverController extends Controller
                                 new OA\Property(property: 'routing_number', type: 'string', example: '987654321'),
                                 new OA\Property(property: 'swift_code', type: 'string', example: 'CHASUS33'),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
-                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30')
+                                new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2026-06-23T00:58:13+05:30'),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
@@ -336,18 +348,18 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Driver profile not found.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Driver profile not found.'),
                     ]
                 )
             ),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function saveBankAccount(SaveBankAccountRequest $request): JsonResponse
     {
         $driver = $request->user()->driverProfile;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
@@ -383,7 +395,7 @@ class DriverController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Driver status updated successfully.'),
-                        new OA\Property(property: 'is_online', type: 'boolean', example: true)
+                        new OA\Property(property: 'is_online', type: 'boolean', example: true),
                     ]
                 )
             ),
@@ -391,10 +403,10 @@ class DriverController extends Controller
             new OA\Response(response: 403, description: 'Only active approved drivers can go online.', content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'success', type: 'boolean', example: false),
-                    new OA\Property(property: 'message', type: 'string', example: 'Only active approved drivers can go online.')
+                    new OA\Property(property: 'message', type: 'string', example: 'Only active approved drivers can go online.'),
                 ]
             )),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function toggleOnlineStatus(UpdateDriverStatusRequest $request): JsonResponse
@@ -402,7 +414,7 @@ class DriverController extends Controller
         $user = $request->user();
         $driver = $user->driverProfile;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
@@ -443,30 +455,40 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Driver location updated successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Driver location updated successfully.'),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
     public function updateLocation(UpdateDriverLocationRequest $request): JsonResponse
     {
         $driver = $request->user()->driverProfile;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
             ], 404);
         }
 
+        $latitude = (float) $request->input('latitude', $request->input('current_latitude'));
+        $longitude = (float) $request->input('longitude', $request->input('current_longitude'));
+        $bearing = $request->has('bearing') ? (float) $request->input('bearing') : ($request->has('heading') ? (float) $request->input('heading') : null);
+        $speed = $request->has('speed') ? (float) $request->input('speed') : null;
+        $accuracy = $request->has('accuracy') ? (float) $request->input('accuracy') : null;
+        $timestamp = $request->has('timestamp') ? (int) $request->input('timestamp') : null;
+
         $this->locationService->updateLocation(
             $driver,
-            (float) $request->input('current_latitude'),
-            (float) $request->input('current_longitude'),
-            $request->has('bearing') ? (float) $request->input('bearing') : null
+            $latitude,
+            $longitude,
+            $bearing,
+            $speed,
+            $accuracy,
+            $timestamp
         );
 
         return response()->json([
@@ -504,7 +526,7 @@ class DriverController extends Controller
                                     properties: [
                                         new OA\Property(property: 'today', type: 'number', example: 0.0),
                                         new OA\Property(property: 'this_week', type: 'number', example: 0.0),
-                                        new OA\Property(property: 'total', type: 'number', example: 0.0)
+                                        new OA\Property(property: 'total', type: 'number', example: 0.0),
                                     ]
                                 ),
                                 new OA\Property(
@@ -514,22 +536,22 @@ class DriverController extends Controller
                                         new OA\Property(property: 'name', type: 'string', example: 'Bob Driver'),
                                         new OA\Property(property: 'email', type: 'string', example: 'bob.driver@example.com'),
                                         new OA\Property(property: 'phone', type: 'string', example: '+447911999999'),
-                                        new OA\Property(property: 'avatar_url', type: 'string', nullable: true, example: null)
+                                        new OA\Property(property: 'avatar_url', type: 'string', nullable: true, example: null),
                                     ]
-                                )
+                                ),
                             ]
-                        )
+                        ),
                     ]
                 )
             ),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse')
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
         ]
     )]
     public function dashboard(Request $request): JsonResponse
     {
         $driver = $request->user()->driverProfile;
 
-        if (!$driver) {
+        if (! $driver) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
@@ -543,10 +565,15 @@ class DriverController extends Controller
             'dashboard' => new DriverDashboardResource($driver),
         ]);
     }
+
     public function updateSettings(Request $request) {}
+
     public function activeRequests(Request $request) {}
+
     public function acceptRequest(Request $request, $requestId) {}
+
     public function declineRequest(Request $request, $requestId) {}
+
     /**
      * Retrieve details of a ride (accessible only to assigned driver).
      */
@@ -557,7 +584,7 @@ class DriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Driver Ride Lifecycle'],
         parameters: [
-            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -566,7 +593,7 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
@@ -578,16 +605,16 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Record not found.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Record not found.'),
                     ]
                 )
-            )
+            ),
         ]
     )]
-    public function showRide(Request $request, \App\Models\Ride $ride): JsonResponse
+    public function showRide(Request $request, Ride $ride): JsonResponse
     {
         $driverProfile = $request->user()->driverProfile;
-        if (!$driverProfile || $ride->driver_profile_id !== $driverProfile->id) {
+        if (! $driverProfile || $ride->driver_profile_id !== $driverProfile->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'You are not authorized to view this ride.',
@@ -596,7 +623,7 @@ class DriverController extends Controller
 
         return response()->json([
             'success' => true,
-            'ride' => new \App\Http\Resources\RideResource($ride->load(['rider', 'driverProfile.user'])),
+            'ride' => new RideResource($ride->load(['rider', 'driverProfile.user'])),
         ]);
     }
 
@@ -610,7 +637,7 @@ class DriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Driver Ride Lifecycle'],
         parameters: [
-            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -620,23 +647,23 @@ class DriverController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Ride status updated to arriving.'),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
-    public function markArriving(UpdateRideStatusRequest $request, \App\Models\Ride $ride): JsonResponse
+    public function markArriving(UpdateRideStatusRequest $request, Ride $ride): JsonResponse
     {
         $updatedRide = $this->lifecycleService->updateStatus($ride, 'arriving', $request->validated(), $request->user());
 
         return response()->json([
             'success' => true,
             'message' => 'Ride status updated to arriving.',
-            'ride' => new \App\Http\Resources\RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
+            'ride' => new RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
         ]);
     }
 
@@ -650,7 +677,7 @@ class DriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Driver Ride Lifecycle'],
         parameters: [
-            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -660,23 +687,23 @@ class DriverController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Ride status updated to arrived.'),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
-    public function markArrived(UpdateRideStatusRequest $request, \App\Models\Ride $ride): JsonResponse
+    public function markArrived(UpdateRideStatusRequest $request, Ride $ride): JsonResponse
     {
         $updatedRide = $this->lifecycleService->updateStatus($ride, 'arrived', $request->validated(), $request->user());
 
         return response()->json([
             'success' => true,
             'message' => 'Ride status updated to arrived.',
-            'ride' => new \App\Http\Resources\RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
+            'ride' => new RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
         ]);
     }
 
@@ -690,14 +717,14 @@ class DriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Driver Ride Lifecycle'],
         parameters: [
-            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
                 required: ['otp'],
                 properties: [
-                    new OA\Property(property: 'otp', type: 'string', example: '123456', description: 'The 6-digit OTP provided by the rider.')
+                    new OA\Property(property: 'otp', type: 'string', example: '123456', description: 'The 6-digit OTP provided by the rider.'),
                 ]
             )
         ),
@@ -709,23 +736,23 @@ class DriverController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Ride started successfully.'),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
-    public function startRide(UpdateRideStatusRequest $request, \App\Models\Ride $ride): JsonResponse
+    public function startRide(UpdateRideStatusRequest $request, Ride $ride): JsonResponse
     {
         $updatedRide = $this->lifecycleService->updateStatus($ride, 'in_progress', $request->validated(), $request->user());
 
         return response()->json([
             'success' => true,
             'message' => 'Ride started successfully.',
-            'ride' => new \App\Http\Resources\RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
+            'ride' => new RideResource($updatedRide->load(['rider', 'driverProfile.user'])),
         ]);
     }
 
@@ -739,7 +766,7 @@ class DriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Driver Ride Lifecycle'],
         parameters: [
-            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'ride', in: 'path', required: true, description: 'ID of the Ride', schema: new OA\Schema(type: 'integer')),
         ],
         requestBody: new OA\RequestBody(
             required: true,
@@ -747,7 +774,7 @@ class DriverController extends Controller
                 required: ['actual_distance', 'actual_duration'],
                 properties: [
                     new OA\Property(property: 'actual_distance', type: 'number', format: 'float', example: 5.2, description: 'Actual trip distance in kilometers.'),
-                    new OA\Property(property: 'actual_duration', type: 'integer', example: 12, description: 'Actual trip duration in minutes.')
+                    new OA\Property(property: 'actual_duration', type: 'integer', example: 12, description: 'Actual trip duration in minutes.'),
                 ]
             )
         ),
@@ -759,16 +786,16 @@ class DriverController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Ride completed successfully.'),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
-    public function completeRide(UpdateRideStatusRequest $request, \App\Models\Ride $ride): JsonResponse
+    public function completeRide(UpdateRideStatusRequest $request, Ride $ride): JsonResponse
     {
         try {
             $updatedRide = $this->lifecycleService->updateStatus($ride, 'completed', $request->validated(), $request->user());
@@ -777,14 +804,14 @@ class DriverController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Ride completed successfully.',
-                'ride' => new \App\Http\Resources\RideResource($updatedRide),
+                'ride' => new RideResource($updatedRide),
                 'payment' => $updatedRide->payment ? [
                     'id' => $updatedRide->payment->id,
                     'payment_method' => $updatedRide->payment->payment_method->value,
                     'payment_status' => $updatedRide->payment->payment_status->value,
                 ] : null,
             ]);
-        } catch (\App\Exceptions\InsufficientWalletBalanceException $e) {
+        } catch (InsufficientWalletBalanceException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -792,7 +819,7 @@ class DriverController extends Controller
                 'required_amount' => $e->getRequired(),
                 'shortfall' => $e->getShortfall(),
             ], 422);
-        } catch (\Illuminate\Validation\ValidationException $e) {
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
@@ -801,14 +828,19 @@ class DriverController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 422);
         }
     }
+
     public function rideHistory(Request $request) {}
+
     public function earningsSummary(Request $request) {}
+
     public function reviewRider(Request $request, $ride) {}
+
     public function walletCashout(Request $request) {}
+
     public function notifications(Request $request) {}
 
     /**
@@ -831,18 +863,18 @@ class DriverController extends Controller
                             property: 'requests',
                             type: 'array',
                             items: new OA\Items(ref: '#/components/schemas/RideRequest')
-                        )
+                        ),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
-            new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse')
+            new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
         ]
     )]
     public function rideRequests(Request $request): JsonResponse
     {
         $driverProfile = $request->user()->driverProfile;
-        if (!$driverProfile) {
+        if (! $driverProfile) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
@@ -850,16 +882,16 @@ class DriverController extends Controller
         }
 
         // Expire older pending requests
-        \App\Models\RideRequest::where('driver_profile_id', $driverProfile->id)
-            ->where('status', \App\Enums\RideRequestStatus::PENDING)
+        RideRequest::where('driver_profile_id', $driverProfile->id)
+            ->where('status', RideRequestStatus::PENDING)
             ->where('expires_at', '<=', now())
-            ->update(['status' => \App\Enums\RideRequestStatus::EXPIRED]);
+            ->update(['status' => RideRequestStatus::EXPIRED]);
 
-        $requests = \App\Models\RideRequest::where('driver_profile_id', $driverProfile->id)
-            ->where('status', \App\Enums\RideRequestStatus::PENDING)
+        $requests = RideRequest::where('driver_profile_id', $driverProfile->id)
+            ->where('status', RideRequestStatus::PENDING)
             ->where(function ($q) {
                 $q->whereNull('expires_at')
-                  ->orWhere('expires_at', '>', now());
+                    ->orWhere('expires_at', '>', now());
             })
             ->with(['ride.rider'])
             ->latest()
@@ -867,7 +899,7 @@ class DriverController extends Controller
 
         return response()->json([
             'success' => true,
-            'requests' => \App\Http\Resources\RideRequestResource::collection($requests),
+            'requests' => RideRequestResource::collection($requests),
         ]);
     }
 
@@ -881,7 +913,7 @@ class DriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Driver Matching'],
         parameters: [
-            new OA\Parameter(name: 'request', in: 'path', required: true, description: 'ID of the RideRequest', schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'request', in: 'path', required: true, description: 'ID of the RideRequest', schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -891,7 +923,7 @@ class DriverController extends Controller
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
                         new OA\Property(property: 'message', type: 'string', example: 'Ride request accepted successfully.'),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
@@ -903,16 +935,16 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'Ride request is no longer available.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Ride request is no longer available.'),
                     ]
                 )
-            )
+            ),
         ]
     )]
-    public function acceptRideRequest(Request $httpRequest, \App\Models\RideRequest $request): JsonResponse
+    public function acceptRideRequest(Request $httpRequest, RideRequest $request): JsonResponse
     {
         $driverProfile = $httpRequest->user()->driverProfile;
-        if (!$driverProfile) {
+        if (! $driverProfile) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
@@ -927,10 +959,10 @@ class DriverController extends Controller
         }
 
         if ($request->expires_at && $request->expires_at->isPast()) {
-            $request->update(['status' => \App\Enums\RideRequestStatus::EXPIRED]);
+            $request->update(['status' => RideRequestStatus::EXPIRED]);
         }
 
-        if ($request->status !== \App\Enums\RideRequestStatus::PENDING) {
+        if ($request->status !== RideRequestStatus::PENDING) {
             return response()->json([
                 'success' => false,
                 'message' => 'This request is no longer available.',
@@ -938,26 +970,26 @@ class DriverController extends Controller
         }
 
         try {
-            $ride = \Illuminate\Support\Facades\DB::transaction(function () use ($request, $driverProfile) {
+            $ride = DB::transaction(function () use ($request, $driverProfile) {
                 // Lock the ride for update to prevent race conditions
-                $ride = \App\Models\Ride::where('id', $request->ride_id)->lockForUpdate()->first();
+                $ride = Ride::where('id', $request->ride_id)->lockForUpdate()->first();
 
-                if (!$ride || $ride->status !== \App\Enums\RideStatus::PENDING) {
+                if (! $ride || $ride->status !== RideStatus::PENDING) {
                     throw new \Exception('Ride request is no longer available.');
                 }
 
                 // Accept this request
-                $request->update(['status' => \App\Enums\RideRequestStatus::ACCEPTED]);
+                $request->update(['status' => RideRequestStatus::ACCEPTED]);
 
                 // Mark other requests for this ride as expired
-                \App\Models\RideRequest::where('ride_id', $ride->id)
+                RideRequest::where('ride_id', $ride->id)
                     ->where('id', '!=', $request->id)
-                    ->where('status', \App\Enums\RideRequestStatus::PENDING)
-                    ->update(['status' => \App\Enums\RideRequestStatus::EXPIRED]);
+                    ->where('status', RideRequestStatus::PENDING)
+                    ->update(['status' => RideRequestStatus::EXPIRED]);
 
                 // Update the Ride status and assign driver
                 $ride->update([
-                    'status' => \App\Enums\RideStatus::ACCEPTED,
+                    'status' => RideStatus::ACCEPTED,
                     'driver_profile_id' => $driverProfile->id,
                     'accepted_at' => now(),
                 ]);
@@ -966,12 +998,15 @@ class DriverController extends Controller
             });
 
             // Notify Rider
-            event(new \App\Events\RideAcceptedEvent($ride->rider, \App\Enums\NotificationType::RIDE_ACCEPTED, null, null, ['ride_id' => $ride->id, 'driver' => $driverProfile->user->name]));
+            event(new RideAcceptedEvent($ride->rider, NotificationType::RIDE_ACCEPTED, null, null, ['ride_id' => $ride->id, 'driver' => $driverProfile->user->name]));
+
+            // Dispatch status change
+            event(new DriverStatusChanged($httpRequest->user(), 'busy'));
 
             return response()->json([
                 'success' => true,
                 'message' => 'Ride request accepted successfully.',
-                'ride' => new \App\Http\Resources\RideResource($ride->load(['rider', 'driverProfile.user'])),
+                'ride' => new RideResource($ride->load(['rider', 'driverProfile.user'])),
             ]);
 
         } catch (\Exception $e) {
@@ -992,7 +1027,7 @@ class DriverController extends Controller
         security: [['bearerAuth' => []]],
         tags: ['Driver Matching'],
         parameters: [
-            new OA\Parameter(name: 'request', in: 'path', required: true, description: 'ID of the RideRequest', schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'request', in: 'path', required: true, description: 'ID of the RideRequest', schema: new OA\Schema(type: 'integer')),
         ],
         responses: [
             new OA\Response(
@@ -1001,19 +1036,19 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Ride request declined successfully.')
+                        new OA\Property(property: 'message', type: 'string', example: 'Ride request declined successfully.'),
                     ]
                 )
             ),
             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
             new OA\Response(response: 403, ref: '#/components/responses/ForbiddenResponse'),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse')
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
         ]
     )]
-    public function declineRideRequest(Request $httpRequest, \App\Models\RideRequest $request): JsonResponse
+    public function declineRideRequest(Request $httpRequest, RideRequest $request): JsonResponse
     {
         $driverProfile = $httpRequest->user()->driverProfile;
-        if (!$driverProfile) {
+        if (! $driverProfile) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
@@ -1027,14 +1062,14 @@ class DriverController extends Controller
             ], 403);
         }
 
-        if ($request->status !== \App\Enums\RideRequestStatus::PENDING) {
+        if ($request->status !== RideRequestStatus::PENDING) {
             return response()->json([
                 'success' => false,
                 'message' => 'This request cannot be declined.',
             ], 422);
         }
 
-        $request->update(['status' => \App\Enums\RideRequestStatus::DECLINED]);
+        $request->update(['status' => RideRequestStatus::DECLINED]);
 
         return response()->json([
             'success' => true,
@@ -1058,7 +1093,7 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride')
+                        new OA\Property(property: 'ride', type: 'object', ref: '#/components/schemas/Ride'),
                     ]
                 )
             ),
@@ -1069,29 +1104,29 @@ class DriverController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: false),
-                        new OA\Property(property: 'message', type: 'string', example: 'No active ride found.')
+                        new OA\Property(property: 'message', type: 'string', example: 'No active ride found.'),
                     ]
                 )
-            )
+            ),
         ]
     )]
     public function activeRide(Request $request): JsonResponse
     {
         $driverProfile = $request->user()->driverProfile;
-        if (!$driverProfile) {
+        if (! $driverProfile) {
             return response()->json([
                 'success' => false,
                 'message' => 'Driver profile not found.',
             ], 404);
         }
 
-        $ride = \App\Models\Ride::where('driver_profile_id', $driverProfile->id)
-            ->whereNotIn('status', [\App\Enums\RideStatus::COMPLETED, \App\Enums\RideStatus::CANCELLED])
+        $ride = Ride::where('driver_profile_id', $driverProfile->id)
+            ->whereNotIn('status', [RideStatus::COMPLETED, RideStatus::CANCELLED])
             ->with(['rider', 'driverProfile.user'])
             ->latest()
             ->first();
 
-        if (!$ride) {
+        if (! $ride) {
             return response()->json([
                 'success' => false,
                 'message' => 'No active ride found.',
@@ -1100,7 +1135,7 @@ class DriverController extends Controller
 
         return response()->json([
             'success' => true,
-            'ride' => new \App\Http\Resources\RideResource($ride),
+            'ride' => new RideResource($ride),
         ]);
     }
 }

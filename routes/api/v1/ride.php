@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Rider\RiderController;
-use App\Http\Controllers\Driver\DriverController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\Driver\DriverController;
+use App\Http\Controllers\Rider\RiderController;
+use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
     // Phase 5 Rider Ride Actions
@@ -12,6 +12,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/request', [RiderController::class, 'requestRide']);
         Route::get('/active', [RiderController::class, 'activeRide']);
         Route::post('/{ride}/cancel', [RiderController::class, 'cancelRide']);
+        Route::get('/{ride}/tracking', [RiderController::class, 'getTrackingDetails']);
         Route::get('/{ride}', [RiderController::class, 'showRide']);
         Route::get('/', [RiderController::class, 'rideHistory']);
     });
@@ -62,5 +63,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/messages', [ChatController::class, 'sendMessage']);
         Route::post('/call', [ChatController::class, 'initiateCall']);
         Route::post('/emergency', [ChatController::class, 'triggerEmergency']);
+        Route::post('/typing/start', [ChatController::class, 'typingStart']);
+        Route::post('/typing/stop', [ChatController::class, 'typingStop']);
     });
+
+    // Real-Time Conversations, Receipts & Chat APIs
+    Route::post('/conversations', [ChatController::class, 'createConversation']);
+    Route::post('/messages', [ChatController::class, 'sendMessage']);
+    Route::get('/messages', [ChatController::class, 'getMessages']);
+    Route::post('/messages/{id}/delivered', [ChatController::class, 'markDelivered']);
+    Route::post('/messages/{id}/read', [ChatController::class, 'markRead']);
 });

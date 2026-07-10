@@ -2,9 +2,18 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationType;
 use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use App\Enums\WithdrawalStatus;
+use App\Events\PaymentFailedEvent;
+use App\Events\WalletCreditEvent;
+use App\Events\WalletDebitEvent;
+use App\Events\WalletTopupCompletedEvent;
+use App\Events\WithdrawalApprovedEvent;
+use App\Events\WithdrawalCompletedEvent;
+use App\Events\WithdrawalRejectedEvent;
+use App\Events\WithdrawalRequestedEvent;
 use App\Exceptions\InsufficientWalletBalanceException;
 use App\Models\ProcessedStripeEvent;
 use App\Models\Wallet;
@@ -50,7 +59,7 @@ class WalletService
                 'metadata' => $metadata,
             ]);
 
-            event(new \App\Events\WalletCreditEvent($wallet->user, \App\Enums\NotificationType::WALLET_CREDIT, null, null, ['amount' => $amount]));
+            event(new WalletCreditEvent($wallet->user, NotificationType::WALLET_CREDIT, null, null, ['amount' => $amount]));
 
             return $tx;
         });
@@ -79,7 +88,7 @@ class WalletService
 
             // Enforce that general users cannot withdraw beyond balance (except drivers who can go negative on commission debits)
             if ($type === WalletTransactionType::WITHDRAWAL && $before < $amount) {
-                throw new \Exception("Withdrawal amount exceeds wallet balance.");
+                throw new \Exception('Withdrawal amount exceeds wallet balance.');
             }
 
             $after = $before - $amount;
@@ -98,7 +107,7 @@ class WalletService
                 'metadata' => $metadata,
             ]);
 
-            event(new \App\Events\WalletDebitEvent($wallet->user, \App\Enums\NotificationType::WALLET_DEBIT, null, null, ['amount' => $amount]));
+            event(new WalletDebitEvent($wallet->user, NotificationType::WALLET_DEBIT, null, null, ['amount' => $amount]));
 
             return $tx;
         });
@@ -110,7 +119,7 @@ class WalletService
     public function createTopup(Wallet $wallet, float $amount): WalletTopup
     {
         if ($amount < 5.00 || $amount > 5000.00) {
-            throw new \Exception("Top-up amount must be between 5.00 and 5000.00.");
+            throw new \Exception('Top-up amount must be between 5.00 and 5000.00.');
         }
 
         return DB::transaction(function () use ($wallet, $amount) {
@@ -133,7 +142,7 @@ class WalletService
     public function processWebhookEvent(array $payload): void
     {
         $eventId = $payload['id'] ?? null;
-        if (!$eventId) {
+        if (! $eventId) {
             return;
         }
 
@@ -150,12 +159,12 @@ class WalletService
             $dataObject = $payload['data']['object'] ?? [];
             $intentId = $dataObject['id'] ?? null;
 
-            if (!$intentId) {
+            if (! $intentId) {
                 return;
             }
 
             $topup = WalletTopup::where('stripe_payment_intent', $intentId)->first();
-            if (!$topup || $topup->payment_status !== 'pending') {
+            if (! $topup || $topup->payment_status !== 'pending') {
                 return;
             }
 
@@ -171,19 +180,19 @@ class WalletService
                     $topup->wallet,
                     (float) $topup->amount,
                     WalletTransactionType::TOP_UP,
-                    'topup_' . $topup->id,
+                    'topup_'.$topup->id,
                     'Stripe wallet top-up completed',
                     ['stripe_payment_intent' => $intentId]
                 );
 
-                event(new \App\Events\WalletTopupCompletedEvent($topup->wallet->user, \App\Enums\NotificationType::WALLET_TOPUP, null, null, ['amount' => $topup->amount]));
+                event(new WalletTopupCompletedEvent($topup->wallet->user, NotificationType::WALLET_TOPUP, null, null, ['amount' => $topup->amount]));
             } elseif ($type === 'payment_intent.payment_failed') {
                 $topup->update([
                     'payment_status' => 'failed',
                     'gateway_response' => $payload,
                 ]);
 
-                event(new \App\Events\PaymentFailedEvent($topup->wallet->user, \App\Enums\NotificationType::PAYMENT_FAILED, null, null, ['amount' => $topup->amount]));
+                event(new PaymentFailedEvent($topup->wallet->user, NotificationType::PAYMENT_FAILED, null, null, ['amount' => $topup->amount]));
             }
         });
     }
@@ -194,11 +203,11 @@ class WalletService
     public function requestWithdrawal(Wallet $wallet, float $amount, ?int $bankAccountId = null): WithdrawalRequest
     {
         if ($amount <= 0) {
-            throw new \Exception("Cannot withdraw zero or negative amount.");
+            throw new \Exception('Cannot withdraw zero or negative amount.');
         }
 
         if ($wallet->balance < $amount) {
-            throw new \Exception("Withdrawal amount exceeds wallet balance.");
+            throw new \Exception('Withdrawal amount exceeds wallet balance.');
         }
 
         $withdrawal = WithdrawalRequest::create([
@@ -208,7 +217,7 @@ class WalletService
             'bank_account_id' => $bankAccountId,
         ]);
 
-        event(new \App\Events\WithdrawalRequestedEvent($wallet->user, \App\Enums\NotificationType::WITHDRAW_REQUESTED, null, null, ['amount' => $amount]));
+        event(new WithdrawalRequestedEvent($wallet->user, NotificationType::WITHDRAW_REQUESTED, null, null, ['amount' => $amount]));
 
         return $withdrawal;
     }
@@ -219,7 +228,7 @@ class WalletService
     public function approveWithdrawal(WithdrawalRequest $request, ?string $adminNote = null): void
     {
         if ($request->status !== WithdrawalStatus::PENDING) {
-            throw new \Exception("Withdrawal request is not pending.");
+            throw new \Exception('Withdrawal request is not pending.');
         }
 
         DB::transaction(function () use ($request, $adminNote) {
@@ -230,8 +239,8 @@ class WalletService
                 $wallet,
                 (float) $request->amount,
                 WalletTransactionType::WITHDRAWAL,
-                'withdrawal_' . $request->id,
-                'Approved withdrawal request #' . $request->id,
+                'withdrawal_'.$request->id,
+                'Approved withdrawal request #'.$request->id,
                 ['bank_account_id' => $request->bank_account_id]
             );
 
@@ -242,8 +251,8 @@ class WalletService
             ]);
         });
 
-        event(new \App\Events\WithdrawalApprovedEvent($request->wallet->user, \App\Enums\NotificationType::WITHDRAW_APPROVED, null, null, ['amount' => $request->amount]));
-        event(new \App\Events\WithdrawalCompletedEvent($request->wallet->user, \App\Enums\NotificationType::WITHDRAW_COMPLETED, null, null, ['amount' => $request->amount]));
+        event(new WithdrawalApprovedEvent($request->wallet->user, NotificationType::WITHDRAW_APPROVED, null, null, ['amount' => $request->amount]));
+        event(new WithdrawalCompletedEvent($request->wallet->user, NotificationType::WITHDRAW_COMPLETED, null, null, ['amount' => $request->amount]));
     }
 
     /**
@@ -252,7 +261,7 @@ class WalletService
     public function rejectWithdrawal(WithdrawalRequest $request, ?string $adminNote = null): void
     {
         if ($request->status !== WithdrawalStatus::PENDING) {
-            throw new \Exception("Withdrawal request is not pending.");
+            throw new \Exception('Withdrawal request is not pending.');
         }
 
         $request->update([
@@ -261,6 +270,6 @@ class WalletService
             'processed_at' => now(),
         ]);
 
-        event(new \App\Events\WithdrawalRejectedEvent($request->wallet->user, \App\Enums\NotificationType::WITHDRAW_REJECTED, null, null, ['amount' => $request->amount]));
+        event(new WithdrawalRejectedEvent($request->wallet->user, NotificationType::WITHDRAW_REJECTED, null, null, ['amount' => $request->amount]));
     }
 }

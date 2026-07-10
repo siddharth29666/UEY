@@ -6,8 +6,11 @@ use App\DTOs\SaveBankAccountDTO;
 use App\DTOs\UploadDocumentDTO;
 use App\Enums\DocumentStatus;
 use App\Enums\DriverDocumentType;
+use App\Enums\NotificationType;
 use App\Enums\UserStatus;
 use App\Enums\VehicleStatus;
+use App\Events\DriverDocumentApprovedEvent;
+use App\Events\DriverDocumentRejectedEvent;
 use App\Models\DriverBankAccount;
 use App\Models\DriverDocument;
 use App\Models\DriverProfile;
@@ -82,9 +85,9 @@ class DriverVerificationService
 
         // Notify Driver
         if ($status === DocumentStatus::APPROVED) {
-            event(new \App\Events\DriverDocumentApprovedEvent($document->driverProfile->user, \App\Enums\NotificationType::DRIVER_DOCUMENT_APPROVED, null, null, ['document_id' => $document->id]));
+            event(new DriverDocumentApprovedEvent($document->driverProfile->user, NotificationType::DRIVER_DOCUMENT_APPROVED, null, null, ['document_id' => $document->id]));
         } else {
-            event(new \App\Events\DriverDocumentRejectedEvent($document->driverProfile->user, \App\Enums\NotificationType::DRIVER_DOCUMENT_REJECTED, null, null, ['document_id' => $document->id, 'reason' => $reason]));
+            event(new DriverDocumentRejectedEvent($document->driverProfile->user, NotificationType::DRIVER_DOCUMENT_REJECTED, null, null, ['document_id' => $document->id, 'reason' => $reason]));
         }
 
         return $document;

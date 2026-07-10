@@ -2,10 +2,11 @@
 
 namespace App\Services\Payments;
 
+use App\Enums\WalletTransactionType;
+use App\Exceptions\InsufficientWalletBalanceException;
 use App\Models\Payment;
 use App\Models\Ride;
-use App\Models\WalletTransaction;
-use App\Exceptions\InsufficientWalletBalanceException;
+use App\Services\WalletService;
 
 class WalletGateway implements PaymentGatewayInterface
 {
@@ -27,14 +28,14 @@ class WalletGateway implements PaymentGatewayInterface
             );
         }
 
-        $walletService = app(\App\Services\WalletService::class);
+        $walletService = app(WalletService::class);
 
         // Debit rider's wallet
         $walletService->debit(
             $riderWallet,
             (float) $payment->total,
-            \App\Enums\WalletTransactionType::RIDE_PAYMENT,
-            'ride_' . $ride->id,
+            WalletTransactionType::RIDE_PAYMENT,
+            'ride_'.$ride->id,
             "Payment debited for Ride #{$ride->id}"
         );
 
@@ -50,14 +51,14 @@ class WalletGateway implements PaymentGatewayInterface
                 $walletService->credit(
                     $driverWallet,
                     (float) $payment->driver_earning,
-                    \App\Enums\WalletTransactionType::RIDE_EARNING,
-                    'ride_' . $ride->id,
+                    WalletTransactionType::RIDE_EARNING,
+                    'ride_'.$ride->id,
                     "Earnings credited for Ride #{$ride->id}"
                 );
             }
         }
 
         // Generate unique transaction reference
-        return 'PAY-' . now()->format('Ymd') . '-' . str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT);
+        return 'PAY-'.now()->format('Ymd').'-'.str_pad((string) $payment->id, 6, '0', STR_PAD_LEFT);
     }
 }

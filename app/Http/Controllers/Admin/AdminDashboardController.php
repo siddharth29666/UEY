@@ -34,7 +34,7 @@ class AdminDashboardController extends Controller
                 response: 200,
                 description: 'Dashboard summaries retrieved.',
                 content: new OA\JsonContent(ref: '#/components/schemas/DashboardResource')
-            )
+            ),
         ]
     )]
     public function index(Request $request): JsonResponse

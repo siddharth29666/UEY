@@ -25,6 +25,7 @@ class SettingService
     public function get(string $key, $default = null)
     {
         $settings = $this->all();
+
         return $settings[$key] ?? $default;
     }
 

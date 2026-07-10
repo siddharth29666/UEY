@@ -19,8 +19,11 @@ class AdminRideTest extends TestCase
     use RefreshDatabase;
 
     protected User $admin;
+
     protected User $rider;
+
     protected Ride $ride;
+
     protected VehicleType $vehicleType;
 
     protected function setUp(): void

@@ -5,14 +5,16 @@ namespace App\Exceptions;
 class InsufficientWalletBalanceException extends \Exception
 {
     protected float $balance;
+
     protected float $required;
+
     protected float $shortfall;
 
     public function __construct(
         float $balance,
         float $required,
         float $shortfall,
-        string $message = "Insufficient wallet balance."
+        string $message = 'Insufficient wallet balance.'
     ) {
         parent::__construct($message);
         $this->balance = $balance;

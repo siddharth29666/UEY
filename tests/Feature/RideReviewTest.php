@@ -12,9 +12,9 @@ use App\Models\RideReview;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Models\VehicleType;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 use Tests\TestCase;
 
 class RideReviewTest extends TestCase
@@ -22,6 +22,7 @@ class RideReviewTest extends TestCase
     use RefreshDatabase;
 
     protected User $rider;
+
     protected VehicleType $standardVehicleType;
 
     protected function setUp(): void
@@ -67,7 +68,7 @@ class RideReviewTest extends TestCase
 
         $profile = DriverProfile::create([
             'user_id' => $user->id,
-            'license_number' => 'DL-' . rand(100000, 999999),
+            'license_number' => 'DL-'.rand(100000, 999999),
             'license_expiry' => Carbon::now()->addYears(2),
             'is_online' => true,
             'rating' => 5.00,
@@ -82,7 +83,7 @@ class RideReviewTest extends TestCase
             'model' => 'Prius',
             'year' => 2021,
             'color' => 'White',
-            'plate_number' => 'PL-' . rand(1000, 9999),
+            'plate_number' => 'PL-'.rand(1000, 9999),
             'status' => VehicleStatus::APPROVED,
         ]);
 
@@ -120,7 +121,7 @@ class RideReviewTest extends TestCase
 
         // Driver starts with rating = 5.00, total_reviews = 0
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/rides/{$ride->id}/review", [
             'rating' => 4,
             'review' => 'Good driver but car was slightly dusty.',
@@ -144,8 +145,8 @@ class RideReviewTest extends TestCase
             ],
             'reviewee_stats' => [
                 'average_rating' => 4.0, // (5.00 * 0 + 4) / 1 = 4.0
-                'total_reviews' => 1
-            ]
+                'total_reviews' => 1,
+            ],
         ]);
 
         // Assert database values
@@ -169,7 +170,7 @@ class RideReviewTest extends TestCase
 
         // Rider starts with rating = 5.00, total = 0
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/rides/{$ride->id}/review", [
             'rating' => 3,
             'review' => 'Rider kept me waiting.',
@@ -190,8 +191,8 @@ class RideReviewTest extends TestCase
             ],
             'reviewee_stats' => [
                 'average_rating' => 3.0, // (5.00 * 0 + 3) / 1 = 3.0
-                'total_reviews' => 1
-            ]
+                'total_reviews' => 1,
+            ],
         ]);
 
         $this->rider->refresh();
@@ -207,7 +208,7 @@ class RideReviewTest extends TestCase
         $token = $this->rider->createToken('test', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/rides/{$ride->id}/review", [
             'rating' => 5,
         ]);
@@ -251,7 +252,7 @@ class RideReviewTest extends TestCase
         $token = $stranger->createToken('test', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/rides/{$ride->id}/review", [
             'rating' => 5,
         ]);
@@ -267,7 +268,7 @@ class RideReviewTest extends TestCase
         $token = $this->rider->createToken('test', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/rides/{$ride->id}/review", [
             'rating' => 6, // Invalid > 5
         ]);
@@ -287,7 +288,7 @@ class RideReviewTest extends TestCase
         $token = $this->rider->createToken('test', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/rides/{$ride->id}/review", [
             'rating' => 5,
         ]);
@@ -323,14 +324,14 @@ class RideReviewTest extends TestCase
         $token = $this->rider->createToken('test', ['role:rider'])->plainTextToken;
 
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->getJson("/api/v1/rides/{$ride->id}/review");
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
             'success',
             'rider_review' => ['id', 'rating', 'review', 'is_anonymous', 'reviewer_id', 'reviewer_name'],
-            'driver_review' => ['id', 'rating', 'review', 'is_anonymous', 'reviewer_id', 'reviewer_name']
+            'driver_review' => ['id', 'rating', 'review', 'is_anonymous', 'reviewer_id', 'reviewer_name'],
         ]);
         $response->assertJsonFragment([
             'reviewer_id' => $driver['user']->id,
@@ -373,7 +374,7 @@ class RideReviewTest extends TestCase
 
         // 1. Check pagination structure: page=1, per_page=2, sort=latest
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->getJson("/api/v1/drivers/{$driver['user']->id}/reviews?per_page=2&sort=latest");
 
         $response->assertStatus(200);
@@ -391,7 +392,7 @@ class RideReviewTest extends TestCase
                 'one_star',
             ],
             'meta' => ['current_page', 'per_page', 'total', 'last_page'],
-            'links' => ['first', 'last', 'prev', 'next']
+            'links' => ['first', 'last', 'prev', 'next'],
         ]);
 
         // Default latest: reviews should be sorted newest first (ID 3, then ID 2)
@@ -412,25 +413,25 @@ class RideReviewTest extends TestCase
                 'three_star' => 1,
                 'two_star' => 1,
                 'one_star' => 1,
-            ]
+            ],
         ]);
 
         // 2. Check sort = highest_rating
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->getJson("/api/v1/drivers/{$driver['user']->id}/reviews?sort=highest_rating");
         $this->assertEquals(3, $response->json('reviews.0.rating'));
 
         // 3. Check sort = lowest_rating
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->getJson("/api/v1/drivers/{$driver['user']->id}/reviews?sort=lowest_rating");
         $this->assertEquals(1, $response->json('reviews.0.rating'));
 
         // 4. Test validation of review tags limit (> 5 tags)
         $ride = $this->createRide($driver, RideStatus::COMPLETED);
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/rides/{$ride->id}/review", [
             'rating' => 5,
             'review_tags' => ['1', '2', '3', '4', '5', '6'], // 6 tags is too many
@@ -440,7 +441,7 @@ class RideReviewTest extends TestCase
 
         // 5. Test validation of tag character length (> 30 chars)
         $response = $this->withHeaders([
-            'Authorization' => "Bearer {$token}"
+            'Authorization' => "Bearer {$token}",
         ])->postJson("/api/v1/rides/{$ride->id}/review", [
             'rating' => 5,
             'review_tags' => [str_repeat('a', 31)],
