@@ -5636,6 +5636,1528 @@
                 ]
             }
         },
+        "/emergency-contacts": {
+            "get": {
+                "tags": [
+                    "Emergency Contacts"
+                ],
+                "summary": "List Emergency Contacts",
+                "description": "Retrieves all emergency contacts saved by the rider.",
+                "operationId": "ce223b84b721a443ff7ec6d36e9e257e",
+                "responses": {
+                    "200": {
+                        "description": "List retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EmergencyContactResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Emergency Contacts"
+                ],
+                "summary": "Create Emergency Contact",
+                "description": "Saves a new emergency contact. Respects max contacts limits.",
+                "operationId": "c2af018cb07ca2c0da4b3151c4776779",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreEmergencyContactRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Emergency contact created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/EmergencyContactResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/emergency-contacts/default": {
+            "get": {
+                "tags": [
+                    "Emergency Contacts"
+                ],
+                "summary": "Get Default Emergency Contacts",
+                "description": "Retrieves emergency contacts ordered by priority ascending.",
+                "operationId": "ae0836c6136d4731d4ba6dafce7f15a8",
+                "responses": {
+                    "200": {
+                        "description": "Default emergency contacts retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "contacts": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EmergencyContactResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/emergency-contacts/{id}": {
+            "put": {
+                "tags": [
+                    "Emergency Contacts"
+                ],
+                "summary": "Update Emergency Contact",
+                "description": "Updates details of an existing emergency contact.",
+                "operationId": "a4ba3b113d49f3369e1e847162a032ac",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateEmergencyContactRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Emergency contact updated.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/EmergencyContactResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Emergency Contacts"
+                ],
+                "summary": "Delete Emergency Contact",
+                "description": "Deletes a saved emergency contact.",
+                "operationId": "46dc9d2b3fdbe41003fedd8519d9394f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Emergency contact deleted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Emergency contact deleted successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/rides/{ride}/sos": {
+            "post": {
+                "tags": [
+                    "SOS & Emergency Alarms"
+                ],
+                "summary": "Trigger SOS Alert",
+                "description": "Triggers a new emergency SOS alarm during an active ride.",
+                "operationId": "a3fb8dcac0d61a3713ec8a12da5588f0",
+                "parameters": [
+                    {
+                        "name": "ride",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TriggerSOSRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "SOS Alert triggered.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/EmergencyAlertResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "409": {
+                        "description": "Conflict error when an active SOS alert already exists."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/emergency-alerts/{id}/acknowledge": {
+            "post": {
+                "tags": [
+                    "SOS & Emergency Alarms"
+                ],
+                "summary": "Acknowledge SOS Alert",
+                "description": "Allows the assigned driver to acknowledge the triggered emergency SOS alert.",
+                "operationId": "b8eb0e8bcbdefe280980597fdc35cb06",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SOS Alert acknowledged.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SOS Alert acknowledged successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/emergency-alerts/{id}/resolve": {
+            "post": {
+                "tags": [
+                    "SOS & Emergency Alarms"
+                ],
+                "summary": "Resolve SOS Alert",
+                "description": "Resolves the emergency alert. Can be resolved by the triggering rider or an administrator.",
+                "operationId": "ad6da155f221f54d25684d34dda70066",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResolveSOSRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "SOS Alert resolved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SOS Alert resolved successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/emergency-alerts": {
+            "get": {
+                "tags": [
+                    "SOS & Emergency Alarms"
+                ],
+                "summary": "List SOS Alerts",
+                "description": "Retrieves all emergency alerts related to the rider or driver.",
+                "operationId": "8e7073f1ea8198b101ec0d186db09f14",
+                "responses": {
+                    "200": {
+                        "description": "List retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EmergencyAlertResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/emergency-alerts/{id}": {
+            "get": {
+                "tags": [
+                    "SOS & Emergency Alarms"
+                ],
+                "summary": "Get SOS Alert Details",
+                "description": "Retrieves single SOS alert details including history logs.",
+                "operationId": "e49de697fec7742442b072f12366fa16",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/EmergencyAlertResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/emergency-alerts": {
+            "get": {
+                "tags": [
+                    "Admin SOS Moderation"
+                ],
+                "summary": "Admin List SOS Alerts",
+                "description": "Retrieves all SOS alerts on the platform (Admin only).",
+                "operationId": "5359d935b3e78a15534cf1a250326b82",
+                "responses": {
+                    "200": {
+                        "description": "SOS Alert list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EmergencyAlertResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/emergency-alerts/{id}": {
+            "get": {
+                "tags": [
+                    "Admin SOS Moderation"
+                ],
+                "summary": "Admin Get SOS Alert Details",
+                "description": "Retrieves complete single SOS alert details including history logs (Admin only).",
+                "operationId": "0f8e556244888fc673ab74c2038d810f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/EmergencyAlertResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/emergency-alerts/{id}/resolve": {
+            "post": {
+                "tags": [
+                    "Admin SOS Moderation"
+                ],
+                "summary": "Admin Resolve SOS Alert",
+                "description": "Resolves an active SOS alert with administrative notes.",
+                "operationId": "076d6d6d3d1f4db7e67bfa6612b4f61a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ResolveSOSRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "SOS Alert resolved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SOS Alert resolved successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/emergency-alerts/{id}/assign": {
+            "post": {
+                "tags": [
+                    "Admin SOS Moderation"
+                ],
+                "summary": "Admin Assign SOS Alert",
+                "description": "Assigns an administrator to manage the emergency alert.",
+                "operationId": "be750c4ddde05b2e6dd78e7e47398dbd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SOS Alert assigned.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SOS Alert assigned successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/emergency-alerts/{id}/close": {
+            "post": {
+                "tags": [
+                    "Admin SOS Moderation"
+                ],
+                "summary": "Admin Close SOS Alert",
+                "description": "Closes a resolved SOS alert.",
+                "operationId": "79686e7191f28621689ae5a73f931826",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "SOS Alert closed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "SOS Alert closed successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/emergency-alerts/statistics": {
+            "get": {
+                "tags": [
+                    "Admin SOS Moderation"
+                ],
+                "summary": "Admin SOS Statistics",
+                "description": "Returns consolidated metrics: today, weekly, monthly, active, resolved, average_response_time.",
+                "operationId": "1f6c5d3a7c52e6b8db9e902e11e16e7b",
+                "responses": {
+                    "200": {
+                        "description": "SOS statistics retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "today": {
+                                                    "type": "integer"
+                                                },
+                                                "weekly": {
+                                                    "type": "integer"
+                                                },
+                                                "monthly": {
+                                                    "type": "integer"
+                                                },
+                                                "active": {
+                                                    "type": "integer"
+                                                },
+                                                "resolved": {
+                                                    "type": "integer"
+                                                },
+                                                "average_response_time": {
+                                                    "type": "number",
+                                                    "format": "float"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/favorite-places": {
+            "get": {
+                "tags": [
+                    "Favorite Places"
+                ],
+                "summary": "List Favorite Places",
+                "description": "Retrieves all saved favorite locations for the authenticated rider.",
+                "operationId": "1baa70e8741149f8530d60d9468255b6",
+                "responses": {
+                    "200": {
+                        "description": "Favorite places list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/FavoritePlaceResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Favorite Places"
+                ],
+                "summary": "Create Favorite Place",
+                "description": "Saves a new favorite location for the rider.",
+                "operationId": "0e7864f41a4bed44792e8f8116ca4d80",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreFavoritePlaceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Favorite place created.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FavoritePlaceResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "409": {
+                        "description": "Conflict error or duplication limit exceeded."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/favorite-places/default": {
+            "get": {
+                "tags": [
+                    "Favorite Places"
+                ],
+                "summary": "Get Default & Nearest Places",
+                "description": "Returns Home and Work saved places, along with the nearest Saved place if latitude and longitude are supplied.",
+                "operationId": "4db51ff28d52676137389e3bac8e0f0d",
+                "parameters": [
+                    {
+                        "name": "latitude",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "longitude",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Default places retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "home": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/FavoritePlaceResource"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        },
+                                        "work": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/FavoritePlaceResource"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        },
+                                        "nearest_saved_place": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/FavoritePlaceResource"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/favorite-places/{id}": {
+            "get": {
+                "tags": [
+                    "Favorite Places"
+                ],
+                "summary": "Get Favorite Place Details",
+                "description": "Retrieves a single favorite place by ID.",
+                "operationId": "f17f52d3d4f65cfc50cef6ddff847c27",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Details retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FavoritePlaceResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Favorite Places"
+                ],
+                "summary": "Update Favorite Place",
+                "description": "Updates details of an existing favorite place.",
+                "operationId": "a59acbcfba32f0f91ff884e97fe249aa",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateFavoritePlaceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Favorite place updated.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/FavoritePlaceResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Favorite Places"
+                ],
+                "summary": "Delete Favorite Place",
+                "description": "Permanently deletes a saved favorite location.",
+                "operationId": "68a08a24559a5466b6a1eb6046573312",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Favorite place deleted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Favorite place deleted successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/ledgers": {
+            "get": {
+                "tags": [
+                    "Ledger (Admin)"
+                ],
+                "summary": "Admin — List Ledger Entries",
+                "description": "Returns paginated ledger journal entries with optional filters. Admin only.",
+                "operationId": "205fbbf447d15ff3305de1a58402100a",
+                "parameters": [
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "wallet_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "transaction_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "source",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "reference",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "credit",
+                                "debit"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ledger list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/LedgerResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/ledgers/{id}": {
+            "get": {
+                "tags": [
+                    "Ledger (Admin)"
+                ],
+                "summary": "Admin — Get Ledger Entry Detail",
+                "description": "Returns a single ledger entry including linked wallet, user, and wallet transaction data. Admin only.",
+                "operationId": "cd661e7011a4e61e3fefa57fac497586",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ledger entry retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/LedgerResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/wallet/ledger": {
+            "get": {
+                "tags": [
+                    "Wallet"
+                ],
+                "summary": "Rider — My Wallet Ledger History",
+                "description": "Returns the authenticated rider's immutable wallet ledger entries. Read-only.",
+                "operationId": "d92e004ff63964f7be2d0fe7dfc7175b",
+                "parameters": [
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "direction",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "credit",
+                                "debit"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ledger history retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/LedgerResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/notifications": {
             "get": {
                 "tags": [
@@ -6350,6 +7872,300 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Unauthorized."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/referrals/apply": {
+            "post": {
+                "tags": [
+                    "Referral System"
+                ],
+                "summary": "Apply Referral Code",
+                "description": "Applies an invitation referral code before the first ride is completed.",
+                "operationId": "a58919a360d6e8fb772f472517648e13",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ApplyReferralRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Referral code applied successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Referral code has been successfully applied to your account."
+                                        },
+                                        "referral": {
+                                            "$ref": "#/components/schemas/Referral"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/referrals/invite": {
+            "post": {
+                "tags": [
+                    "Referral System"
+                ],
+                "summary": "Invite Friend",
+                "description": "Generates a referral invitation sharing package for a friend.",
+                "operationId": "20c16b5c349ba3a33f4204ae26a6a5b6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/InviteFriendRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Invitation content generated.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "referral_code": {
+                                            "type": "string",
+                                            "example": "UEY4K8PZ"
+                                        },
+                                        "invitation_message": {
+                                            "type": "string",
+                                            "example": "Use my code UEY4K8PZ to get a discount..."
+                                        },
+                                        "share_url": {
+                                            "type": "string",
+                                            "example": "https://uey.mobility/download?code=UEY4K8PZ"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/referrals/code": {
+            "get": {
+                "tags": [
+                    "Referral System"
+                ],
+                "summary": "Get My Referral Code",
+                "description": "Retrieves the authenticated user's unique referral code.",
+                "operationId": "972af22cd586f92b98417646f30650b0",
+                "responses": {
+                    "200": {
+                        "description": "Referral code retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "referral_code": {
+                                            "type": "string",
+                                            "example": "UEY4K8PZ"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/referrals/history": {
+            "get": {
+                "tags": [
+                    "Referral System"
+                ],
+                "summary": "Referral History List",
+                "description": "Retrieves a list of all users referred by the authenticated user.",
+                "operationId": "cc82c072f9dcb8d3d5999a2c0d4f6726",
+                "responses": {
+                    "200": {
+                        "description": "Referral history retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "referrals": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ReferralHistoryResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/referrals/summary": {
+            "get": {
+                "tags": [
+                    "Referral System"
+                ],
+                "summary": "Referral Summary Stats",
+                "description": "Retrieves totals, pending count, and completed statistics.",
+                "operationId": "6fd9130fefdded5b309c31c7213e7033",
+                "responses": {
+                    "200": {
+                        "description": "Summary retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "total_referred": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "completed_referrals": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "pending_referrals": {
+                                            "type": "integer",
+                                            "example": 7
+                                        },
+                                        "total_earnings": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 50
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/referrals/earnings": {
+            "get": {
+                "tags": [
+                    "Referral System"
+                ],
+                "summary": "Referral Earnings History Ledger",
+                "description": "Retrieves the transaction ledger credits from referral bonuses.",
+                "operationId": "a6eb2e64edda0a40cce6bda871d3cb7b",
+                "responses": {
+                    "200": {
+                        "description": "Earnings history retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "earnings": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ReferralBonusResource"
+                                            }
                                         }
                                     },
                                     "type": "object"
@@ -8917,6 +10733,430 @@
                 },
                 "type": "object"
             },
+            "Referral": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "referrer_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "referred_user_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "referral_code": {
+                        "type": "string",
+                        "example": "UEY4K8PZ"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "first_ride_completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "referrer_bonus": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "referred_bonus": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 5
+                    },
+                    "rewarded_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ReferralHistoryResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "referred_user": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Bob Friend"
+                            },
+                            "phone": {
+                                "type": "string",
+                                "example": "+447922222222"
+                            },
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "example": "bob@example.com"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending"
+                    },
+                    "first_ride_completed": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "first_ride_completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ReferralBonusResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "credit"
+                    },
+                    "transaction_type": {
+                        "type": "string",
+                        "example": "referral_bonus"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "completed"
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "ref_bonus_referrer_1"
+                    },
+                    "remarks": {
+                        "type": "string",
+                        "example": "Referral bonus received"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "FavoritePlaceResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "home"
+                    },
+                    "label": {
+                        "type": "string",
+                        "example": "Home"
+                    },
+                    "nickname": {
+                        "type": "string",
+                        "example": "Sweet Home",
+                        "nullable": true
+                    },
+                    "google_place_id": {
+                        "type": "string",
+                        "example": "place_id_123",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "221B Baker St"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5237
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1585
+                    },
+                    "is_default": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "EmergencyContactResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+447911111111"
+                    },
+                    "relationship": {
+                        "type": "string",
+                        "example": "Brother"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "EmergencyAlertResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "ride_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "driver_id": {
+                        "type": "integer",
+                        "example": 2,
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5237
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1585
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Help me!",
+                        "nullable": true
+                    },
+                    "attachment": {
+                        "type": "string",
+                        "example": "sos/evidence.jpg",
+                        "nullable": true
+                    },
+                    "attachment_type": {
+                        "type": "string",
+                        "example": "photo",
+                        "nullable": true
+                    },
+                    "resolved_by": {
+                        "type": "integer",
+                        "example": 3,
+                        "nullable": true
+                    },
+                    "resolved_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "LedgerResource": {
+                "description": "Immutable accounting journal entry mirroring a single wallet transaction.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "wallet_transaction_id": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "wallet_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "RIDE_PAY_001",
+                        "nullable": true
+                    },
+                    "transaction_type": {
+                        "type": "string",
+                        "example": "ride_payment"
+                    },
+                    "direction": {
+                        "type": "string",
+                        "example": "debit",
+                        "enum": [
+                            "credit",
+                            "debit"
+                        ]
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 12.5
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "GBP"
+                    },
+                    "source": {
+                        "type": "string",
+                        "example": "ride_payment",
+                        "enum": [
+                            "ride_payment",
+                            "wallet_topup",
+                            "withdrawal",
+                            "refund",
+                            "referral_bonus",
+                            "admin_credit",
+                            "admin_debit",
+                            "promo_credit",
+                            "manual_adjustment",
+                            "stripe",
+                            "cash"
+                        ]
+                    },
+                    "remarks": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "metadata": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "wallet_transaction": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 10
+                            },
+                            "type": {
+                                "type": "string",
+                                "example": "debit"
+                            },
+                            "status": {
+                                "type": "string",
+                                "example": "completed"
+                            },
+                            "balance_before": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 100
+                            },
+                            "balance_after": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 87.5
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "user": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 3
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "John Rider"
+                            },
+                            "role": {
+                                "type": "string",
+                                "example": "rider"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "wallet": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 2
+                            },
+                            "balance": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 87.5
+                            },
+                            "currency": {
+                                "type": "string",
+                                "example": "GBP"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "SendOtpRequest": {
                 "required": [
                     "phone",
@@ -9634,6 +11874,193 @@
                     }
                 },
                 "type": "object"
+            },
+            "ApplyReferralRequest": {
+                "required": [
+                    "referral_code"
+                ],
+                "properties": {
+                    "referral_code": {
+                        "type": "string",
+                        "example": "UEY4K8PZ"
+                    }
+                },
+                "type": "object"
+            },
+            "InviteFriendRequest": {
+                "required": [
+                    "phone"
+                ],
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "example": "+447922222222"
+                    }
+                },
+                "type": "object"
+            },
+            "StoreFavoritePlaceRequest": {
+                "required": [
+                    "type",
+                    "label",
+                    "address",
+                    "latitude",
+                    "longitude"
+                ],
+                "properties": {
+                    "type": {
+                        "type": "string",
+                        "example": "home",
+                        "enum": [
+                            "home",
+                            "work",
+                            "saved"
+                        ]
+                    },
+                    "label": {
+                        "type": "string",
+                        "example": "Home"
+                    },
+                    "nickname": {
+                        "type": "string",
+                        "example": "Sweet Home",
+                        "nullable": true
+                    },
+                    "google_place_id": {
+                        "type": "string",
+                        "example": "place_id_123",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "221B Baker St"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5237
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1585
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateFavoritePlaceRequest": {
+                "properties": {
+                    "label": {
+                        "type": "string",
+                        "example": "My Home Office"
+                    },
+                    "nickname": {
+                        "type": "string",
+                        "example": "Home Office",
+                        "nullable": true
+                    },
+                    "address": {
+                        "type": "string",
+                        "example": "222 Baker St"
+                    },
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.524
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.16
+                    }
+                },
+                "type": "object"
+            },
+            "StoreEmergencyContactRequest": {
+                "required": [
+                    "name",
+                    "phone",
+                    "relationship",
+                    "priority"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "John Doe"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+447911111111"
+                    },
+                    "relationship": {
+                        "type": "string",
+                        "example": "Brother"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateEmergencyContactRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Johnathan Doe"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+447911111112"
+                    },
+                    "relationship": {
+                        "type": "string",
+                        "example": "Spouse"
+                    },
+                    "priority": {
+                        "type": "integer",
+                        "example": 2
+                    }
+                },
+                "type": "object"
+            },
+            "TriggerSOSRequest": {
+                "required": [
+                    "latitude",
+                    "longitude"
+                ],
+                "properties": {
+                    "latitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 51.5237
+                    },
+                    "longitude": {
+                        "type": "number",
+                        "format": "float",
+                        "example": -0.1585
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Help me, vehicle broken down!",
+                        "nullable": true
+                    },
+                    "photo": {
+                        "type": "string",
+                        "format": "binary",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ResolveSOSRequest": {
+                "properties": {
+                    "admin_note": {
+                        "type": "string",
+                        "example": "Dispatched emergency services, resolved successfully."
+                    }
+                },
+                "type": "object"
             }
         },
         "responses": {
@@ -9829,8 +12256,36 @@
             "description": "Driver Documents"
         },
         {
+            "name": "Emergency Contacts",
+            "description": "Emergency Contacts"
+        },
+        {
+            "name": "SOS & Emergency Alarms",
+            "description": "SOS & Emergency Alarms"
+        },
+        {
+            "name": "Admin SOS Moderation",
+            "description": "Admin SOS Moderation"
+        },
+        {
+            "name": "Favorite Places",
+            "description": "Favorite Places"
+        },
+        {
+            "name": "Ledger (Admin)",
+            "description": "Ledger (Admin)"
+        },
+        {
+            "name": "Wallet",
+            "description": "Wallet"
+        },
+        {
             "name": "Payments",
             "description": "Payments"
+        },
+        {
+            "name": "Referral System",
+            "description": "Referral System"
         },
         {
             "name": "Reviews",
@@ -9843,10 +12298,6 @@
         {
             "name": "Rider Rides",
             "description": "Rider Rides"
-        },
-        {
-            "name": "Wallet",
-            "description": "Wallet"
         }
     ]
 }

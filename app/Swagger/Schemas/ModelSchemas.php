@@ -381,4 +381,134 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'data', type: 'object', nullable: true),
     ]
 )]
+#[OA\Schema(
+    schema: 'Referral',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'referrer_id', type: 'integer', example: 1),
+        new OA\Property(property: 'referred_user_id', type: 'integer', example: 2),
+        new OA\Property(property: 'referral_code', type: 'string', example: 'UEY4K8PZ'),
+        new OA\Property(property: 'status', type: 'string', example: 'pending'),
+        new OA\Property(property: 'first_ride_completed_at', type: 'string', format: 'date-time', nullable: true),
+        new OA\Property(property: 'referrer_bonus', type: 'number', format: 'float', example: 10.00),
+        new OA\Property(property: 'referred_bonus', type: 'number', format: 'float', example: 5.00),
+        new OA\Property(property: 'rewarded_at', type: 'string', format: 'date-time', nullable: true),
+    ]
+)]
+#[OA\Schema(
+    schema: 'ReferralHistoryResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'referred_user', type: 'object', properties: [
+            new OA\Property(property: 'id', type: 'integer', example: 2),
+            new OA\Property(property: 'name', type: 'string', example: 'Bob Friend'),
+            new OA\Property(property: 'phone', type: 'string', example: '+447922222222'),
+            new OA\Property(property: 'email', type: 'string', format: 'email', example: 'bob@example.com'),
+        ]),
+        new OA\Property(property: 'status', type: 'string', example: 'pending'),
+        new OA\Property(property: 'first_ride_completed', type: 'boolean', example: false),
+        new OA\Property(property: 'first_ride_completed_at', type: 'string', format: 'date-time', nullable: true),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+    ]
+)]
+#[OA\Schema(
+    schema: 'ReferralBonusResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'amount', type: 'number', format: 'float', example: 10.00),
+        new OA\Property(property: 'type', type: 'string', example: 'credit'),
+        new OA\Property(property: 'transaction_type', type: 'string', example: 'referral_bonus'),
+        new OA\Property(property: 'status', type: 'string', example: 'completed'),
+        new OA\Property(property: 'reference', type: 'string', example: 'ref_bonus_referrer_1'),
+        new OA\Property(property: 'remarks', type: 'string', example: 'Referral bonus received'),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+    ]
+)]
+#[OA\Schema(
+    schema: 'FavoritePlaceResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'user_id', type: 'integer', example: 1),
+        new OA\Property(property: 'type', type: 'string', example: 'home'),
+        new OA\Property(property: 'label', type: 'string', example: 'Home'),
+        new OA\Property(property: 'nickname', type: 'string', example: 'Sweet Home', nullable: true),
+        new OA\Property(property: 'google_place_id', type: 'string', example: 'place_id_123', nullable: true),
+        new OA\Property(property: 'address', type: 'string', example: '221B Baker St'),
+        new OA\Property(property: 'latitude', type: 'number', format: 'float', example: 51.5237),
+        new OA\Property(property: 'longitude', type: 'number', format: 'float', example: -0.1585),
+        new OA\Property(property: 'is_default', type: 'boolean', example: true),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+    ]
+)]
+#[OA\Schema(
+    schema: 'EmergencyContactResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'user_id', type: 'integer', example: 1),
+        new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+        new OA\Property(property: 'phone', type: 'string', example: '+447911111111'),
+        new OA\Property(property: 'relationship', type: 'string', example: 'Brother'),
+        new OA\Property(property: 'priority', type: 'integer', example: 1),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+    ]
+)]
+#[OA\Schema(
+    schema: 'EmergencyAlertResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'ride_id', type: 'integer', example: 1),
+        new OA\Property(property: 'user_id', type: 'integer', example: 1),
+        new OA\Property(property: 'driver_id', type: 'integer', example: 2, nullable: true),
+        new OA\Property(property: 'status', type: 'string', example: 'active'),
+        new OA\Property(property: 'latitude', type: 'number', format: 'float', example: 51.5237),
+        new OA\Property(property: 'longitude', type: 'number', format: 'float', example: -0.1585),
+        new OA\Property(property: 'message', type: 'string', example: 'Help me!', nullable: true),
+        new OA\Property(property: 'attachment', type: 'string', example: 'sos/evidence.jpg', nullable: true),
+        new OA\Property(property: 'attachment_type', type: 'string', example: 'photo', nullable: true),
+        new OA\Property(property: 'resolved_by', type: 'integer', example: 3, nullable: true),
+        new OA\Property(property: 'resolved_at', type: 'string', format: 'date-time', nullable: true),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+    ]
+)]
+#[OA\Schema(
+    schema: 'LedgerResource',
+    description: 'Immutable accounting journal entry mirroring a single wallet transaction.',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'wallet_transaction_id', type: 'integer', example: 10),
+        new OA\Property(property: 'wallet_id', type: 'integer', example: 2),
+        new OA\Property(property: 'user_id', type: 'integer', example: 3),
+        new OA\Property(property: 'reference', type: 'string', example: 'RIDE_PAY_001', nullable: true),
+        new OA\Property(property: 'transaction_type', type: 'string', example: 'ride_payment'),
+        new OA\Property(property: 'direction', type: 'string', enum: ['credit', 'debit'], example: 'debit'),
+        new OA\Property(property: 'amount', type: 'number', format: 'float', example: 12.50),
+        new OA\Property(property: 'currency', type: 'string', example: 'GBP'),
+        new OA\Property(
+            property: 'source',
+            type: 'string',
+            enum: ['ride_payment', 'wallet_topup', 'withdrawal', 'refund', 'referral_bonus', 'admin_credit', 'admin_debit', 'promo_credit', 'manual_adjustment', 'stripe', 'cash'],
+            example: 'ride_payment'
+        ),
+        new OA\Property(property: 'remarks', type: 'string', nullable: true),
+        new OA\Property(property: 'metadata', type: 'object', nullable: true),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'wallet_transaction', type: 'object', nullable: true, properties: [
+            new OA\Property(property: 'id', type: 'integer', example: 10),
+            new OA\Property(property: 'type', type: 'string', example: 'debit'),
+            new OA\Property(property: 'status', type: 'string', example: 'completed'),
+            new OA\Property(property: 'balance_before', type: 'number', format: 'float', example: 100.00),
+            new OA\Property(property: 'balance_after', type: 'number', format: 'float', example: 87.50),
+        ]),
+        new OA\Property(property: 'user', type: 'object', nullable: true, properties: [
+            new OA\Property(property: 'id', type: 'integer', example: 3),
+            new OA\Property(property: 'name', type: 'string', example: 'John Rider'),
+            new OA\Property(property: 'role', type: 'string', example: 'rider'),
+        ]),
+        new OA\Property(property: 'wallet', type: 'object', nullable: true, properties: [
+            new OA\Property(property: 'id', type: 'integer', example: 2),
+            new OA\Property(property: 'balance', type: 'number', format: 'float', example: 87.50),
+            new OA\Property(property: 'currency', type: 'string', example: 'GBP'),
+        ]),
+    ]
+)]
 class ModelSchemas {}

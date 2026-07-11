@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\DashboardResource;
 use App\Models\DriverProfile;
+use App\Models\EmergencyAlert;
 use App\Models\Payment;
 use App\Models\Ride;
 use App\Models\RideReview;
@@ -61,6 +62,33 @@ class AdminDashboardController extends Controller
             'average_driver_rating' => round((float) DriverProfile::avg('rating'), 2),
             'average_rider_rating' => round((float) User::where('role', 'rider')->avg('rating'), 2),
         ];
+
+        // 1b. SOS Metric Summaries
+        $resolvedAlerts = EmergencyAlert::where('status', 'resolved')
+            ->whereNotNull('resolved_at')
+            ->get();
+        $totalSeconds = 0;
+        $longestResponse = 0;
+        foreach ($resolvedAlerts as $alert) {
+            $diff = $alert->created_at->diffInSeconds($alert->resolved_at);
+            $totalSeconds += $diff;
+            if ($diff > $longestResponse) {
+                $longestResponse = $diff;
+            }
+        }
+        $avgResponseTime = $resolvedAlerts->count() > 0
+            ? round($totalSeconds / $resolvedAlerts->count(), 2)
+            : 0.0;
+
+        $metrics['active_sos'] = EmergencyAlert::where('status', 'active')->count();
+        $metrics['resolved_sos'] = $resolvedAlerts->count();
+        $metrics['today_sos'] = EmergencyAlert::whereDate('created_at', Carbon::today())->count();
+        $metrics['monthly_sos'] = EmergencyAlert::whereMonth('created_at', Carbon::now()->month)->whereYear('created_at', Carbon::now()->year)->count();
+        $metrics['sos_response_time'] = $avgResponseTime;
+        $metrics['longest_response'] = $longestResponse;
+        $metrics['open_sos'] = EmergencyAlert::whereIn('status', ['active', 'acknowledged', 'assigned'])->count();
+        $metrics['resolved_today'] = EmergencyAlert::where('status', 'resolved')->whereDate('resolved_at', Carbon::today())->count();
+        $metrics['resolved_this_month'] = EmergencyAlert::where('status', 'resolved')->whereMonth('resolved_at', Carbon::now()->month)->whereYear('resolved_at', Carbon::now()->year)->count();
 
         // 2. Charts Data (Last 7 Days / Last 6 Months)
         $last7Days = collect(range(0, 6))->map(function ($days) {

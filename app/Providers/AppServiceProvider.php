@@ -14,6 +14,7 @@ use App\Events\MessageSent;
 use App\Events\PaymentFailedEvent;
 use App\Events\PaymentSucceededEvent;
 use App\Events\PromotionEvent;
+use App\Events\ReferralApplied;
 use App\Events\ReferralBonusEvent;
 use App\Events\ReviewReceivedEvent;
 use App\Events\RideAcceptedEvent;
@@ -103,11 +104,11 @@ class AppServiceProvider extends ServiceProvider
         // Review Events
         Event::listen(ReviewReceivedEvent::class, SendReviewNotification::class);
 
-        // Admin/Document/System Events
         Event::listen(DriverDocumentApprovedEvent::class, SendAdminNotification::class);
         Event::listen(DriverDocumentRejectedEvent::class, SendAdminNotification::class);
         Event::listen(AdminAnnouncementEvent::class, SendAdminNotification::class);
         Event::listen(ReferralBonusEvent::class, SendAdminNotification::class);
+        Event::listen(ReferralApplied::class, SendAdminNotification::class);
 
         // Promotion Events
         Event::listen(PromotionEvent::class, SendPromotionNotification::class);

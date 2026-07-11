@@ -1583,10 +1583,483 @@ This module describes the verification sequence for real-time ride tracking, cha
     }
     ```
 
+---
+
+### Phase 13: Referral & Rewards System Testing Flow
+
+This section details how to verify the referral system API endpoints and background scheduler tasks.
+
+#### 1. Get Referral Code
+*   **Method / Route:** `GET {{base_url}}/referrals/code`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "referral_code": "UEY4K8PZ"
+    }
+    ```
+
+#### 2. Apply Referral Code
+*   **Method / Route:** `POST {{base_url}}/referrals/apply`
+*   **Headers:**
+    *   `Authorization: Bearer {{friend_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "referral_code": "UEY4K8PZ"
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Referral code has been successfully applied to your account.",
+      "referral": {
+        "id": 1,
+        "referrer_id": 1,
+        "referred_user_id": 2,
+        "status": "pending"
+      }
+    }
+    ```
+
+#### 3. Invite Friend
+*   **Method / Route:** `POST {{base_url}}/referrals/invite`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "phone": "+447922222222"
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "referral_code": "UEY4K8PZ",
+      "invitation_message": "Use my referral code UEY4K8PZ to sign up and get a bonus...",
+      "share_url": "https://uey.mobility/download?code=UEY4K8PZ"
+    }
+    ```
+
+#### 4. Referral Summary Statistics
+*   **Method / Route:** `GET {{base_url}}/referrals/summary`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "total_referred": 1,
+      "completed_referrals": 0,
+      "pending_referrals": 1,
+      "total_earnings": 0.0
+    }
+    ```
+
+#### 5. Referral History List
+*   **Method / Route:** `GET {{base_url}}/referrals/history`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "referrals": [
+        {
+          "id": 1,
+          "referred_user": {
+            "name": "Bob Friend",
+            "phone": "+447922222222"
+          },
+          "status": "pending",
+          "first_ride_completed": false
+        }
+      ]
+    }
+    ```
+
+#### 6. Referral Earnings History Ledger
+*   **Method / Route:** `GET {{base_url}}/referrals/earnings`
+*   **Headers:**
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "earnings": [
+        {
+          "id": 15,
+          "amount": 10.0,
+          "type": "credit",
+          "transaction_type": "referral_bonus"
+        }
+      ]
+    }
+    ```
+
+---
+
+## 11. Scheduled Maintenance & Audits Testing Scenario (Step-by-Step)
+
+Follow this order to verify the scheduler commands manually via Artisan CLI:
+
+### Step 1: Ride Timeout Expiration Command
+1. Create a ride request and leave it `pending`.
+2. Wait until the timeout limit is exceeded (or update its `created_at` timestamp in the database to be older than 10 minutes).
+3. Run the following command in terminal:
+   ```bash
+   php artisan app:expire-pending-rides
+   ```
+4. Verify the console outputs `"Expired 1 pending rides."` and check that the ride's status is now `cancelled`.
+
+### Step 2: OTP Verification Cleanup Command
+1. Generate an OTP and verify it expires.
+2. Run the following command:
+   ```bash
+   php artisan app:cleanup-otp
+   ```
+3. Check the `otp_verifications` database table to confirm expired records have been deleted.
+
+### Step 3: Daily Wallet Settlement Audit Command
+1. Run the following command:
+   ```bash
+   php artisan app:wallet-settlement
+   ```
+2. Verify it outputs `"Wallet settlement ledger audit completed."` and logs any wallet transaction balance mismatch warnings to `storage/logs/laravel.log`.
+
+### Step 4: Driver Offline Inactivity Command
+1. Create an online driver profile (`is_online = true`) and set their `last_seen_at` to a timestamp older than 15 minutes.
+2. Run the command:
+   ```bash
+   php artisan app:driver-offline
+   ```
+3. Verify the driver is set to offline in the database and the console outputs `"Forced 1 inactive drivers offline."`.
+
+### Step 5: Verify Active Schedule List
+1. List all active cron intervals:
+   ```bash
+   php artisan schedule:list
+   ```
+2. Verify all 7 platform commands are listed as scheduled.
 
 
+---
+
+## 12. Favorite Places & Emergency SOS Testing Flow
+
+### Step 1: Create and Manage Favorite Places (Rider)
+1. List favorite places:
+   *   **Method / Route:** `GET {{base_url}}/favorite-places`
+   *   **Headers:** `Authorization: Bearer {{rider_token}}`
+   *   Verify response has empty data array.
+2. Create Home place:
+   *   **Method / Route:** `POST {{base_url}}/favorite-places`
+   *   **Body (JSON):**
+       ```json
+       {
+         "type": "home",
+         "label": "Home Sweet Home",
+         "address": "221B Baker Street",
+         "latitude": 51.5237,
+         "longitude": -0.1585
+       }
+       ```
+   *   Verify response returns `201 Created` and `is_default` is `true`.
+3. Try to save another Home:
+   *   Submit the same request with `type: "home"` but different latitude.
+   *   Verify response returns `422 Unprocessable Content`.
+4. Try to save a location within 20m of Home:
+   *   **Body (JSON):**
+       ```json
+       {
+         "type": "saved",
+         "label": "Baker St Station",
+         "address": "Baker Street Station",
+         "latitude": 51.5238,
+         "longitude": -0.1586
+       }
+       ```
+   *   Verify response returns `422 Unprocessable Content` due to coordinate proximity checks.
+
+### Step 2: Trigger SOS on Active Ride
+1. Trigger SOS Alert:
+   *   **Method / Route:** `POST {{base_url}}/rides/{{ride_id}}/sos`
+   *   **Body (multipart/form-data):**
+       *   `latitude`: 51.5123
+       *   `longitude`: -0.1345
+       *   `message`: "Emergency, vehicle breakdown!"
+   *   Verify response returns `201 Created` and status is `active`.
+2. Try to trigger a second active SOS on same ride:
+   *   Submit the same POST request.
+   *   Verify response returns `409 Conflict`.
+
+### Step 3: Driver Acknowledge SOS Alert
+1. Driver Acknowledges SOS:
+   *   **Method / Route:** `POST {{base_url}}/emergency-alerts/{{alert_id}}/acknowledge`
+   *   **Headers:** `Authorization: Bearer {{driver_token}}`
+   *   Verify response returns `200 OK` and status is updated to `acknowledged`.
+
+### Step 4: Admin Assign and Resolve SOS
+1. Admin Assign SOS:
+   *   **Method / Route:** `POST {{base_url}}/admin/emergency-alerts/{{alert_id}}/assign`
+   *   **Headers:** `Authorization: Bearer {{admin_token}}`
+   *   Verify response returns `200 OK`.
+2. Admin Retrieve Statistics:
+   *   **Method / Route:** `GET {{base_url}}/admin/emergency-alerts/statistics`
+   *   Verify statistics show updated count of active, resolved and open SOS alerts.
+3. Admin Resolve SOS:
+   *   **Method / Route:** `POST {{base_url}}/admin/emergency-alerts/{{alert_id}}/resolve`
+   *   **Body (JSON):**
+       ```json
+       {
+         "admin_note": "Contacted emergency services, all resolved."
+       }
+       ```
+   *   Verify response returns `200 OK`.
 
 
+---
 
+## 15. Wallet Ledger (Immutable Audit Journal)
 
+> **Note:** Ledger entries are **automatically created** by `WalletService` on every `credit()` and `debit()`. There is no write API — the ledger is strictly read-only.
 
+---
+
+### 15.1 Rider — View Own Ledger History
+
+**Endpoint:** `GET /api/v1/wallet/ledger`
+
+**Headers:**
+```
+Authorization: Bearer {{rider_token}}
+Accept: application/json
+```
+
+**Query Parameters (all optional):**
+
+| Parameter | Type | Example | Description |
+|---|---|---|---|
+| `date_from` | date | `2026-07-01` | Filter from date |
+| `date_to` | date | `2026-07-31` | Filter to date |
+| `direction` | string | `credit` | `credit` or `debit` |
+| `per_page` | integer | `20` | Results per page (default 20) |
+
+**Expected Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "wallet_transaction_id": 10,
+      "direction": "credit",
+      "amount": 50.00,
+      "currency": "GBP",
+      "source": "wallet_topup",
+      "transaction_type": "top_up",
+      "remarks": null,
+      "metadata": {},
+      "created_at": "2026-07-11T12:00:00+00:00"
+    }
+  ],
+  "meta": {
+    "total": 12,
+    "per_page": 20,
+    "current_page": 1,
+    "last_page": 1
+  }
+}
+```
+
+**Testing Checklist:**
+- [ ] Returns only the authenticated rider's own ledger entries
+- [ ] Filter `direction=credit` returns only credit entries
+- [ ] Filter `direction=debit` returns only debit entries
+- [ ] Filter `date_from` and `date_to` returns entries within that date range
+- [ ] Unauthenticated request returns `401`
+- [ ] Admin token without rider role returns `401`
+
+---
+
+### 15.2 Admin — List All Ledger Entries
+
+**Endpoint:** `GET /api/v1/admin/ledgers`
+
+**Headers:**
+```
+Authorization: Bearer {{admin_token}}
+Accept: application/json
+```
+
+**Query Parameters (all optional):**
+
+| Parameter | Type | Example | Description |
+|---|---|---|---|
+| `date_from` | date | `2026-07-01` | Start date |
+| `date_to` | date | `2026-07-31` | End date |
+| `wallet_id` | integer | `2` | Filter by wallet |
+| `user_id` | integer | `5` | Filter by user |
+| `transaction_type` | string | `ride_payment` | Filter by type |
+| `source` | string | `stripe` | Filter by source |
+| `reference` | string | `RIDE_001` | Partial match on reference |
+| `direction` | string | `debit` | `credit` or `debit` |
+| `per_page` | integer | `20` | Results per page |
+
+**Expected Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 5,
+      "wallet_transaction_id": 22,
+      "user_id": 7,
+      "wallet_id": 4,
+      "reference": "RIDE_PAY_022",
+      "transaction_type": "ride_payment",
+      "direction": "debit",
+      "amount": 15.00,
+      "currency": "GBP",
+      "source": "ride_payment",
+      "created_at": "2026-07-10T09:30:00+00:00"
+    }
+  ],
+  "meta": {
+    "total": 200,
+    "per_page": 20,
+    "current_page": 1,
+    "last_page": 10
+  }
+}
+```
+
+**Testing Checklist:**
+- [ ] Returns paginated results with correct `meta`
+- [ ] Filter `direction=credit` returns only credit entries
+- [ ] Filter `source=referral_bonus` returns only referral entries
+- [ ] Filter `wallet_id` scopes results to that wallet
+- [ ] Filter `reference=RIDE` performs partial match
+- [ ] Rider token returns `403 Forbidden`
+- [ ] Unauthenticated request returns `401`
+
+---
+
+### 15.3 Admin — View Single Ledger Entry
+
+**Endpoint:** `GET /api/v1/admin/ledgers/{id}`
+
+**Headers:**
+```
+Authorization: Bearer {{admin_token}}
+Accept: application/json
+```
+
+**Path Parameter:** `id` — Ledger entry ID
+
+**Expected Response (200 OK):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "wallet_transaction_id": 10,
+    "wallet_id": 2,
+    "user_id": 3,
+    "reference": "RIDE_PAY_001",
+    "transaction_type": "ride_payment",
+    "direction": "debit",
+    "amount": 12.50,
+    "currency": "GBP",
+    "source": "ride_payment",
+    "remarks": null,
+    "metadata": {},
+    "created_at": "2026-07-11T12:00:00+00:00",
+    "wallet_transaction": {
+      "id": 10,
+      "type": "debit",
+      "status": "completed",
+      "balance_before": 100.00,
+      "balance_after": 87.50,
+      "payment_gateway": "stripe",
+      "created_at": "2026-07-11T12:00:00+00:00"
+    },
+    "user": {
+      "id": 3,
+      "name": "John Rider",
+      "email": "john@example.com",
+      "phone": "+447911000001",
+      "role": "rider"
+    },
+    "wallet": {
+      "id": 2,
+      "balance": 87.50,
+      "currency": "GBP",
+      "status": "active"
+    }
+  }
+}
+```
+
+**Expected Response (404 Not Found):**
+```json
+{
+  "success": false,
+  "message": "No query results for model [App\\Models\\Ledger]."
+}
+```
+
+**Testing Checklist:**
+- [ ] Returns full ledger entry with linked `wallet_transaction`, `user`, and `wallet`
+- [ ] Invalid ID returns `404`
+- [ ] Rider token returns `403 Forbidden`
+
+---
+
+### 15.4 Ledger Backfill Command (Artisan — Idempotent)
+
+Run once after deployment to backfill ledger entries for all pre-existing wallet transactions. Safe to run multiple times.
+
+```bash
+php artisan app:ledger-backfill
+```
+
+**Expected Output:**
+```
+Starting ledger backfill...
+Backfill complete.
++-------------------------------+-------+
+| Metric                        | Count |
++-------------------------------+-------+
+| Total transactions scanned    | 450   |
+| Ledger entries created        | 380   |
+| Already existed (skipped)     | 70    |
++-------------------------------+-------+
+```
+
+> Running the command a second time will show `0` entries created (all already exist).
+
+---
+
+### 15.5 Verification After Backfill
+
+After running `app:ledger-backfill`, verify completeness:
+
+1. **Count wallet_transactions:**
+   ```sql
+   SELECT COUNT(*) FROM wallet_transactions;
+   ```
+2. **Count ledger entries:**
+   ```sql
+   SELECT COUNT(*) FROM ledgers;
+   ```
+3. **Find orphaned transactions (should be 0):**
+   ```sql
+   SELECT wt.id FROM wallet_transactions wt
+   LEFT JOIN ledgers l ON l.wallet_transaction_id = wt.id
+   WHERE l.id IS NULL;
+   ```

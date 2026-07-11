@@ -25,7 +25,8 @@ use Illuminate\Support\Facades\DB;
 class WalletService
 {
     public function __construct(
-        protected StripeService $stripeService
+        protected StripeService $stripeService,
+        protected LedgerService $ledgerService
     ) {}
 
     /**
@@ -58,6 +59,9 @@ class WalletService
                 'remarks' => $remarks,
                 'metadata' => $metadata,
             ]);
+
+            // Mirror to immutable audit ledger (1 tx → 1 ledger entry).
+            $this->ledgerService->createFromWalletTransaction($tx);
 
             event(new WalletCreditEvent($wallet->user, NotificationType::WALLET_CREDIT, null, null, ['amount' => $amount]));
 
@@ -106,6 +110,9 @@ class WalletService
                 'remarks' => $remarks,
                 'metadata' => $metadata,
             ]);
+
+            // Mirror to immutable audit ledger (1 tx → 1 ledger entry).
+            $this->ledgerService->createFromWalletTransaction($tx);
 
             event(new WalletDebitEvent($wallet->user, NotificationType::WALLET_DEBIT, null, null, ['amount' => $amount]));
 

@@ -258,4 +258,76 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'distance_unit', type: 'string', nullable: true),
     ]
 )]
+#[OA\Schema(
+    schema: 'ApplyReferralRequest',
+    required: ['referral_code'],
+    properties: [
+        new OA\Property(property: 'referral_code', type: 'string', example: 'UEY4K8PZ'),
+    ]
+)]
+#[OA\Schema(
+    schema: 'InviteFriendRequest',
+    required: ['phone'],
+    properties: [
+        new OA\Property(property: 'phone', type: 'string', example: '+447922222222'),
+    ]
+)]
+#[OA\Schema(
+    schema: 'StoreFavoritePlaceRequest',
+    required: ['type', 'label', 'address', 'latitude', 'longitude'],
+    properties: [
+        new OA\Property(property: 'type', type: 'string', enum: ['home', 'work', 'saved'], example: 'home'),
+        new OA\Property(property: 'label', type: 'string', example: 'Home'),
+        new OA\Property(property: 'nickname', type: 'string', example: 'Sweet Home', nullable: true),
+        new OA\Property(property: 'google_place_id', type: 'string', example: 'place_id_123', nullable: true),
+        new OA\Property(property: 'address', type: 'string', example: '221B Baker St'),
+        new OA\Property(property: 'latitude', type: 'number', format: 'float', example: 51.5237),
+        new OA\Property(property: 'longitude', type: 'number', format: 'float', example: -0.1585),
+    ]
+)]
+#[OA\Schema(
+    schema: 'UpdateFavoritePlaceRequest',
+    properties: [
+        new OA\Property(property: 'label', type: 'string', example: 'My Home Office'),
+        new OA\Property(property: 'nickname', type: 'string', example: 'Home Office', nullable: true),
+        new OA\Property(property: 'address', type: 'string', example: '222 Baker St'),
+        new OA\Property(property: 'latitude', type: 'number', format: 'float', example: 51.5240),
+        new OA\Property(property: 'longitude', type: 'number', format: 'float', example: -0.1600),
+    ]
+)]
+#[OA\Schema(
+    schema: 'StoreEmergencyContactRequest',
+    required: ['name', 'phone', 'relationship', 'priority'],
+    properties: [
+        new OA\Property(property: 'name', type: 'string', example: 'John Doe'),
+        new OA\Property(property: 'phone', type: 'string', example: '+447911111111'),
+        new OA\Property(property: 'relationship', type: 'string', example: 'Brother'),
+        new OA\Property(property: 'priority', type: 'integer', example: 1),
+    ]
+)]
+#[OA\Schema(
+    schema: 'UpdateEmergencyContactRequest',
+    properties: [
+        new OA\Property(property: 'name', type: 'string', example: 'Johnathan Doe'),
+        new OA\Property(property: 'phone', type: 'string', example: '+447911111112'),
+        new OA\Property(property: 'relationship', type: 'string', example: 'Spouse'),
+        new OA\Property(property: 'priority', type: 'integer', example: 2),
+    ]
+)]
+#[OA\Schema(
+    schema: 'TriggerSOSRequest',
+    required: ['latitude', 'longitude'],
+    properties: [
+        new OA\Property(property: 'latitude', type: 'number', format: 'float', example: 51.5237),
+        new OA\Property(property: 'longitude', type: 'number', format: 'float', example: -0.1585),
+        new OA\Property(property: 'message', type: 'string', example: 'Help me, vehicle broken down!', nullable: true),
+        new OA\Property(property: 'photo', type: 'string', format: 'binary', nullable: true),
+    ]
+)]
+#[OA\Schema(
+    schema: 'ResolveSOSRequest',
+    properties: [
+        new OA\Property(property: 'admin_note', type: 'string', example: 'Dispatched emergency services, resolved successfully.'),
+    ]
+)]
 class RequestSchemas {}

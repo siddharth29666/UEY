@@ -3468,6 +3468,157 @@ This module defines the API endpoints, broadcast channels, and real-time events 
 
 ---
 
+## Module 13: Referral & Rewards System
+
+This module defines the API endpoints for the referral system. Users can apply invitation codes, generate invitations for friends, view their current referral stats summary, and track their reward credits history.
+
+### 78. Apply Referral Code
+*   **API Name:** Apply Referral Code
+*   **Purpose:** Applies a friend's referral code to the user's account before the first ride is completed.
+*   **Endpoint URL:** `/referrals/apply`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes
+*   **Request Payload:**
+    ```json
+    {
+      "referral_code": "UEY4K8PZ"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Referral code has been successfully applied to your account.",
+      "referral": {
+        "id": 1,
+        "referrer_id": 1,
+        "referred_user_id": 2,
+        "referral_code": "UEY4K8PZ",
+        "status": "pending",
+        "first_ride_completed_at": null,
+        "referrer_bonus": 10.0,
+        "referred_bonus": 5.0,
+        "rewarded_at": null,
+        "created_at": "2026-07-11T12:00:00Z"
+      }
+    }
+    ```
+*   **Error Response (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "You cannot refer yourself."
+    }
+    ```
+
+### 79. Invite Friend
+*   **API Name:** Invite Friend
+*   **Purpose:** Generates referral sharing packages including referral code, message, and URL.
+*   **Endpoint URL:** `/referrals/invite`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes
+*   **Request Payload:**
+    ```json
+    {
+      "phone": "+447922222222"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "referral_code": "UEY4K8PZ",
+      "invitation_message": "Use my referral code UEY4K8PZ to sign up and get a bonus on UEY Premium Mobility! Download here: https://uey.mobility/download?code=UEY4K8PZ",
+      "share_url": "https://uey.mobility/download?code=UEY4K8PZ"
+    }
+    ```
+
+### 80. Get My Referral Code
+*   **API Name:** Get Referral Code
+*   **Purpose:** Retrieves the authenticated user's unique referral code.
+*   **Endpoint URL:** `/referrals/code`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "referral_code": "UEY4K8PZ"
+    }
+    ```
+
+### 81. Referral History List
+*   **API Name:** Referral History
+*   **Purpose:** Retrieves a list of users referred by the authenticated user.
+*   **Endpoint URL:** `/referrals/history`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "referrals": [
+        {
+          "id": 1,
+          "referred_user": {
+            "id": 2,
+            "name": "Bob Friend",
+            "phone": "+447922222222",
+            "email": "bob@example.com"
+          },
+          "status": "pending",
+          "first_ride_completed": false,
+          "first_ride_completed_at": null,
+          "created_at": "2026-07-11T12:00:00Z"
+        }
+      ]
+    }
+    ```
+
+### 82. Referral Summary Stats
+*   **API Name:** Referral Summary
+*   **Purpose:** Retrieves totals, pending counts, and total completed statistics.
+*   **Endpoint URL:** `/referrals/summary`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "total_referred": 1,
+      "completed_referrals": 0,
+      "pending_referrals": 1,
+      "total_earnings": 0.0
+    }
+    ```
+
+### 83. Referral Earnings History Ledger
+*   **API Name:** Referral Earnings
+*   **Purpose:** Retrieves the transaction history of credits earned from referrals.
+*   **Endpoint URL:** `/referrals/earnings`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "earnings": [
+        {
+          "id": 15,
+          "amount": 10.0,
+          "type": "credit",
+          "transaction_type": "referral_bonus",
+          "status": "completed",
+          "reference": "ref_bonus_referrer_1",
+          "remarks": "Referral bonus received",
+          "created_at": "2026-07-11T12:00:00Z"
+        }
+      ]
+    }
+    ```
+
+---
+
 ## Real-Time Channel & Event Specifications
 
 ### WebSocket Channels
@@ -3491,14 +3642,622 @@ This module defines the API endpoints, broadcast channels, and real-time events 
 7.  `WalletUpdated` / `PaymentCompleted`: Emits wallet balance modifications.
 8.  `ReviewSubmitted`: Broadcasts ratings on admin presence feed.
 9.  `MessageSent` / `MessageDelivered` / `MessageRead`: Emits chat states on `ride.{rideId}`.
-10. `TypingStarted` / `TypingStopped`: Emits client typing indicators on `ride.{rideId}`.
 11. `DriverStatusChanged`: Emits driver online, offline, busy states on `presence-drivers` and `presence-admins`.
 
 
+---
+
+## Phase 14: Favorite Places & Emergency SOS
+
+### 1. Favorite Places
+
+#### GET /favorite-places
+*   **Purpose:** List all favorite places saved by the authenticated rider.
+*   **Authentication Required:** Yes
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "id": 1,
+          "user_id": 1,
+          "type": "home",
+          "label": "Home",
+          "nickname": "Sweet Home",
+          "google_place_id": "place_id_123",
+          "address": "221B Baker St",
+          "latitude": 51.5237,
+          "longitude": -0.1585,
+          "is_default": true,
+          "created_at": "2026-07-11T12:00:00Z"
+        }
+      ]
+    }
+    ```
+
+#### GET /favorite-places/default
+*   **Purpose:** Get defaults (Home, Work, and nearest Saved Place based on query coordinates).
+*   **Authentication Required:** Yes
+*   **Query Parameters:**
+    *   `latitude`: decimal (optional)
+    *   `longitude`: decimal (optional)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "home": {
+        "id": 1,
+        "user_id": 1,
+        "type": "home",
+        "label": "Home",
+        "nickname": "Sweet Home",
+        "address": "221B Baker St",
+        "latitude": 51.5237,
+        "longitude": -0.1585,
+        "is_default": true
+      },
+      "work": {
+        "id": 2,
+        "user_id": 1,
+        "type": "work",
+        "label": "Office",
+        "nickname": "UEY HQ",
+        "address": "1 Canada Square",
+        "latitude": 51.5033,
+        "longitude": -0.0195,
+        "is_default": false
+      },
+      "nearest_saved_place": {
+        "id": 3,
+        "user_id": 1,
+        "type": "saved",
+        "label": "Gym",
+        "nickname": "Iron Temple",
+        "address": "10 Park Avenue",
+        "latitude": 51.5200,
+        "longitude": -0.1500,
+        "is_default": false
+      }
+    }
+    ```
+
+#### POST /favorite-places
+*   **Purpose:** Create a new favorite place. Prevents 20m coordinate collision and single Home/Work constraint.
+*   **Authentication Required:** Yes
+*   **Request Payload:**
+    ```json
+    {
+      "type": "home",
+      "label": "My Home",
+      "address": "221B Baker St",
+      "latitude": 51.5237,
+      "longitude": -0.1585
+    }
+    ```
+*   **Success Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "id": 1,
+        "user_id": 1,
+        "type": "home",
+        "label": "My Home",
+        "nickname": null,
+        "google_place_id": null,
+        "address": "221B Baker St",
+        "latitude": 51.5237,
+        "longitude": -0.1585,
+        "is_default": true,
+        "created_at": "2026-07-11T12:00:00Z"
+      }
+    }
+    ```
+*   **Error Responses:**
+    *   `422 Unprocessable Content`: If coordinates are within 20m of another place or if type Home/Work is duplicated.
+    *   `401 Unauthorized`: Missing bearer token.
+
+#### PUT /favorite-places/{id}
+*   **Purpose:** Update an existing favorite place.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "id": 1,
+        "user_id": 1,
+        "type": "home",
+        "label": "Home (Updated)",
+        "nickname": "Old Home",
+        "address": "221B Baker St",
+        "latitude": 51.5237,
+        "longitude": -0.1585,
+        "is_default": true,
+        "created_at": "2026-07-11T12:00:00Z"
+      }
+    }
+    ```
+
+#### DELETE /favorite-places/{id}
+*   **Purpose:** Delete a favorite place.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Favorite place deleted successfully."
+    }
+    ```
+
+---
+
+### 2. Emergency Contacts
+
+#### GET /emergency-contacts
+*   **Purpose:** List all emergency contacts.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "id": 1,
+          "user_id": 1,
+          "name": "John Doe",
+          "phone": "+447911111111",
+          "relationship": "Brother",
+          "priority": 1,
+          "created_at": "2026-07-11T12:00:00Z"
+        }
+      ]
+    }
+    ```
+
+#### GET /emergency-contacts/default
+*   **Purpose:** Get emergency contacts ordered by priority ascending.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "contacts": [
+        {
+          "id": 1,
+          "name": "John Doe",
+          "phone": "+447911111111",
+          "relationship": "Brother",
+          "priority": 1
+        }
+      ]
+    }
+    ```
+
+#### POST /emergency-contacts
+*   **Purpose:** Save a new emergency contact. Restricts limits using settings.
+*   **Success Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "id": 1,
+        "user_id": 1,
+        "name": "John Doe",
+        "phone": "+447911111111",
+        "relationship": "Brother",
+        "priority": 1,
+        "created_at": "2026-07-11T12:00:00Z"
+      }
+    }
+    ```
+
+---
+
+### 3. Emergency SOS Alerts
+
+#### POST /rides/{ride}/sos
+*   **Purpose:** Trigger an active SOS alert on a ride. Checks conflict (409) if an active SOS already exists.
+*   **Request Payload (multipart/form-data):**
+    *   `latitude`: decimal
+    *   `longitude`: decimal
+    *   `message`: string (optional)
+    *   `photo`: file (optional)
+*   **Success Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "id": 1,
+        "ride_id": 1,
+        "user_id": 1,
+        "driver_id": 2,
+        "status": "active",
+        "latitude": 51.5237,
+        "longitude": -0.1585,
+        "message": "Help me!",
+        "attachment": "sos/evidence.jpg",
+        "attachment_type": "photo",
+        "created_at": "2026-07-11T12:00:00Z"
+      }
+    }
+    ```
+*   **Error Responses:**
+    *   `409 Conflict`: If another active SOS alert is already in progress for the ride.
+    *   `422 Unprocessable Content`: If the ride is not active.
+
+#### POST /emergency-alerts/{id}/acknowledge
+*   **Purpose:** Driver acknowledges an active SOS alert.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "SOS Alert acknowledged by driver."
+    }
+    ```
+
+#### POST /emergency-alerts/{id}/resolve
+*   **Purpose:** Rider resolves their own SOS alert.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "SOS Alert resolved successfully."
+    }
+    ```
+
+#### GET /emergency-alerts
+*   **Purpose:** List SOS alerts associated with the user.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "id": 1,
+          "ride_id": 1,
+          "user_id": 1,
+          "driver_id": 2,
+          "status": "active",
+          "latitude": 51.5237,
+          "longitude": -0.1585,
+          "message": "Help me!"
+        }
+      ]
+    }
+    ```
+
+#### GET /emergency-alerts/{id}
+*   **Purpose:** View details of a specific SOS alert including its timeline history.
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "id": 1,
+        "ride_id": 1,
+        "user_id": 1,
+        "driver_id": 2,
+        "status": "active",
+        "latitude": 51.5237,
+        "longitude": -0.1585,
+        "message": "Help me!",
+        "histories": [
+          {
+            "id": 1,
+            "status": "active",
+            "message": "Emergency SOS triggered by rider.",
+            "created_at": "2026-07-11T12:00:00Z"
+          }
+        ]
+      }
+    }
+    ```
+
+---
+
+### 4. Admin SOS Moderation
+
+#### GET /admin/emergency-alerts
+*   **Purpose:** Retrieve list of all SOS alerts across the platform (Admin Only).
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "id": 1,
+          "ride_id": 1,
+          "user_id": 1,
+          "driver_id": 2,
+          "status": "active",
+          "latitude": 51.5237,
+          "longitude": -0.1585
+        }
+      ]
+    }
+    ```
+
+#### GET /admin/emergency-alerts/statistics
+*   **Purpose:** Retrieve consolidated SOS statistics (Admin Only).
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "today": 5,
+        "weekly": 20,
+        "monthly": 60,
+        "active": 2,
+        "resolved": 15,
+        "average_response_time": 320.50
+      }
+    }
+    ```
+
+#### POST /admin/emergency-alerts/{id}/assign
+*   **Purpose:** Assigns the logged-in administrator to manage the SOS alert (Admin Only).
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "SOS Alert assigned successfully."
+    }
+    ```
+
+#### POST /admin/emergency-alerts/{id}/resolve
+*   **Purpose:** Resolves the SOS alert and logs notes (Admin Only).
+*   **Request Payload:**
+    ```json
+    {
+      "admin_note": "Resolved by contacting driver."
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "SOS Alert resolved successfully by administrator."
+    }
+    ```
+
+#### POST /admin/emergency-alerts/{id}/close
+*   **Purpose:** Closes resolved alert (Admin Only).
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "SOS Alert closed successfully."
+    }
+    ```
 
 
+---
 
+## 15. Wallet Ledger (Immutable Audit Journal)
 
+The Ledger is a **read-only, append-only** immutable accounting journal that mirrors every `wallet_transaction` for compliance, audit, and finance reporting. It does **NOT** replace `wallet_transactions` — those remain the single source of truth for balances.
 
+> **Architecture Rule:** Every `WalletService::credit()` and `WalletService::debit()` call automatically writes a matching ledger entry. No manual API call is needed to create ledger entries.
 
+---
 
+### Data Model
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | integer | Ledger entry ID |
+| `wallet_transaction_id` | integer | 1:1 unique link to `wallet_transactions` |
+| `wallet_id` | integer | Parent wallet |
+| `user_id` | integer | Owner of the wallet |
+| `reference` | string | Payment reference (nullable) |
+| `transaction_type` | string | e.g. `ride_payment`, `top_up`, `referral_bonus` |
+| `direction` | string | `credit` or `debit` |
+| `amount` | decimal | Transaction amount |
+| `currency` | string | ISO currency code (e.g. `GBP`) |
+| `source` | string | Origin source — see `LedgerSource` enum below |
+| `remarks` | string | Optional human-readable notes (nullable) |
+| `metadata` | json | Arbitrary context: payment gateway, promo code, etc. |
+| `created_at` | datetime | Immutable creation timestamp |
+
+> **Immutability Guarantees:**
+> - Ledger rows can **never** be updated or deleted.
+> - The model throws `RuntimeException: Ledger entries are immutable` on any update or delete attempt.
+> - `wallet_transaction_id` has a unique database index — only one ledger entry per transaction.
+
+---
+
+### LedgerSource Enum Values
+
+| Value | Description |
+|---|---|
+| `ride_payment` | Deducted for a completed ride |
+| `wallet_topup` | Wallet funded by rider (Stripe / Cash) |
+| `withdrawal` | Driver payout / withdrawal |
+| `refund` | Ride cancellation refund |
+| `referral_bonus` | Referrer or invitee bonus |
+| `admin_credit` | Manual credit applied by admin |
+| `admin_debit` | Manual debit applied by admin |
+| `promo_credit` | Promotional discount credit |
+| `manual_adjustment` | Other manual adjustment |
+| `stripe` | Stripe gateway top-up override |
+| `cash` | Cash payment override |
+
+---
+
+### Rider Endpoints
+
+#### GET /api/v1/wallet/ledger
+
+Returns the authenticated rider's own immutable ledger history. Read-only.
+
+- **Auth:** Bearer Token (`role:rider` or `role:driver`)
+- **Query Parameters (optional):**
+
+| Param | Type | Example |
+|---|---|---|
+| `date_from` | date | `2026-07-01` |
+| `date_to` | date | `2026-07-31` |
+| `direction` | string | `credit` or `debit` |
+| `per_page` | integer | `20` (default) |
+
+- **Success Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "wallet_transaction_id": 10,
+      "wallet_id": 2,
+      "user_id": 3,
+      "reference": "RIDE_PAY_001",
+      "transaction_type": "ride_payment",
+      "direction": "debit",
+      "amount": 12.50,
+      "currency": "GBP",
+      "source": "ride_payment",
+      "remarks": null,
+      "metadata": {},
+      "created_at": "2026-07-11T12:00:00+00:00"
+    }
+  ],
+  "meta": {
+    "total": 1,
+    "per_page": 20,
+    "current_page": 1,
+    "last_page": 1
+  }
+}
+```
+
+---
+
+### Admin Endpoints
+
+#### GET /api/v1/admin/ledgers
+
+Returns all ledger entries with optional filtering. Admin only.
+
+- **Auth:** Bearer Token (`role:admin`)
+- **Query Parameters (optional):**
+
+| Param | Type | Description |
+|---|---|---|
+| `date_from` | date | Start date filter (YYYY-MM-DD) |
+| `date_to` | date | End date filter (YYYY-MM-DD) |
+| `wallet_id` | integer | Filter by wallet |
+| `user_id` | integer | Filter by user |
+| `transaction_type` | string | e.g. `ride_payment`, `top_up` |
+| `source` | string | e.g. `stripe`, `referral_bonus` |
+| `reference` | string | Partial match on reference field |
+| `direction` | string | `credit` or `debit` |
+| `per_page` | integer | Results per page (default 20) |
+
+- **Success Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 5,
+      "wallet_transaction_id": 22,
+      "user_id": 7,
+      "direction": "credit",
+      "amount": 10.00,
+      "currency": "GBP",
+      "source": "referral_bonus",
+      "transaction_type": "referral_bonus",
+      "created_at": "2026-07-10T09:30:00+00:00"
+    }
+  ],
+  "meta": {
+    "total": 200,
+    "per_page": 20,
+    "current_page": 1,
+    "last_page": 10
+  }
+}
+```
+
+---
+
+#### GET /api/v1/admin/ledgers/{id}
+
+Returns a single ledger entry with full linked details (wallet, user, wallet transaction). Admin only.
+
+- **Auth:** Bearer Token (`role:admin`)
+- **Path Parameter:** `id` — Ledger entry ID
+
+- **Success Response (200 OK):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "wallet_transaction_id": 10,
+    "wallet_id": 2,
+    "user_id": 3,
+    "reference": "RIDE_PAY_001",
+    "transaction_type": "ride_payment",
+    "direction": "debit",
+    "amount": 12.50,
+    "currency": "GBP",
+    "source": "ride_payment",
+    "remarks": null,
+    "metadata": {},
+    "created_at": "2026-07-11T12:00:00+00:00",
+    "wallet_transaction": {
+      "id": 10,
+      "type": "debit",
+      "status": "completed",
+      "balance_before": 100.00,
+      "balance_after": 87.50,
+      "payment_gateway": "stripe",
+      "created_at": "2026-07-11T12:00:00+00:00"
+    },
+    "user": {
+      "id": 3,
+      "name": "John Rider",
+      "email": "john@example.com",
+      "phone": "+447911000001",
+      "role": "rider"
+    },
+    "wallet": {
+      "id": 2,
+      "balance": 87.50,
+      "currency": "GBP",
+      "status": "active"
+    }
+  }
+}
+```
+
+- **Error Response (404 Not Found):**
+
+```json
+{
+  "success": false,
+  "message": "Ledger entry not found."
+}
+```
+
+---
+
+### Artisan Commands
+
+| Command | Description |
+|---|---|
+| `php artisan app:ledger-backfill` | Backfill missing ledger entries for all historical wallet transactions. **Fully idempotent** — safe to run multiple times. |
+| `php artisan app:wallet-settlement` | Daily audit: detects balance inconsistencies **and** auto-creates any missing ledger rows. |
+
+**Backfill output example:**
+```
++-------------------------------+-------+
+| Metric                        | Count |
++-------------------------------+-------+
+| Total transactions scanned    | 450   |
+| Ledger entries created        | 380   |
+| Already existed (skipped)     | 70    |
++-------------------------------+-------+
+```

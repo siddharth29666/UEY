@@ -22,6 +22,10 @@ Route::prefix('v1')->group(function () {
     require __DIR__.'/api/v1/review.php';
     require __DIR__.'/api/v1/notification.php';
     require __DIR__.'/api/v1/admin.php';
+    require __DIR__.'/api/v1/referral.php';
+    require __DIR__.'/api/v1/favorite_place.php';
+    require __DIR__.'/api/v1/emergency.php';
+    require __DIR__.'/api/v1/ledger.php';
 });
 
 Broadcast::routes(['middleware' => ['auth:sanctum']]);

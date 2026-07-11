@@ -5,16 +5,36 @@ namespace App\Models;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+
+    protected static function booted(): void
+    {
+        static::creating(function (User $user) {
+            if (empty($user->referral_code)) {
+                $user->referral_code = static::generateUniqueReferralCode();
+            }
+        });
+    }
+
+    public static function generateUniqueReferralCode(): string
+    {
+        do {
+            $code = strtoupper(Str::random(8));
+        } while (static::where('referral_code', $code)->exists());
+
+        return $code;
+    }
 
     /**
      * The attributes that are mass assignable.
@@ -35,6 +55,9 @@ class User extends Authenticatable
         'rating',
         'total_reviews',
         'last_login_at',
+        'referral_code',
+        'referred_by',
+        'first_ride_completed',
     ];
 
     /**
@@ -65,6 +88,7 @@ class User extends Authenticatable
             'rating' => 'decimal:2',
             'total_reviews' => 'integer',
             'last_login_at' => 'datetime',
+            'first_ride_completed' => 'boolean',
         ];
     }
 
@@ -154,5 +178,29 @@ class User extends Authenticatable
     public function notificationPreference(): HasOne
     {
         return $this->hasOne(NotificationPreference::class, 'user_id');
+    }
+
+    /**
+     * Get the referrals where this user is the referrer.
+     */
+    public function referrals(): HasMany
+    {
+        return $this->hasMany(Referral::class, 'referrer_id');
+    }
+
+    /**
+     * Get the users invited by this user.
+     */
+    public function invitedUsers(): HasMany
+    {
+        return $this->hasMany(User::class, 'referred_by');
+    }
+
+    /**
+     * Get the inviter user who referred this user.
+     */
+    public function referredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by');
     }
 }

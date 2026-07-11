@@ -33,6 +33,16 @@ enum NotificationType: string
     case COUPON = 'coupon';
     case SYSTEM = 'system';
     case REFERRAL_BONUS = 'referral_bonus';
+    case REFERRAL_APPLIED = 'referral_applied';
+    case REFERRAL_COMPLETED = 'referral_completed';
+    case FIRST_RIDE_COMPLETED = 'first_ride_completed';
+    case REFERRAL_BONUS_RECEIVED = 'referral_bonus_received';
+
+    case EMERGENCY_TRIGGERED = 'emergency_triggered';
+    case EMERGENCY_ACKNOWLEDGED = 'emergency_acknowledged';
+    case EMERGENCY_ASSIGNED = 'emergency_assigned';
+    case EMERGENCY_RESOLVED = 'emergency_resolved';
+    case EMERGENCY_CLOSED = 'emergency_closed';
 
     /**
      * Get category associated with the notification type.
@@ -70,7 +80,16 @@ enum NotificationType: string
             self::COUPON => NotificationCategory::PROMOTION,
 
             self::SYSTEM,
-            self::REFERRAL_BONUS => NotificationCategory::SYSTEM,
+            self::REFERRAL_BONUS,
+            self::REFERRAL_APPLIED,
+            self::REFERRAL_COMPLETED,
+            self::FIRST_RIDE_COMPLETED,
+            self::REFERRAL_BONUS_RECEIVED,
+            self::EMERGENCY_TRIGGERED,
+            self::EMERGENCY_ACKNOWLEDGED,
+            self::EMERGENCY_ASSIGNED,
+            self::EMERGENCY_RESOLVED,
+            self::EMERGENCY_CLOSED => NotificationCategory::SYSTEM,
         };
     }
 
@@ -93,7 +112,12 @@ enum NotificationType: string
             self::WITHDRAW_APPROVED,
             self::WITHDRAW_COMPLETED,
             self::PAYMENT_SUCCESS,
-            self::PAYMENT_FAILED => NotificationPriority::HIGH,
+            self::PAYMENT_FAILED,
+            self::EMERGENCY_TRIGGERED,
+            self::EMERGENCY_ACKNOWLEDGED,
+            self::EMERGENCY_ASSIGNED,
+            self::EMERGENCY_RESOLVED,
+            self::EMERGENCY_CLOSED => NotificationPriority::HIGH,
 
             self::WITHDRAW_REQUESTED,
             self::WITHDRAW_REJECTED,
@@ -101,7 +125,11 @@ enum NotificationType: string
             self::DRIVER_DOCUMENT_APPROVED,
             self::DRIVER_DOCUMENT_REJECTED,
             self::ADMIN_NOTIFICATION,
-            self::REFERRAL_BONUS => NotificationPriority::NORMAL,
+            self::REFERRAL_BONUS,
+            self::REFERRAL_APPLIED,
+            self::REFERRAL_COMPLETED,
+            self::FIRST_RIDE_COMPLETED,
+            self::REFERRAL_BONUS_RECEIVED => NotificationPriority::NORMAL,
 
             self::PROMOTION,
             self::COUPON,

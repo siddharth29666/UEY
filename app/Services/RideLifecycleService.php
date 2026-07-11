@@ -136,6 +136,9 @@ class RideLifecycleService
                     $paymentService = app(PaymentService::class);
                     $paymentService->processPaymentForRide($ride);
 
+                    // Detect referral first ride completion
+                    app(ReferralService::class)->detectFirstRideCompletion($ride->rider);
+
                     // Update driver profile current location to destination and sync with Redis if online
                     $this->locationService->updateLocation(
                         $driverProfile,

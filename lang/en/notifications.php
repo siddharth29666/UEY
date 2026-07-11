@@ -36,4 +36,18 @@ return [
     'admin' => [
         'broadcast' => ':message',
     ],
+    'referral_bonus' => 'Referral bonus of :amount credited to your wallet.',
+    'referral' => [
+        'applied' => 'Referral code has been successfully applied to your account.',
+        'completed' => 'Referral completed successfully for your friend :friend.',
+        'first_ride_completed' => 'You have completed your first ride! Referral rewards are being processed.',
+        'bonus_received' => 'You received a referral bonus of :amount!',
+    ],
+    'emergency' => [
+        'triggered' => 'Emergency SOS triggered on Ride #:ride_id.',
+        'acknowledged' => 'SOS Alert has been acknowledged by the driver.',
+        'assigned' => 'SOS Alert has been assigned to an administrator.',
+        'resolved' => 'SOS Alert has been resolved.',
+        'closed' => 'SOS Alert has been closed.',
+    ],
 ];

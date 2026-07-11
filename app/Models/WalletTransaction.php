@@ -6,6 +6,7 @@ use App\Enums\WalletTransactionStatus;
 use App\Enums\WalletTransactionType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class WalletTransaction extends Model
 {
@@ -60,5 +61,13 @@ class WalletTransaction extends Model
     public function wallet(): BelongsTo
     {
         return $this->belongsTo(Wallet::class);
+    }
+
+    /**
+     * Get the ledger entry associated with this transaction.
+     */
+    public function ledger(): HasOne
+    {
+        return $this->hasOne(Ledger::class, 'wallet_transaction_id');
     }
 }

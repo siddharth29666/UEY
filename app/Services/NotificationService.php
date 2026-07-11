@@ -262,6 +262,15 @@ class NotificationService
             NotificationType::COUPON => 'notifications.coupon',
             NotificationType::SYSTEM => 'notifications.system',
             NotificationType::REFERRAL_BONUS => 'notifications.referral_bonus',
+            NotificationType::REFERRAL_APPLIED => 'notifications.referral.applied',
+            NotificationType::REFERRAL_COMPLETED => 'notifications.referral.completed',
+            NotificationType::FIRST_RIDE_COMPLETED => 'notifications.referral.first_ride_completed',
+            NotificationType::REFERRAL_BONUS_RECEIVED => 'notifications.referral.bonus_received',
+            NotificationType::EMERGENCY_TRIGGERED => 'notifications.emergency.triggered',
+            NotificationType::EMERGENCY_ACKNOWLEDGED => 'notifications.emergency.acknowledged',
+            NotificationType::EMERGENCY_ASSIGNED => 'notifications.emergency.assigned',
+            NotificationType::EMERGENCY_RESOLVED => 'notifications.emergency.resolved',
+            NotificationType::EMERGENCY_CLOSED => 'notifications.emergency.closed',
         };
     }
 
