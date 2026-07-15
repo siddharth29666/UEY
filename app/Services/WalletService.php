@@ -123,7 +123,7 @@ class WalletService
     /**
      * Request a Stripe PaymentIntent for a wallet top-up.
      */
-    public function createTopup(Wallet $wallet, float $amount): WalletTopup
+    public function createTopup(Wallet $wallet, float $amount): \App\DTOs\TopupResultDTO
     {
         if ($amount < 5.00 || $amount > 5000.00) {
             throw new \Exception('Top-up amount must be between 5.00 and 5000.00.');
@@ -134,12 +134,18 @@ class WalletService
                 'wallet_id' => $wallet->id,
             ]);
 
-            return WalletTopup::create([
+            if (empty($intent->client_secret)) {
+                throw new \Exception('Stripe failed to return a valid client secret.');
+            }
+
+            $topup = WalletTopup::create([
                 'wallet_id' => $wallet->id,
                 'amount' => $amount,
                 'stripe_payment_intent' => $intent->id,
                 'payment_status' => 'pending',
             ]);
+
+            return new \App\DTOs\TopupResultDTO($topup, $intent->client_secret);
         });
     }
 

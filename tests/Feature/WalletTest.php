@@ -136,7 +136,10 @@ class WalletTest extends TestCase
 
         // Mock Stripe
         $stripeMock = $this->mock(StripeService::class);
-        $intentFake = PaymentIntent::constructFrom(['id' => 'pi_test_123']);
+        $intentFake = PaymentIntent::constructFrom([
+            'id' => 'pi_test_123',
+            'client_secret' => 'pi_test_123_secret_actual_stripe_secret_12345'
+        ]);
         $stripeMock->shouldReceive('createPaymentIntent')
             ->once()
             ->with(50.00, 'USD', \Mockery::any())
@@ -151,6 +154,7 @@ class WalletTest extends TestCase
         $response->assertStatus(200);
         $response->assertJson([
             'success' => true,
+            'client_secret' => 'pi_test_123_secret_actual_stripe_secret_12345',
             'payment_intent' => 'pi_test_123',
             'amount' => 50.00,
             'currency' => 'USD',
@@ -165,6 +169,34 @@ class WalletTest extends TestCase
             'stripe_payment_intent' => 'pi_test_123',
             'amount' => 50.00,
             'payment_status' => 'pending',
+        ]);
+    }
+
+    public function test_topup_intent_fails_when_stripe_returns_no_client_secret()
+    {
+        $token = $this->rider->createToken('test', ['role:rider'])->plainTextToken;
+
+        // Mock Stripe
+        $stripeMock = $this->mock(StripeService::class);
+        $intentFake = PaymentIntent::constructFrom([
+            'id' => 'pi_test_123',
+            'client_secret' => null // simulate empty/null client secret from Stripe
+        ]);
+        $stripeMock->shouldReceive('createPaymentIntent')
+            ->once()
+            ->with(50.00, 'USD', \Mockery::any())
+            ->andReturn($intentFake);
+
+        $response = $this->withHeaders([
+            'Authorization' => "Bearer {$token}",
+        ])->postJson('/api/v1/wallet/top-up', [
+            'amount' => 50.00,
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson([
+            'success' => false,
+            'message' => 'Stripe failed to return a valid client secret.',
         ]);
     }
 

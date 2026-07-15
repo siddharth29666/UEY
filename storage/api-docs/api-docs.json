@@ -9234,7 +9234,7 @@
                                         },
                                         "client_secret": {
                                             "type": "string",
-                                            "example": "pi_3MtwJD2eZvKYlo2C0DGk4_secret_xyz"
+                                            "example": "pi_3MtwJD2eZvKYlo2C0DGk4_secret_A1b2C3d4e5f6g7h8i9j0k1l2"
                                         },
                                         "payment_intent": {
                                             "type": "string",

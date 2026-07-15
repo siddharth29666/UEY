@@ -2573,7 +2573,7 @@ Returned when input fields fail to meet specified validation rules.
     ```json
     {
       "success": true,
-      "client_secret": "pi_3MtwJD2eZvKYlo2C0DGk4_secret_1234",
+      "client_secret": "pi_3MtwJD2eZvKYlo2C0DGk4_secret_A1b2C3d4e5f6g7h8i9j0k1l2",
       "payment_intent": "pi_3MtwJD2eZvKYlo2C0DGk4",
       "amount": 50.00,
       "currency": "USD",

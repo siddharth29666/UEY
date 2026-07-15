@@ -166,7 +166,7 @@ class WalletController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'client_secret', type: 'string', example: 'pi_3MtwJD2eZvKYlo2C0DGk4_secret_xyz'),
+                        new OA\Property(property: 'client_secret', type: 'string', example: 'pi_3MtwJD2eZvKYlo2C0DGk4_secret_A1b2C3d4e5f6g7h8i9j0k1l2'),
                         new OA\Property(property: 'payment_intent', type: 'string', example: 'pi_3MtwJD2eZvKYlo2C0DGk4'),
                         new OA\Property(property: 'amount', type: 'number', format: 'float', example: 50.00),
                         new OA\Property(property: 'currency', type: 'string', example: 'USD'),
@@ -192,11 +192,12 @@ class WalletController extends Controller
 
         try {
             $amount = (float) $request->input('amount');
-            $topup = $this->walletService->createTopup($wallet, $amount);
+            $result = $this->walletService->createTopup($wallet, $amount);
+            $topup = $result->walletTopup;
 
             return response()->json([
                 'success' => true,
-                'client_secret' => $topup->stripe_payment_intent.'_secret_'.rand(1000, 9999), // Mock client secret structure
+                'client_secret' => $result->clientSecret,
                 'payment_intent' => $topup->stripe_payment_intent,
                 'amount' => $amount,
                 'currency' => $wallet->currency,
