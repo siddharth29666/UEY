@@ -107,4 +107,59 @@ class DriverProfile extends Model
         return $this->hasOne(Vehicle::class, 'driver_profile_id')
             ->where('status', VehicleStatus::APPROVED);
     }
+
+    /**
+     * Get the overall document status for the driver.
+     */
+    public function getOverallStatusAttribute(): string
+    {
+        $requiredTypes = [
+            \App\Enums\DriverDocumentType::DRIVING_LICENSE,
+            \App\Enums\DriverDocumentType::VEHICLE_REGISTRATION,
+            \App\Enums\DriverDocumentType::INSURANCE,
+        ];
+
+        $uploadedDocs = $this->documents;
+        $docsMap = $uploadedDocs->keyBy(function ($doc) {
+            return $doc->document_type instanceof \BackedEnum ? $doc->document_type->value : (string) $doc->document_type;
+        });
+
+        $hasPending = false;
+        $hasRejected = false;
+        $hasExpired = false;
+
+        foreach ($requiredTypes as $typeEnum) {
+            $typeStr = $typeEnum instanceof \BackedEnum ? $typeEnum->value : (string) $typeEnum;
+
+            if (! isset($docsMap[$typeStr])) {
+                return 'missing';
+            }
+
+            $doc = $docsMap[$typeStr];
+
+            if ($doc->expires_at && $doc->expires_at->isPast()) {
+                $hasExpired = true;
+            }
+
+            if ($doc->status === \App\Enums\DocumentStatus::REJECTED) {
+                $hasRejected = true;
+            } elseif ($doc->status === \App\Enums\DocumentStatus::PENDING) {
+                $hasPending = true;
+            }
+        }
+
+        if ($hasExpired) {
+            return 'expired';
+        }
+
+        if ($hasRejected) {
+            return 'rejected';
+        }
+
+        if ($hasPending) {
+            return 'pending';
+        }
+
+        return 'approved';
+    }
 }

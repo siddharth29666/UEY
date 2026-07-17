@@ -1154,7 +1154,7 @@ flowchart TD
      "amount": 50.00
    }
    ```
-2. Verify response is **200 OK** containing `client_secret`, `payment_intent` (e.g. `pi_12345`), and a pending `wallet_topup` record.
+2. Verify response is **200 OK** containing `client_secret`, `payment_intent` (e.g. `pi_12345`), `stripe_publishable_key`, and a pending `wallet_topup` record.
 
 ### Step 3: Simulate Stripe Webhook Succeeded Event
 1. Since Stripe webhooks reside locally or in sandbox, simulate the hook locally.

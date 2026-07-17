@@ -421,12 +421,20 @@ class DriverController extends Controller
             ], 404);
         }
 
-        // Only active approved drivers can go online
-        if ($user->status !== UserStatus::ACTIVE) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only active approved drivers can go online.',
-            ], 403);
+        if ($request->boolean('is_online')) {
+            if ($user->status !== UserStatus::ACTIVE) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Only active approved drivers can go online.',
+                ], 403);
+            }
+
+            if ($driver->overall_status !== 'approved') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your documents must be approved before you can go online.',
+                ], 422);
+            }
         }
 
         $this->locationService->toggleOnlineStatus($driver, $request->boolean('is_online'));

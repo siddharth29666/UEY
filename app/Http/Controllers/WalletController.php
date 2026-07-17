@@ -170,46 +170,48 @@ class WalletController extends Controller
                         new OA\Property(property: 'payment_intent', type: 'string', example: 'pi_3MtwJD2eZvKYlo2C0DGk4'),
                         new OA\Property(property: 'amount', type: 'number', format: 'float', example: 50.00),
                         new OA\Property(property: 'currency', type: 'string', example: 'USD'),
+                        new OA\Property(property: 'stripe_publishable_key', type: 'string', example: 'pk_test_12345'),
                         new OA\Property(property: 'wallet_topup', ref: '#/components/schemas/WalletTopup'),
                     ]
                 )
-            ),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
-            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
-        ]
-    )]
-    public function topUp(Request $request): JsonResponse
-    {
-        $request->validate([
-            'amount' => ['required', 'numeric', 'min:5.00', 'max:5000.00'],
-        ]);
-
-        $user = $request->user();
-        $wallet = $user->wallet()->firstOrCreate(
-            ['user_id' => $user->id],
-            ['balance' => 0.00, 'currency' => 'USD', 'status' => 'active']
-        );
-
-        try {
-            $amount = (float) $request->input('amount');
-            $result = $this->walletService->createTopup($wallet, $amount);
-            $topup = $result->walletTopup;
-
-            return response()->json([
-                'success' => true,
-                'client_secret' => $result->clientSecret,
-                'payment_intent' => $topup->stripe_payment_intent,
-                'amount' => $amount,
-                'currency' => $wallet->currency,
-                'wallet_topup' => new WalletTopupResource($topup),
-            ]);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage(),
-            ], 422);
-        }
-    }
+             ),
+             new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
+             new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+         ]
+     )]
+     public function topUp(Request $request): JsonResponse
+     {
+         $request->validate([
+             'amount' => ['required', 'numeric', 'min:5.00', 'max:5000.00'],
+         ]);
+ 
+         $user = $request->user();
+         $wallet = $user->wallet()->firstOrCreate(
+             ['user_id' => $user->id],
+             ['balance' => 0.00, 'currency' => 'USD', 'status' => 'active']
+         );
+ 
+         try {
+             $amount = (float) $request->input('amount');
+             $result = $this->walletService->createTopup($wallet, $amount);
+             $topup = $result->walletTopup;
+ 
+             return response()->json([
+                 'success' => true,
+                 'client_secret' => $result->clientSecret,
+                 'payment_intent' => $topup->stripe_payment_intent,
+                 'amount' => $amount,
+                 'currency' => $wallet->currency,
+                 'stripe_publishable_key' => config('services.stripe.key'),
+                 'wallet_topup' => new WalletTopupResource($topup),
+             ]);
+         } catch (\Exception $e) {
+             return response()->json([
+                 'success' => false,
+                 'message' => $e->getMessage(),
+             ], 422);
+         }
+     }
 
     /**
      * File a withdrawal request.

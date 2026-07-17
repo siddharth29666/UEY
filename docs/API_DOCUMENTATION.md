@@ -2577,6 +2577,7 @@ Returned when input fields fail to meet specified validation rules.
       "payment_intent": "pi_3MtwJD2eZvKYlo2C0DGk4",
       "amount": 50.00,
       "currency": "USD",
+      "stripe_publishable_key": "pk_test_sample_stripe_publishable_key_12345",
       "wallet_topup": {
         "id": 3,
         "amount": 50.00,
