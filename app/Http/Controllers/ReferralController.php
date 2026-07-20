@@ -48,8 +48,16 @@ class ReferralController extends Controller
     )]
     public function apply(ApplyReferralRequest $request): JsonResponse
     {
+        $user = $request->user();
+        if ($user->referred_by !== null) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Referral already applied.',
+            ]);
+        }
+
         try {
-            $referral = $this->referralService->applyReferralCode($request->user(), $request->input('referral_code'));
+            $referral = $this->referralService->applyReferralCode($user, $request->input('referral_code'));
 
             return response()->json([
                 'success' => true,
@@ -57,6 +65,12 @@ class ReferralController extends Controller
                 'referral' => new ReferralResource($referral),
             ]);
         } catch (\Exception $e) {
+            if ($e->getMessage() === 'Referral already applied.') {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Referral already applied.',
+                ]);
+            }
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),

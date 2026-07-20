@@ -38,7 +38,7 @@ class RideService
     /**
      * Estimate fares for all active vehicle types.
      */
-    public function estimateFares(float $pickupLat, float $pickupLng, float $destLat, float $destLng): array
+    public function estimateFares(float $pickupLat, float $pickupLng, float $destLat, float $destLng, ?User $rider = null, ?string $promoCode = null): array
     {
         $distance = $this->calculateDistance($pickupLat, $pickupLng, $destLat, $destLng);
         $duration = (int) ceil($distance * 1.5); // Estimate 1.5 mins per KM
@@ -49,20 +49,84 @@ class RideService
         $vehicleTypes = VehicleType::where('active', true)->get();
         $estimates = [];
 
+        // Pre-validate promo code globally if passed (to fail early if completely invalid)
+        $promo = null;
+        $promoService = app(PromoService::class);
+        if ($promoCode && $rider) {
+            // Find promo code
+            $promo = \App\Models\PromoCode::where('code', $promoCode)->first();
+            if (!$promo || !$promo->is_active || ($promo->expires_at && $promo->expires_at->isPast())) {
+                throw new \Exception("Promo code is invalid or unavailable.");
+            }
+            // Global limit check
+            $globalUsages = DB::table('promo_code_usages')
+                ->where('promo_code_id', $promo->id)
+                ->whereIn('status', ['reserved', 'completed'])
+                ->count();
+            if ($promo->usage_limit !== null && $globalUsages >= $promo->usage_limit) {
+                throw new \Exception("Promo code is invalid or unavailable.");
+            }
+            // User usages check
+            $userUsages = DB::table('promo_code_usages')
+                ->where('promo_code_id', $promo->id)
+                ->where('user_id', $rider->id)
+                ->whereIn('status', ['reserved', 'completed'])
+                ->count();
+            if ($promo->per_user_limit !== null && $userUsages >= $promo->per_user_limit) {
+                throw new \Exception("Promo code is invalid or unavailable.");
+            }
+            // First ride only check
+            if ($promo->first_ride_only) {
+                $hasRides = DB::table('rides')
+                    ->where('rider_id', $rider->id)
+                    ->where('status', 'completed')
+                    ->exists();
+                if ($hasRides) {
+                    throw new \Exception("Promo code is invalid or unavailable.");
+                }
+            }
+        }
+
         foreach ($vehicleTypes as $type) {
             $fare = $type->base_fare + ($type->per_km_rate * $distance) + ($type->per_minute_rate * $duration);
             if ($fare < $type->minimum_fare) {
                 $fare = $type->minimum_fare;
             }
 
-            $estimates[] = [
+            $originalFare = round($fare, 2);
+            $discountAmount = 0.00;
+            $finalFare = $originalFare;
+
+            if ($promo && $rider) {
+                $eligible = true;
+                if (!empty($promo->ride_eligibility) && !in_array($type->id, $promo->ride_eligibility)) {
+                    $eligible = false;
+                }
+                if ($originalFare < (float) $promo->min_fare) {
+                    $eligible = false;
+                }
+
+                if ($eligible) {
+                    $discountAmount = $promoService->calculateDiscount($promo, $originalFare);
+                    $finalFare = max(0.00, $originalFare - $discountAmount);
+                }
+            }
+
+            $estimate = [
                 'vehicle_type_id' => $type->id,
                 'name' => $type->name,
                 'capacity' => $type->capacity,
                 'estimated_distance' => round($distance, 2),
                 'estimated_duration' => $duration,
-                'estimated_fare' => round($fare, 2),
+                'estimated_fare' => $originalFare,
             ];
+
+            if ($promoCode) {
+                $estimate['discount_amount'] = round($discountAmount, 2);
+                $estimate['final_fare'] = round($finalFare, 2);
+            }
+
+            $estimates[] = $estimate;
         }
 
         return $estimates;
@@ -93,6 +157,8 @@ class RideService
                 $fare = $vehicleType->minimum_fare;
             }
 
+            $originalFare = round($fare, 2);
+
             // Generate a 6-digit OTP
             $otp = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
@@ -109,9 +175,33 @@ class RideService
                 'otp' => $otp,
                 'estimated_distance' => round($distance, 2),
                 'estimated_duration' => $duration,
-                'estimated_fare' => round($fare, 2),
+                'estimated_fare' => $originalFare,
+                'discount_amount' => 0.00,
+                'final_estimated_fare' => $originalFare,
                 'payment_method' => $data['payment_method'] ?? 'cash',
             ]);
+
+            // If promo_code is provided, reserve it under database row lock
+            if (!empty($data['promo_code'])) {
+                $promoService = app(PromoService::class);
+                $usage = $promoService->reservePromo($rider, $data['promo_code'], $vehicleType->id, $originalFare, $ride->id);
+
+                $ride->update([
+                    'discount_amount' => $usage->discount_amount,
+                    'final_estimated_fare' => max(0.00, $originalFare - $usage->discount_amount),
+                ]);
+
+                // Create Audit Log for promo reserve
+                app(AuditLogService::class)->log(
+                    $rider,
+                    'promo_codes',
+                    'promo_reserve',
+                    'promo_codes',
+                    $usage->promo_code_id,
+                    null,
+                    ['ride_id' => $ride->id, 'discount_amount' => $usage->discount_amount]
+                );
+            }
 
             // Match with nearby drivers
             $matchingService = app(RideMatchingService::class);
@@ -149,6 +239,25 @@ class RideService
                 'cancelled_by' => $user->role->value,
                 'cancel_reason' => $reason,
             ]);
+
+            // Cancel promo code usage if exists
+            $promoUsage = \App\Models\PromoCodeUsage::where('ride_id', $ride->id)
+                ->whereIn('status', ['reserved', 'completed'])
+                ->first();
+            if ($promoUsage) {
+                app(PromoService::class)->cancelPromo($ride->id);
+
+                // Audit Log for promo cancel
+                app(AuditLogService::class)->log(
+                    $user,
+                    'promo_codes',
+                    'promo_cancel',
+                    'promo_codes',
+                    $promoUsage->promo_code_id,
+                    null,
+                    ['ride_id' => $ride->id]
+                );
+            }
 
             // Expire all pending ride requests
             $ride->requests()->where('status', RideRequestStatus::PENDING)->update([

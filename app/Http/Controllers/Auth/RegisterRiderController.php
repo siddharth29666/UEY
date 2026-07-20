@@ -75,7 +75,7 @@ class RegisterRiderController extends Controller
     {
         try {
             $dto = RegisterRiderDTO::fromRequest($request);
-            $user = $this->authService->registerRider($dto);
+            $user = $this->authService->registerRider($dto, $request->input('referral_code'));
 
             // Log user in automatically after registration
             $token = $user->createToken('uey-auth-token', ['role:rider'])->plainTextToken;

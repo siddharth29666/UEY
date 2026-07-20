@@ -31,7 +31,7 @@ class AuthService
      *
      * @throws ValidationException
      */
-    public function registerRider(RegisterRiderDTO $dto): User
+    public function registerRider(RegisterRiderDTO $dto, ?string $referralCode = null): User
     {
         // 1. Guard check: Verify OTP was successfully verified for this phone
         if (! $this->otpService->isVerified($dto->phone, OtpType::REGISTER)) {
@@ -40,7 +40,34 @@ class AuthService
             ]);
         }
 
-        return DB::transaction(function () use ($dto) {
+        $referrer = null;
+        if ($referralCode) {
+            $code = strtoupper(trim($referralCode));
+            $referrer = User::where('referral_code', $code)
+                ->where('status', UserStatus::ACTIVE)
+                ->first();
+
+            if (!$referrer) {
+                $validator = \Illuminate\Support\Facades\Validator::make([], []);
+                $validator->errors()->add('referral_code', 'Invalid referral code.');
+                throw new \Illuminate\Validation\ValidationException($validator, response()->json([
+                    'success' => false,
+                    'message' => 'Invalid referral code.',
+                ], 422));
+            }
+
+            // Self-referral validation
+            if ($referrer->phone === $dto->phone || ($dto->email && $referrer->email === $dto->email)) {
+                $validator = \Illuminate\Support\Facades\Validator::make([], []);
+                $validator->errors()->add('referral_code', 'Invalid referral code.');
+                throw new \Illuminate\Validation\ValidationException($validator, response()->json([
+                    'success' => false,
+                    'message' => 'Invalid referral code.',
+                ], 422));
+            }
+        }
+
+        return DB::transaction(function () use ($dto, $referrer, $referralCode) {
             // 2. Create Rider account
             $user = User::create([
                 'name' => $dto->name,
@@ -49,6 +76,7 @@ class AuthService
                 'password' => Hash::make($dto->password),
                 'role' => UserRole::RIDER,
                 'status' => UserStatus::ACTIVE,
+                'referred_by' => $referrer ? $referrer->id : null,
             ]);
 
             // 3. Initialize Wallet
@@ -56,6 +84,31 @@ class AuthService
                 'user_id' => $user->id,
                 'balance' => 0.00,
             ]);
+
+            // 4. Create pending Referral record
+            if ($referrer) {
+                $settingService = app(SettingService::class);
+                $referrerBonus = (float) $settingService->get('referral_bonus_referrer', 10.00);
+                $referredBonus = (float) $settingService->get('referral_bonus_referred', 5.00);
+
+                \App\Models\Referral::create([
+                    'referrer_id' => $referrer->id,
+                    'referred_user_id' => $user->id,
+                    'referral_code' => strtoupper(trim($referralCode)),
+                    'status' => 'pending',
+                    'referrer_bonus' => $referrerBonus,
+                    'referred_bonus' => $referredBonus,
+                ]);
+
+                // Fire notifications
+                event(new \App\Events\ReferralApplied($user, \App\Enums\NotificationType::REFERRAL_APPLIED, null, null, [
+                    'referrer_name' => $referrer->name,
+                ]));
+
+                event(new \App\Events\ReferralApplied($referrer, \App\Enums\NotificationType::REFERRAL_APPLIED, null, null, [
+                    'invitee_name' => $user->name,
+                ]));
+            }
 
             return $user;
         });
@@ -66,7 +119,7 @@ class AuthService
      *
      * @throws ValidationException
      */
-    public function registerDriver(RegisterDriverDTO $dto): User
+    public function registerDriver(RegisterDriverDTO $dto, ?string $referralCode = null): User
     {
         // 1. Guard check: Verify OTP was successfully verified for this phone
         if (! $this->otpService->isVerified($dto->phone, OtpType::REGISTER)) {
@@ -75,7 +128,34 @@ class AuthService
             ]);
         }
 
-        return DB::transaction(function () use ($dto) {
+        $referrer = null;
+        if ($referralCode) {
+            $code = strtoupper(trim($referralCode));
+            $referrer = User::where('referral_code', $code)
+                ->where('status', UserStatus::ACTIVE)
+                ->first();
+
+            if (!$referrer) {
+                $validator = \Illuminate\Support\Facades\Validator::make([], []);
+                $validator->errors()->add('referral_code', 'Invalid referral code.');
+                throw new \Illuminate\Validation\ValidationException($validator, response()->json([
+                    'success' => false,
+                    'message' => 'Invalid referral code.',
+                ], 422));
+            }
+
+            // Self-referral validation
+            if ($referrer->phone === $dto->phone || ($dto->email && $referrer->email === $dto->email)) {
+                $validator = \Illuminate\Support\Facades\Validator::make([], []);
+                $validator->errors()->add('referral_code', 'Invalid referral code.');
+                throw new \Illuminate\Validation\ValidationException($validator, response()->json([
+                    'success' => false,
+                    'message' => 'Invalid referral code.',
+                ], 422));
+            }
+        }
+
+        return DB::transaction(function () use ($dto, $referrer, $referralCode) {
             // 2. Create Driver account (status defaults to pending approval)
             $user = User::create([
                 'name' => $dto->name,
@@ -84,6 +164,7 @@ class AuthService
                 'password' => Hash::make($dto->password),
                 'role' => UserRole::DRIVER,
                 'status' => UserStatus::PENDING_APPROVAL,
+                'referred_by' => $referrer ? $referrer->id : null,
             ]);
 
             // 3. Initialize Driver Profile
@@ -112,6 +193,31 @@ class AuthService
                 'user_id' => $user->id,
                 'balance' => 0.00,
             ]);
+
+            // 6. Create pending Referral record
+            if ($referrer) {
+                $settingService = app(SettingService::class);
+                $referrerBonus = (float) $settingService->get('referral_bonus_referrer', 10.00);
+                $referredBonus = (float) $settingService->get('referral_bonus_referred', 5.00);
+
+                \App\Models\Referral::create([
+                    'referrer_id' => $referrer->id,
+                    'referred_user_id' => $user->id,
+                    'referral_code' => strtoupper(trim($referralCode)),
+                    'status' => 'pending',
+                    'referrer_bonus' => $referrerBonus,
+                    'referred_bonus' => $referredBonus,
+                ]);
+
+                // Fire notifications
+                event(new \App\Events\ReferralApplied($user, \App\Enums\NotificationType::REFERRAL_APPLIED, null, null, [
+                    'referrer_name' => $referrer->name,
+                ]));
+
+                event(new \App\Events\ReferralApplied($referrer, \App\Enums\NotificationType::REFERRAL_APPLIED, null, null, [
+                    'invitee_name' => $user->name,
+                ]));
+            }
 
             return $user;
         });

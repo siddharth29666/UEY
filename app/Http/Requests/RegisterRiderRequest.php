@@ -30,6 +30,28 @@ class RegisterRiderRequest extends FormRequest
                 Rule::unique('users', 'phone')->whereNull('deleted_at'),
             ],
             'password' => ['required', 'string', 'min:8'],
+            'referral_code' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'size:8',
+                Rule::exists('users', 'referral_code')->where('status', \App\Enums\UserStatus::ACTIVE->value ?: 'active'),
+            ],
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+    {
+        if ($validator->errors()->has('referral_code')) {
+            throw new \Illuminate\Validation\ValidationException($validator, response()->json([
+                'success' => false,
+                'message' => 'Invalid referral code.',
+            ], 422));
+        }
+
+        parent::failedValidation($validator);
     }
 }

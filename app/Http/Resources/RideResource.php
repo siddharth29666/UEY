@@ -28,9 +28,13 @@ class RideResource extends JsonResource
             'estimated_distance' => (float) $this->estimated_distance,
             'estimated_duration' => (int) $this->estimated_duration,
             'estimated_fare' => (float) $this->estimated_fare,
+            'discount_amount' => (float) $this->discount_amount,
+            'final_estimated_fare' => (float) $this->final_estimated_fare,
             'actual_distance' => $this->actual_distance !== null ? (float) $this->actual_distance : null,
             'actual_duration' => $this->actual_duration !== null ? (int) $this->actual_duration : null,
             'actual_fare' => $this->actual_fare !== null ? (float) $this->actual_fare : null,
+            'actual_discount_amount' => $this->actual_discount_amount !== null ? (float) $this->actual_discount_amount : null,
+            'final_actual_fare' => $this->final_actual_fare !== null ? (float) $this->final_actual_fare : null,
             'accepted_at' => $this->accepted_at ? $this->accepted_at->toIso8601String() : null,
             'arrived_at' => $this->arrived_at ? $this->arrived_at->toIso8601String() : null,
             'started_at' => $this->started_at ? $this->started_at->toIso8601String() : null,
@@ -47,6 +51,10 @@ class RideResource extends JsonResource
             // Nested relations if loaded
             'rider' => new UserResource($this->whenLoaded('rider')),
             'driver_profile' => new DriverProfileResource($this->whenLoaded('driverProfile')),
+            'promo_usage' => $this->relationLoaded('promoUsage') && $this->promoUsage ? [
+                'code' => $this->promoUsage->promoCode->code,
+                'discount_amount' => (float) $this->promoUsage->discount_amount,
+            ] : null,
         ];
     }
 }

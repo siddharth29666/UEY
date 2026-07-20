@@ -39,9 +39,13 @@ class Ride extends Model
         'estimated_distance',
         'estimated_duration',
         'estimated_fare',
+        'discount_amount',
+        'final_estimated_fare',
+        'actual_fare',
+        'actual_discount_amount',
+        'final_actual_fare',
         'actual_distance',
         'actual_duration',
-        'actual_fare',
         'accepted_at',
         'arrived_at',
         'started_at',
@@ -75,9 +79,13 @@ class Ride extends Model
             'estimated_distance' => 'decimal:2',
             'estimated_duration' => 'integer',
             'estimated_fare' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'final_estimated_fare' => 'decimal:2',
             'actual_distance' => 'decimal:2',
             'actual_duration' => 'integer',
             'actual_fare' => 'decimal:2',
+            'actual_discount_amount' => 'decimal:2',
+            'final_actual_fare' => 'decimal:2',
             'accepted_at' => 'datetime',
             'arrived_at' => 'datetime',
             'started_at' => 'datetime',
@@ -153,5 +161,13 @@ class Ride extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(RideReview::class, 'ride_id');
+    }
+
+    /**
+     * Get the promo usage associated with this ride.
+     */
+    public function promoUsage(): HasOne
+    {
+        return $this->hasOne(PromoCodeUsage::class, 'ride_id');
     }
 }

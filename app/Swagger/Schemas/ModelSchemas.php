@@ -504,11 +504,49 @@ use OpenApi\Attributes as OA;
             new OA\Property(property: 'name', type: 'string', example: 'John Rider'),
             new OA\Property(property: 'role', type: 'string', example: 'rider'),
         ]),
-        new OA\Property(property: 'wallet', type: 'object', nullable: true, properties: [
-            new OA\Property(property: 'id', type: 'integer', example: 2),
-            new OA\Property(property: 'balance', type: 'number', format: 'float', example: 87.50),
-            new OA\Property(property: 'currency', type: 'string', example: 'GBP'),
         ]),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'VehicleType',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'name', type: 'string', example: 'Economy'),
+        new OA\Property(property: 'capacity', type: 'integer', example: 4),
+        new OA\Property(property: 'base_fare', type: 'string', example: '2.50'),
+        new OA\Property(property: 'per_km_rate', type: 'string', example: '1.20'),
+        new OA\Property(property: 'per_minute_rate', type: 'string', example: '0.30'),
+        new OA\Property(property: 'minimum_fare', type: 'string', example: '5.00'),
+        new OA\Property(property: 'commission_percentage', type: 'string', example: '15.00'),
+        new OA\Property(property: 'icon_url', type: 'string', nullable: true, example: 'https://uey-assets.s3.amazonaws.com/vehicle-types/icons/sedan.png'),
+        new OA\Property(property: 'active', type: 'boolean', example: true),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'PromoResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'code', type: 'string', example: 'WELCOME50'),
+        new OA\Property(property: 'discount_type', type: 'string', example: 'percentage'),
+        new OA\Property(property: 'discount_value', type: 'string', example: '50.00'),
+        new OA\Property(property: 'max_discount', type: 'string', nullable: true, example: '200.00'),
+        new OA\Property(property: 'minimum_fare', type: 'string', example: '300.00'),
+        new OA\Property(property: 'expires_at', type: 'string', format: 'date-time', example: '2026-12-31T23:59:59Z'),
+        new OA\Property(property: 'first_ride_only', type: 'boolean', example: true),
+        new OA\Property(property: 'eligible', type: 'boolean', example: true),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'PromoHistoryResource',
+    properties: [
+        new OA\Property(property: 'ride_id', type: 'integer', example: 55),
+        new OA\Property(property: 'promo_code', type: 'string', example: 'WELCOME50'),
+        new OA\Property(property: 'discount_amount', type: 'string', example: '120.00'),
+        new OA\Property(property: 'status', type: 'string', example: 'completed'),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
     ]
 )]
 class ModelSchemas {}

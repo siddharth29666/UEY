@@ -113,7 +113,7 @@ class RegisterDriverController extends Controller
     {
         try {
             $dto = RegisterDriverDTO::fromRequest($request);
-            $user = $this->authService->registerDriver($dto);
+            $user = $this->authService->registerDriver($dto, $request->input('referral_code'));
 
             // Log user in automatically after registration (awaits document approval)
             $token = $user->createToken('uey-auth-token', ['role:driver'])->plainTextToken;

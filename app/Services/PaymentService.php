@@ -41,12 +41,12 @@ class PaymentService
         // Calculations
         $subtotal = (float) $ride->actual_fare;
         $tax = 0.00;
-        $discount = 0.00;
-        $total = $subtotal;
+        $discount = (float) $ride->actual_discount_amount;
+        $total = (float) $ride->final_actual_fare;
 
         $commissionRate = (float) config('services.payments.commission_rate', 15.0);
-        $commission = round($subtotal * ($commissionRate / 100), 2);
-        $driverEarning = round($subtotal - $commission, 2);
+        $commission = round($total * ($commissionRate / 100), 2);
+        $driverEarning = round($total - $commission, 2);
 
         try {
             return DB::transaction(function () use ($ride, $existingPayment, $subtotal, $tax, $discount, $total, $commission, $driverEarning) {

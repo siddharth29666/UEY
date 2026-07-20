@@ -47,7 +47,7 @@ class AdminPromoCodeController extends Controller
     )]
     public function index(Request $request): JsonResponse
     {
-        $query = PromoCode::query();
+        $query = PromoCode::withTrashed();
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -94,7 +94,7 @@ class AdminPromoCodeController extends Controller
     )]
     public function show($id): JsonResponse
     {
-        $promo = PromoCode::findOrFail($id);
+        $promo = PromoCode::withTrashed()->findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -170,7 +170,7 @@ class AdminPromoCodeController extends Controller
     )]
     public function update(PromoCodeRequest $request, $id): JsonResponse
     {
-        $promo = PromoCode::findOrFail($id);
+        $promo = PromoCode::withTrashed()->findOrFail($id);
         $oldValues = $promo->toArray();
 
         $promo->update($request->validated());
@@ -210,7 +210,7 @@ class AdminPromoCodeController extends Controller
     )]
     public function destroy(Request $request, $id): JsonResponse
     {
-        $promo = PromoCode::findOrFail($id);
+        $promo = PromoCode::withTrashed()->findOrFail($id);
         $oldValues = $promo->toArray();
 
         $promo->delete();
@@ -228,6 +228,103 @@ class AdminPromoCodeController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Promo Code deleted successfully.',
+        ]);
+    }
+
+    /**
+     * Activate or Deactivate Promo Code.
+     */
+    #[OA\Patch(
+        path: '/admin/promo-codes/{id}/status',
+        summary: 'Activate or Deactivate Promo Code',
+        description: 'Enables or disables a promo code.',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Promo Code Management'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['active'],
+                properties: [
+                    new OA\Property(property: 'active', type: 'boolean', example: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Promo Code status updated successfully.'),
+            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
+        ]
+    )]
+    public function status(Request $request, $id): JsonResponse
+    {
+        $promo = PromoCode::withTrashed()->findOrFail($id);
+        $oldValues = $promo->toArray();
+
+        $data = $request->validate([
+            'active' => ['required', 'boolean'],
+        ]);
+
+        $promo->update(['is_active' => $data['active']]);
+
+        $action = $data['active'] ? 'promo_activate' : 'promo_deactivate';
+
+        $this->auditService->log(
+            $request->user(),
+            'promo_codes',
+            $action,
+            'promo_codes',
+            $promo->id,
+            $oldValues,
+            $promo->fresh()->toArray()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Promo Code status updated successfully.',
+            'promo_code' => new PromoCodeResource($promo),
+        ]);
+    }
+
+    /**
+     * Restore Soft Deleted Promo Code.
+     */
+    #[OA\Post(
+        path: '/admin/promo-codes/{id}/restore',
+        summary: 'Restore Soft Deleted Promo Code',
+        description: 'Restores a previously soft deleted promo code config.',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Promo Code Management'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Promo Code restored successfully.'),
+            new OA\Response(response: 404, ref: '#/components/responses/NotFoundResponse'),
+        ]
+    )]
+    public function restore(Request $request, $id): JsonResponse
+    {
+        $promo = PromoCode::onlyTrashed()->findOrFail($id);
+        $oldValues = $promo->toArray();
+
+        $promo->restore();
+
+        $this->auditService->log(
+            $request->user(),
+            'promo_codes',
+            'promo_restore',
+            'promo_codes',
+            $promo->id,
+            $oldValues,
+            $promo->fresh()->toArray()
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Promo Code restored successfully.',
+            'promo_code' => new PromoCodeResource($promo),
         ]);
     }
 }

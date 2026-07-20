@@ -72,4 +72,61 @@ class RideReview extends Model
     {
         return $this->belongsTo(User::class, 'reviewee_id');
     }
+
+    /**
+     * The "booted" method of the model.
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (RideReview $review) {
+            static::recalculateDriverStats($review->reviewee_id);
+        });
+
+        static::deleted(function (RideReview $review) {
+            static::recalculateDriverStats($review->reviewee_id);
+        });
+
+        static::restored(function (RideReview $review) {
+            static::recalculateDriverStats($review->reviewee_id);
+        });
+    }
+
+    /**
+     * Recalculate average rating and total review counts.
+     */
+    public static function recalculateDriverStats(int $revieweeUserId): void
+    {
+        $reviewee = User::find($revieweeUserId);
+        if (!$reviewee) {
+            return;
+        }
+
+        // If it's a driver, update the driver profile rating and total_reviews
+        if ($reviewee->isDriver() && $reviewee->driverProfile) {
+            $stats = static::where('reviewee_id', $revieweeUserId)
+                ->selectRaw('COUNT(*) as total, AVG(rating) as average')
+                ->first();
+
+            $total = (int) ($stats->total ?? 0);
+            $average = $total > 0 ? round((float) $stats->average, 2) : 5.00;
+
+            $reviewee->driverProfile->update([
+                'rating' => $average,
+                'total_reviews' => $total,
+            ]);
+        } else {
+            // If it's a rider, update the user rating and total_reviews
+            $stats = static::where('reviewee_id', $revieweeUserId)
+                ->selectRaw('COUNT(*) as total, AVG(rating) as average')
+                ->first();
+
+            $total = (int) ($stats->total ?? 0);
+            $average = $total > 0 ? round((float) $stats->average, 2) : 5.00;
+
+            $reviewee->update([
+                'rating' => $average,
+                'total_reviews' => $total,
+            ]);
+        }
+    }
 }

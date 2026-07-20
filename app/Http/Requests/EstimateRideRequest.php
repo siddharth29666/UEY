@@ -24,6 +24,7 @@ class EstimateRideRequest extends FormRequest
             'pickup_longitude' => ['required', 'numeric', 'between:-180,180'],
             'destination_latitude' => ['required', 'numeric', 'between:-90,90'],
             'destination_longitude' => ['required', 'numeric', 'between:-180,180'],
+            'promo_code' => ['sometimes', 'nullable', 'string'],
         ];
     }
 }

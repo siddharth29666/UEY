@@ -535,4 +535,111 @@ class NotificationTest extends TestCase
         $this->assertEquals(5, $log->payload['rating']);
         $this->assertEquals(999, $log->payload['ride_id']);
     }
+
+    /**
+     * Test config/services.php throws exception when service-account file does not exist.
+     */
+    public function test_firebase_config_throws_exception_if_service_account_file_missing()
+    {
+        $_ENV['FIREBASE_SERVICE_ACCOUNT'] = 'storage/app/firebase/missing-file.json';
+        putenv('FIREBASE_SERVICE_ACCOUNT=storage/app/firebase/missing-file.json');
+
+        try {
+            require base_path('config/services.php');
+            $this->fail('Expected InvalidArgumentException was not thrown.');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString('Firebase service account file not found', $e->getMessage());
+        } finally {
+            // Restore default
+            $_ENV['FIREBASE_SERVICE_ACCOUNT'] = 'storage/app/firebase/service-account.json';
+            putenv('FIREBASE_SERVICE_ACCOUNT=storage/app/firebase/service-account.json');
+        }
+    }
+
+    /**
+     * Test local environment + force disabled => mock mode (isEnabled returns false)
+     */
+    public function test_firebase_is_enabled_local_force_disabled()
+    {
+        app()->bind('env', fn() => 'local');
+
+        config([
+            'services.firebase.enabled' => true,
+            'services.firebase.force_enable' => false,
+            'services.firebase.testing_allow_real_calls' => false,
+            'services.firebase.project_id' => 'ueyy-8c691',
+            'services.firebase.client_email' => 'laravel-fcm@ueyy-8c691.iam.gserviceaccount.com',
+            'services.firebase.private_key' => '-----BEGIN PRIVATE KEY----- fake key -----END PRIVATE KEY-----',
+        ]);
+
+        $firebaseService = app(\App\Services\FirebaseService::class);
+        $this->assertFalse($firebaseService->isEnabled());
+
+        // Restore env
+        app()->bind('env', fn() => 'testing');
+    }
+
+    /**
+     * Test local environment + force enabled => real FCM enabled (isEnabled returns true)
+     */
+    public function test_firebase_is_enabled_local_force_enabled()
+    {
+        app()->bind('env', fn() => 'local');
+
+        config([
+            'services.firebase.enabled' => true,
+            'services.firebase.force_enable' => true,
+            'services.firebase.project_id' => 'ueyy-8c691',
+            'services.firebase.client_email' => 'laravel-fcm@ueyy-8c691.iam.gserviceaccount.com',
+            'services.firebase.private_key' => '-----BEGIN PRIVATE KEY----- fake key -----END PRIVATE KEY-----',
+        ]);
+
+        $firebaseService = app(\App\Services\FirebaseService::class);
+        $this->assertTrue($firebaseService->isEnabled());
+
+        // Restore env
+        app()->bind('env', fn() => 'testing');
+    }
+
+    /**
+     * Test production environment + valid credentials => enabled (isEnabled returns true)
+     */
+    public function test_firebase_is_enabled_production_with_valid_credentials()
+    {
+        app()->bind('env', fn() => 'production');
+
+        config([
+            'services.firebase.enabled' => true,
+            'services.firebase.project_id' => 'ueyy-8c691',
+            'services.firebase.client_email' => 'laravel-fcm@ueyy-8c691.iam.gserviceaccount.com',
+            'services.firebase.private_key' => '-----BEGIN PRIVATE KEY----- fake key -----END PRIVATE KEY-----',
+        ]);
+
+        $firebaseService = app(\App\Services\FirebaseService::class);
+        $this->assertTrue($firebaseService->isEnabled());
+
+        // Restore env
+        app()->bind('env', fn() => 'testing');
+    }
+
+    /**
+     * Test missing credentials => disabled (isEnabled returns false)
+     */
+    public function test_firebase_is_enabled_missing_credentials()
+    {
+        app()->bind('env', fn() => 'production');
+
+        config([
+            'services.firebase.enabled' => true,
+            'services.firebase.project_id' => '',
+            'services.firebase.client_email' => '',
+            'services.firebase.private_key' => '',
+        ]);
+
+        $firebaseService = app(\App\Services\FirebaseService::class);
+        $this->assertFalse($firebaseService->isEnabled());
+
+        // Restore env
+        app()->bind('env', fn() => 'testing');
+    }
 }

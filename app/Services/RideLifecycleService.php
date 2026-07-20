@@ -123,11 +123,41 @@ class RideLifecycleService
                         'final_fare' => round($finalFare, 2),
                     ];
 
+                    $originalActualFare = round($finalFare, 2);
+                    $actualDiscountAmount = 0.00;
+                    $finalActualFare = $originalActualFare;
+
+                    $promoUsage = \App\Models\PromoCodeUsage::where('ride_id', $ride->id)
+                        ->where('status', 'reserved')
+                        ->first();
+
+                    if ($promoUsage) {
+                        $promoService = app(PromoService::class);
+                        $actualDiscountAmount = $promoService->calculateDiscount($promoUsage->promoCode, $originalActualFare);
+                        $finalActualFare = max(0.00, $originalActualFare - $actualDiscountAmount);
+
+                        // Complete promo usage in database
+                        $promoService->completePromo($ride->id, $originalActualFare);
+
+                        // Audit Log for promo apply/complete
+                        app(AuditLogService::class)->log(
+                            $ride->rider,
+                            'promo_codes',
+                            'promo_apply',
+                            'promo_codes',
+                            $promoUsage->promo_code_id,
+                            null,
+                            ['ride_id' => $ride->id, 'discount_amount' => $actualDiscountAmount]
+                        );
+                    }
+
                     $ride->update([
                         'status' => RideStatus::COMPLETED,
                         'actual_distance' => $distance,
                         'actual_duration' => $duration,
-                        'actual_fare' => round($finalFare, 2),
+                        'actual_fare' => $originalActualFare,
+                        'actual_discount_amount' => $actualDiscountAmount,
+                        'final_actual_fare' => $finalActualFare,
                         'completed_at' => now(),
                         'fare_breakdown' => $breakdown,
                     ]);

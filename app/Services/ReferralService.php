@@ -48,7 +48,7 @@ class ReferralService
             }
 
             if ($invitee->referred_by !== null) {
-                throw new \Exception('You have already applied a referral code.');
+                throw new \Exception('Referral already applied.');
             }
 
             if ($invitee->first_ride_completed) {
@@ -58,7 +58,7 @@ class ReferralService
             // check if there is an existing referral record to be sure
             $exists = Referral::where('referred_user_id', $invitee->id)->exists();
             if ($exists) {
-                throw new \Exception('You have already applied a referral code.');
+                throw new \Exception('Referral already applied.');
             }
 
             // 3. Apply referral relationship

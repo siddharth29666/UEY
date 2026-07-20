@@ -31,6 +31,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'email', type: 'string', format: 'email', example: 'john.rider@example.com'),
         new OA\Property(property: 'phone', type: 'string', example: '+447911123456'),
         new OA\Property(property: 'password', type: 'string', format: 'password', example: 'password123'),
+        new OA\Property(property: 'referral_code', type: 'string', example: 'ABC12345', nullable: true),
     ]
 )]
 
@@ -53,6 +54,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'vehicle_color', type: 'string', example: 'Silver'),
         new OA\Property(property: 'vehicle_plate', type: 'string', example: 'ABC-999'),
         new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 1),
+        new OA\Property(property: 'referral_code', type: 'string', example: 'ABC12345', nullable: true),
     ]
 )]
 
@@ -126,6 +128,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'pickup_longitude', type: 'number', format: 'float', example: -0.1278),
         new OA\Property(property: 'destination_latitude', type: 'number', format: 'float', example: 51.5204),
         new OA\Property(property: 'destination_longitude', type: 'number', format: 'float', example: -0.1482),
+        new OA\Property(property: 'promo_code', type: 'string', example: 'WELCOME50', nullable: true),
     ]
 )]
 
@@ -140,6 +143,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'destination_longitude', type: 'number', format: 'float', example: -0.1482),
         new OA\Property(property: 'destination_address', type: 'string', example: "Regent's Park, London"),
         new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 1),
+        new OA\Property(property: 'promo_code', type: 'string', example: 'WELCOME50', nullable: true),
     ]
 )]
 
@@ -324,10 +328,35 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'photo', type: 'string', format: 'binary', nullable: true),
     ]
 )]
+    ]
+)]
 #[OA\Schema(
-    schema: 'ResolveSOSRequest',
+    schema: 'CreateVehicleTypeRequest',
+    required: ['name', 'capacity', 'base_fare', 'per_km_rate', 'per_minute_rate', 'minimum_fare', 'commission_percentage'],
     properties: [
-        new OA\Property(property: 'admin_note', type: 'string', example: 'Dispatched emergency services, resolved successfully.'),
+        new OA\Property(property: 'name', type: 'string', example: 'Sedan'),
+        new OA\Property(property: 'capacity', type: 'integer', example: 4),
+        new OA\Property(property: 'base_fare', type: 'number', format: 'float', example: 2.50),
+        new OA\Property(property: 'per_km_rate', type: 'number', format: 'float', example: 1.20),
+        new OA\Property(property: 'per_minute_rate', type: 'number', format: 'float', example: 0.30),
+        new OA\Property(property: 'minimum_fare', type: 'number', format: 'float', example: 5.00),
+        new OA\Property(property: 'commission_percentage', type: 'number', format: 'float', example: 15.00),
+        new OA\Property(property: 'icon_url', type: 'string', nullable: true, example: 'https://uey-assets.s3.amazonaws.com/vehicle-types/icons/sedan.png'),
+        new OA\Property(property: 'active', type: 'boolean', example: true),
+    ]
+)]
+#[OA\Schema(
+    schema: 'UpdateVehicleTypeRequest',
+    properties: [
+        new OA\Property(property: 'name', type: 'string', example: 'Sedan Plus'),
+        new OA\Property(property: 'capacity', type: 'integer', example: 5),
+        new OA\Property(property: 'base_fare', type: 'number', format: 'float', example: 3.00),
+        new OA\Property(property: 'per_km_rate', type: 'number', format: 'float', example: 1.40),
+        new OA\Property(property: 'per_minute_rate', type: 'number', format: 'float', example: 0.35),
+        new OA\Property(property: 'minimum_fare', type: 'number', format: 'float', example: 6.00),
+        new OA\Property(property: 'commission_percentage', type: 'number', format: 'float', example: 15.00),
+        new OA\Property(property: 'icon_url', type: 'string', nullable: true, example: 'https://uey-assets.s3.amazonaws.com/vehicle-types/icons/sedan.png'),
+        new OA\Property(property: 'active', type: 'boolean', example: false),
     ]
 )]
 class RequestSchemas {}

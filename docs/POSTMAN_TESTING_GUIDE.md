@@ -73,11 +73,11 @@ Configure your Postman environment with the following variables:
         "rating": 5.0,
         "acceptance_rate": 100.0,
         "ontime_rate": 100.0,
-        "completed_rides_count": 0,
+        "completed_rides_count": 5,
         "earnings_summary": {
-          "today": 0.0,
-          "this_week": 0.0,
-          "total": 0.0
+          "today": 45.50,
+          "this_week": 220.00,
+          "total": 580.00
         },
         "profile": {
           "name": "Bob Driver",
@@ -2063,3 +2063,261 @@ After running `app:ledger-backfill`, verify completeness:
    LEFT JOIN ledgers l ON l.wallet_transaction_id = wt.id
    WHERE l.id IS NULL;
    ```
+
+---
+
+## 16. Rider Promo Code & Registration Referral System
+
+This section describes how to test and verify Rider Promo APIs and Registration Referral integrations.
+
+### 16.1 Environment Setup
+*   `rider_token`: The Bearer token received after rider registration or login.
+*   `driver_token`: The Bearer token received after driver registration or login.
+*   `admin_token`: The Bearer token received after admin login.
+
+---
+
+### 16.2 Recommended Testing Order
+
+Follow this sequence to test the entire lifecycle:
+1. **Admin Promo Code Creation**: Create promo codes using Admin API.
+2. **Registration with Referral Code**: Register rider/driver using a referral code.
+3. **List Available Promos**: Check listing of eligible promos for the rider.
+4. **Validate Promo Code**: Validate promo against estimated fare.
+5. **Estimate Ride with Promo**: Get ride estimation including promo discount.
+6. **Request Ride with Promo**: Book a ride using a promo code.
+7. **Complete Ride**: Complete the ride as a driver and verify updated promo usage history and payment discount breakdown.
+8. **Cancel Ride**: Cancel a ride and verify the promo usage rolls back (cancelled status and restored availability).
+
+---
+
+### 16.3 API Endpoints & Verification
+
+#### 1. List Available Promos
+*   **Method / Route:** `GET {{base_url}}/promos`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "id": 1,
+          "code": "WELCOME50",
+          "discount_type": "percentage",
+          "discount_value": "50.00",
+          "max_discount": "200.00",
+          "minimum_fare": "300.00",
+          "expires_at": "2026-12-31T23:59:59Z",
+          "first_ride_only": true,
+          "eligible": true
+        }
+      ]
+    }
+    ```
+
+#### 2. Get Promo History
+*   **Method / Route:** `GET {{base_url}}/promos/history?per_page=15&page=1`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "ride_id": 55,
+          "promo_code": "WELCOME50",
+          "discount_amount": "120.00",
+          "status": "completed",
+          "created_at": "2026-07-21T01:45:00Z"
+        }
+      ],
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      }
+    }
+    ```
+
+#### 3. Validate Promo Code
+*   **Method / Route:** `POST {{base_url}}/promos/validate`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "promo_code": "WELCOME50",
+      "vehicle_type_id": 1,
+      "estimated_fare": 350.00
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "promo": {
+          "id": 1,
+          "code": "WELCOME50",
+          "discount_type": "percentage",
+          "discount_value": "50.00"
+        },
+        "discount_amount": "175.00",
+        "final_fare": "175.00"
+      }
+    }
+    ```
+*   **Failure Response (422 Unprocessable Entity - Expired/Inactive/Exhausted/Ineligible):**
+    ```json
+    {
+      "success": false,
+      "message": "Promo code is invalid or unavailable."
+    }
+    ```
+
+#### 4. Ride Estimate with Promo Code
+*   **Method / Route:** `POST {{base_url}}/rides/estimate`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "pickup_latitude": 51.5074,
+      "pickup_longitude": -0.1278,
+      "destination_latitude": 51.5204,
+      "destination_longitude": -0.1482,
+      "promo_code": "WELCOME50"
+    }
+    ```
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "estimates": [
+        {
+          "vehicle_type_id": 1,
+          "name": "Economy Class",
+          "capacity": 4,
+          "estimated_distance": 2.50,
+          "estimated_duration": 4,
+          "estimated_fare": 18.00,
+          "discount_amount": 9.00,
+          "final_fare": 9.00
+        }
+      ]
+    }
+    ```
+
+#### 5. Request Ride with Promo Code
+*   **Method / Route:** `POST {{base_url}}/rides/request`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "pickup_latitude": 51.5074,
+      "pickup_longitude": -0.1278,
+      "pickup_address": "London Eye",
+      "destination_latitude": 51.5204,
+      "destination_longitude": -0.1482,
+      "destination_address": "Regent's Park",
+      "vehicle_type_id": 1,
+      "promo_code": "WELCOME50",
+      "payment_method": "cash"
+    }
+    ```
+*   **Expected Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": "Ride requested successfully.",
+      "ride": {
+        "id": 105,
+        "estimated_fare": 18.00,
+        "discount_amount": 9.00,
+        "final_estimated_fare": 9.00,
+        "status": "pending",
+        "promo_usage": {
+          "code": "WELCOME50",
+          "discount_amount": 9.00
+        }
+      }
+    }
+    ```
+
+#### 6. Register Rider with Referral Code
+*   **Method / Route:** `POST {{base_url}}/register/rider`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+*   **Body (JSON):**
+    ```json
+    {
+      "name": "New Rider",
+      "email": "new.rider@example.com",
+      "phone": "+447911999111",
+      "password": "password123",
+      "referral_code": "REFR1234"
+    }
+    ```
+*   **Expected Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "user": {
+        "id": 204,
+        "name": "New Rider",
+        "email": "new.rider@example.com",
+        "phone": "+447911999111",
+        "referral_code": "NEWRI204"
+      },
+      "token": "..."
+    }
+    ```
+*   **Failure Response (422 Unprocessable Entity - Invalid referral code):**
+    ```json
+    {
+      "success": false,
+      "message": "Invalid referral code."
+    }
+    ```
+
+#### 7. Apply Referral Code Idempotent check
+*   **Method / Route:** `POST {{base_url}}/referrals/apply`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Content-Type: application/json`
+    *   `Authorization: Bearer {{rider_token}}`
+*   **Body (JSON):**
+    ```json
+    {
+      "referral_code": "REFR1234"
+    }
+    ```
+*   **Expected Response (200 OK - already applied):**
+    ```json
+    {
+      "success": true,
+      "message": "Referral already applied."
+    }
+    ```
+
+---
+
+### 16.4 Edge Case Scenarios
+
+1. **Self-Referral**: Attempting to register using your own referral code (checks against your phone or email) returns `422` with message `Invalid referral code.`.
+2. **Double Reservation Block**: When multiple requests hit the server for the last remaining promo availability, row locking forces one to complete, while subsequent requests fail with `422` with message `Promo code is invalid or unavailable.`.
+3. **Inactive or Soft Deleted Promos**: Promos flagged as `is_active = false` or soft deleted are automatically omitted from Rider listings and reject validation/booking.

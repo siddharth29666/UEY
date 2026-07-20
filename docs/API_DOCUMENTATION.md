@@ -1365,11 +1365,11 @@ Returned when input fields fail to meet specified validation rules.
         "rating": 4.85,
         "acceptance_rate": 97.2,
         "ontime_rate": 98.9,
-        "completed_rides_count": 0,
+        "completed_rides_count": 42,
         "earnings_summary": {
-          "today": 0.0,
-          "this_week": 0.0,
-          "total": 0.0
+          "today": 120.50,
+          "this_week": 850.00,
+          "total": 3500.00
         },
         "profile": {
           "name": "Bob Driver",
@@ -1387,12 +1387,16 @@ Returned when input fields fail to meet specified validation rules.
       "message": "Unauthenticated."
     }
     ```
-*   **Validation Rules:** None.
+*   **Validation Rules:**
+    - Optional header `X-Timezone` (e.g. `Europe/London`) or query parameter `timezone` to set timezone-safe local day boundaries.
 *   **Business Logic Explanation:**
-    *   Restricted to drivers only.
-    *   Returns base statistics (`rating`, `acceptance_rate`, `ontime_rate`) alongside user details.
-    *   `completed_rides_count` and `earnings_summary` represent placeholders that default to 0 and will be integrated with ride-hailing modules in future phases.
-*   **Database Tables Affected:** `users`, `driver_profiles` (reads)
+    - Restricted to drivers only.
+    - `completed_rides_count` counts all completed rides assigned to this driver.
+    - `earnings_summary` calculates today's, current week's, and lifetime earnings based on Net Driver Earnings from the `payments` table where status is `paid`.
+    - `acceptance_rate` is dynamically calculated as `Accepted Requests / Total Assigned Requests * 100`.
+    - `ontime_rate` is dynamically calculated as `Trips Started On Time / Completed Trips * 100` (where a trip is started on time if started within 5 minutes of arrival).
+    - `rating` matches active reviews and dynamically updates if reviews are soft deleted.
+*   **Database Tables Affected:** `users`, `driver_profiles`, `rides`, `payments`, `ride_requests`, `ride_reviews` (reads)
 *   **Frontend Flow:**
     1.  Driver opens the main dashboard tab.
     2.  App sends a GET call to `/driver/dashboard`.
@@ -4257,8 +4261,136 @@ Returns a single ledger entry with full linked details (wallet, user, wallet tra
 +-------------------------------+-------+
 | Metric                        | Count |
 +-------------------------------+-------+
++-------------------------------+-------+
 | Total transactions scanned    | 450   |
 | Ledger entries created        | 380   |
 | Already existed (skipped)     | 70    |
 +-------------------------------+-------+
 ```
+
+---
+
+## Module 16: Rider Promo Code & Registration Referral System
+
+This module provides APIs for listing active promos, viewing usage history, validating codes, using promo codes during estimation and requests, and applying referral codes during registration.
+
+### 1. List Available Promos
+*   **Purpose:** Returns all active, unexpired, and non-exhausted promo codes available for the logged-in rider. Shows eligibility for first-ride-only promos without hiding them.
+*   **Endpoint URL:** `/promos`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Sanctum)
+*   **Response Headers:** `Accept: application/json`
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "id": 1,
+          "code": "WELCOME50",
+          "discount_type": "percentage",
+          "discount_value": "50.00",
+          "max_discount": "200.00",
+          "minimum_fare": "300.00",
+          "expires_at": "2026-12-31T23:59:59Z",
+          "first_ride_only": true,
+          "eligible": true
+        }
+      ]
+    }
+    ```
+*   **Business Rules:**
+    - Promos are sorted first by `eligible` DESC, then `expires_at` ASC, then `code` ASC.
+    - Soft-deleted, inactive, and expired promos are omitted.
+    - Promos that have reached their global limit or the rider's per-user limit are omitted.
+
+---
+
+### 2. Get Promo History
+*   **Purpose:** Retrieves a paginated history of promo code usage for the authenticated rider, newest first.
+*   **Endpoint URL:** `/promos/history`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Sanctum)
+*   **Parameters (Query):**
+    - `page` (integer, optional, default: 1)
+    - `per_page` (integer, optional, default: 15)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "ride_id": 55,
+          "promo_code": "WELCOME50",
+          "discount_amount": "120.00",
+          "status": "completed",
+          "created_at": "2026-07-21T01:45:00Z"
+        }
+      ],
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      }
+    }
+    ```
+
+---
+
+### 3. Validate Promo Code
+*   **Purpose:** Validates a promo code against vehicle eligibility, first-ride checks, global limits, user limits, and minimum fare.
+*   **Endpoint URL:** `/promos/validate`
+*   **HTTP Method:** `POST`
+*   **Authentication Required:** Yes (Sanctum)
+*   **Request Payload:**
+    ```json
+    {
+      "promo_code": "WELCOME50",
+      "vehicle_type_id": 1,
+      "estimated_fare": 350.00
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "promo": {
+          "id": 1,
+          "code": "WELCOME50",
+          "discount_type": "percentage",
+          "discount_value": "50.00"
+        },
+        "discount_amount": "175.00",
+        "final_fare": "175.00"
+      }
+    }
+    ```
+*   **Failure Response (422 Unprocessable Entity):**
+    ```json
+    {
+      "success": false,
+      "message": "Promo code is invalid or unavailable."
+    }
+    ```
+
+---
+
+### 4. Registration with Referral Code
+*   **Rider Registration Endpoint:** `POST /register/rider`
+*   **Driver Registration Endpoint:** `POST /register/driver`
+*   **Payload Extension:** Optional field `"referral_code"` (string, 8 chars) can be sent.
+*   **Business Rules:**
+    - Verifies the code exists and belongs to an active user.
+    - Rejects self-referrals (checking phone or email overlap) with `422` and message `"Invalid referral code."`.
+    - Automatically links `referred_by` on the new user, registers a pending referral record, and dispatches notification events.
+*   **Idempotency Check:**
+    - If the user was referred during registration and later calls `POST /referrals/apply`, the server responds with a success status:
+      ```json
+      {
+        "success": true,
+        "message": "Referral already applied."
+      }
+      ```
+

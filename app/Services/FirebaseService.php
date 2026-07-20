@@ -13,7 +13,7 @@ class FirebaseService
      */
     public function isEnabled(): bool
     {
-        if (app()->environment('local', 'testing')) {
+        if (! config('services.firebase.enabled', true)) {
             return false;
         }
 
@@ -21,7 +21,19 @@ class FirebaseService
         $clientEmail = config('services.firebase.client_email');
         $privateKey = config('services.firebase.private_key');
 
-        return ! empty($projectId) && ! empty($clientEmail) && ! empty($privateKey);
+        $hasCredentials = ! empty($projectId) && ! empty($clientEmail) && ! empty($privateKey);
+
+        if (! $hasCredentials) {
+            return false;
+        }
+
+        if (app()->environment('local', 'testing')) {
+            $forceEnable = (bool) config('services.firebase.force_enable', false) ||
+                           (bool) config('services.firebase.testing_allow_real_calls', false);
+            return $forceEnable;
+        }
+
+        return true;
     }
 
     /**

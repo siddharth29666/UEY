@@ -86,6 +86,8 @@ Route::middleware(['auth:sanctum', 'ability:role:admin'])->prefix('admin')->grou
     Route::post('/promo-codes', [AdminPromoCodeController::class, 'store']);
     Route::put('/promo-codes/{id}', [AdminPromoCodeController::class, 'update']);
     Route::delete('/promo-codes/{id}', [AdminPromoCodeController::class, 'destroy']);
+    Route::patch('/promo-codes/{id}/status', [AdminPromoCodeController::class, 'status']);
+    Route::post('/promo-codes/{id}/restore', [AdminPromoCodeController::class, 'restore']);
 
     // System Settings Configuration
     Route::get('/settings', [AdminSystemSettingsController::class, 'index']);
@@ -95,4 +97,13 @@ Route::middleware(['auth:sanctum', 'ability:role:admin'])->prefix('admin')->grou
     // Audit Logs
     Route::get('/audit-logs', [AdminAuditLogController::class, 'index']);
     Route::get('/audit-logs/{id}', [AdminAuditLogController::class, 'show']);
+
+    // Vehicle Type CRUD
+    Route::get('/vehicle-types', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'index']);
+    Route::post('/vehicle-types', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'store']);
+    Route::get('/vehicle-types/{id}', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'show']);
+    Route::put('/vehicle-types/{id}', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'update']);
+    Route::delete('/vehicle-types/{id}', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'destroy']);
+    Route::patch('/vehicle-types/{id}/status', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'status']);
+    Route::post('/vehicle-types/{id}/restore', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'restore']);
 });

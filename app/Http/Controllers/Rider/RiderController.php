@@ -62,18 +62,30 @@ class RiderController extends Controller
     )]
     public function estimateRide(EstimateRideRequest $request): JsonResponse
     {
-        $service = app(RideService::class);
-        $estimates = $service->estimateFares(
-            (float) $request->input('pickup_latitude'),
-            (float) $request->input('pickup_longitude'),
-            (float) $request->input('destination_latitude'),
-            (float) $request->input('destination_longitude')
-        );
+        try {
+            $service = app(RideService::class);
+            $estimates = $service->estimateFares(
+                (float) $request->input('pickup_latitude'),
+                (float) $request->input('pickup_longitude'),
+                (float) $request->input('destination_latitude'),
+                (float) $request->input('destination_longitude'),
+                $request->user(),
+                $request->input('promo_code')
+            );
 
-        return response()->json([
-            'success' => true,
-            'estimates' => $estimates,
-        ]);
+            return response()->json([
+                'success' => true,
+                'estimates' => $estimates,
+            ]);
+        } catch (\Exception $e) {
+            if ($e->getMessage() === 'Promo code is invalid or unavailable.') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Promo code is invalid or unavailable.',
+                ], 422);
+            }
+            throw $e;
+        }
     }
 
     /**
@@ -107,14 +119,24 @@ class RiderController extends Controller
     )]
     public function requestRide(RequestRideRequest $request): JsonResponse
     {
-        $service = app(RideService::class);
-        $ride = $service->createRide($request->user(), $request->validated());
+        try {
+            $service = app(RideService::class);
+            $ride = $service->createRide($request->user(), $request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Ride requested successfully.',
-            'ride' => new RideResource($ride),
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Ride requested successfully.',
+                'ride' => new RideResource($ride->load('promoUsage.promoCode')),
+            ], 201);
+        } catch (\Exception $e) {
+            if ($e->getMessage() === 'Promo code is invalid or unavailable.') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Promo code is invalid or unavailable.',
+                ], 422);
+            }
+            throw $e;
+        }
     }
 
     /**

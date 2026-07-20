@@ -41,7 +41,40 @@ class RegisterDriverRequest extends FormRequest
             'vehicle_year' => ['required', 'integer', 'min:1900', 'max:'.(date('Y') + 1)],
             'vehicle_color' => ['required', 'string', 'max:30'],
             'vehicle_plate' => ['required', 'string', 'max:20', 'unique:vehicles,plate_number'],
-            'vehicle_type_id' => ['required', 'integer', 'exists:vehicle_types,id'],
+            'vehicle_type_id' => [
+                'required',
+                'integer',
+                Rule::exists('vehicle_types', 'id')->where('active', true)->whereNull('deleted_at'),
+            ],
+            'referral_code' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'size:8',
+                Rule::exists('users', 'referral_code')->where('status', \App\Enums\UserStatus::ACTIVE->value ?: 'active'),
+            ],
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator)
+    {
+        if ($validator->errors()->has('referral_code')) {
+            throw new \Illuminate\Validation\ValidationException($validator, response()->json([
+                'success' => false,
+                'message' => 'Invalid referral code.',
+            ], 422));
+        }
+
+        if ($validator->errors()->has('vehicle_type_id')) {
+            throw new \Illuminate\Validation\ValidationException($validator, response()->json([
+                'success' => false,
+                'message' => 'Selected vehicle type is unavailable.',
+            ], 422));
+        }
+
+        parent::failedValidation($validator);
     }
 }

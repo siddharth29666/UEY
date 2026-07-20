@@ -39,7 +39,8 @@ class DriverController extends Controller
     public function __construct(
         protected DriverVerificationService $verificationService,
         protected DriverLocationService $locationService,
-        protected RideLifecycleService $lifecycleService
+        protected RideLifecycleService $lifecycleService,
+        protected \App\Services\DriverDashboardService $dashboardService
     ) {}
 
     /**
@@ -547,6 +548,7 @@ class DriverController extends Controller
                                         new OA\Property(property: 'avatar_url', type: 'string', nullable: true, example: null),
                                     ]
                                 ),
+                                new OA\Property(property: 'last_seen_at', type: 'string', format: 'date-time', nullable: true, example: '2026-06-23T19:12:00Z'),
                             ]
                         ),
                     ]
@@ -567,6 +569,16 @@ class DriverController extends Controller
         }
 
         $driver->load('user');
+        
+        $timezone = $request->header('X-Timezone') ?? $request->input('timezone', 'UTC');
+        $stats = $this->dashboardService->getDashboardData($driver, $timezone);
+
+        $driver->completed_rides_count = $stats['completed_rides_count'];
+        $driver->today_earnings = $stats['today_earnings'];
+        $driver->week_earnings = $stats['week_earnings'];
+        $driver->total_earnings = $stats['total_earnings'];
+        $driver->acceptance_rate = $stats['acceptance_rate'];
+        $driver->ontime_rate = $stats['ontime_rate'];
 
         return response()->json([
             'success' => true,
@@ -574,13 +586,25 @@ class DriverController extends Controller
         ]);
     }
 
-    public function updateSettings(Request $request) {}
+    public function updateSettings(Request $request)
+    {
+        // TODO: Implement updateSettings logic for driver preferences (e.g. default navigation, auto accept settings)
+    }
 
-    public function activeRequests(Request $request) {}
+    public function activeRequests(Request $request)
+    {
+        // TODO: Implement activeRequests logic to list matching ride offers currently offered to this driver
+    }
 
-    public function acceptRequest(Request $request, $requestId) {}
+    public function acceptRequest(Request $request, $requestId)
+    {
+        // TODO: Implement acceptRequest logic to transition matching request status to accepted
+    }
 
-    public function declineRequest(Request $request, $requestId) {}
+    public function declineRequest(Request $request, $requestId)
+    {
+        // TODO: Implement declineRequest logic to decline offered ride request
+    }
 
     /**
      * Retrieve details of a ride (accessible only to assigned driver).
@@ -841,15 +865,30 @@ class DriverController extends Controller
         }
     }
 
-    public function rideHistory(Request $request) {}
+    public function rideHistory(Request $request)
+    {
+        // TODO: Implement rideHistory logic to list past completed or cancelled rides for this driver
+    }
 
-    public function earningsSummary(Request $request) {}
+    public function earningsSummary(Request $request)
+    {
+        // TODO: Implement earningsSummary logic to return itemized earnings history, payout summaries, and charts
+    }
 
-    public function reviewRider(Request $request, $ride) {}
+    public function reviewRider(Request $request, $ride)
+    {
+        // TODO: Implement reviewRider logic to allow drivers to rating/review riders for completed trips
+    }
 
-    public function walletCashout(Request $request) {}
+    public function walletCashout(Request $request)
+    {
+        // TODO: Implement walletCashout logic to handle withdrawal cashout requests from driver's wallet
+    }
 
-    public function notifications(Request $request) {}
+    public function notifications(Request $request)
+    {
+        // TODO: Implement notifications logic to list driver-specific in-app notifications
+    }
 
     /**
      * Retrieve a list of active, pending ride requests offered to the authenticated driver.
