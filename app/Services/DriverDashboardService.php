@@ -77,6 +77,8 @@ class DriverDashboardService
             $ontimeRate = round(($onTimeCount / $completedRides->count()) * 100, 2);
         }
 
+        $subscriptionCredits = app(DriverSubscriptionService::class)->getAvailableCredits($driver);
+
         return [
             'completed_rides_count' => $completedRidesCount,
             'today_earnings' => $todayEarnings,
@@ -84,6 +86,7 @@ class DriverDashboardService
             'total_earnings' => $totalEarnings,
             'acceptance_rate' => $acceptanceRate,
             'ontime_rate' => $ontimeRate,
+            'subscription' => $subscriptionCredits,
         ];
     }
 }

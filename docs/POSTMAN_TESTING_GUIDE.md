@@ -2321,3 +2321,142 @@ Follow this sequence to test the entire lifecycle:
 1. **Self-Referral**: Attempting to register using your own referral code (checks against your phone or email) returns `422` with message `Invalid referral code.`.
 2. **Double Reservation Block**: When multiple requests hit the server for the last remaining promo availability, row locking forces one to complete, while subsequent requests fail with `422` with message `Promo code is invalid or unavailable.`.
 3. **Inactive or Soft Deleted Promos**: Promos flagged as `is_active = false` or soft deleted are automatically omitted from Rider listings and reject validation/booking.
+
+---
+
+### 16.5 Driver Ride History Endpoint
+
+#### Driver Ride History List
+*   **Method / Route:** `GET {{base_url}}/driver/rides/history`
+*   **Headers:**
+    *   `Accept: application/json`
+    *   `Authorization: Bearer {{driver_token}}`
+*   **Query Parameters:**
+    *   `status` (optional, e.g. `completed`, `cancelled`)
+    *   `from` (optional, e.g. `2026-07-01`)
+    *   `to` (optional, e.g. `2026-07-31`)
+    *   `page` (optional, default `1`)
+    *   `per_page` (optional, default `15`)
+*   **Expected Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "rides": [
+        {
+          "id": 12,
+          "rider_id": 3,
+          "driver_profile_id": 1,
+          "vehicle_type_id": 2,
+          "pickup_address": "Piccadilly Circus",
+          "destination_address": "Hyde Park",
+          "status": "completed",
+          "estimated_fare": 14.00,
+          "actual_fare": 14.00,
+          "created_at": "2026-07-22T14:30:00.000000Z"
+        }
+      ],
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      },
+      "links": {
+        "first": "http://uey.test/api/v1/driver/rides/history?page=1",
+        "last": "http://uey.test/api/v1/driver/rides/history?page=1",
+        "prev": null,
+        "next": null
+      }
+    }
+    ```
+*   **Testing Checklist:**
+    - [ ] Returns HTTP 200 with rides list for authenticated driver
+    - [ ] Scoped to only driver's profile (does not return other drivers' rides)
+    - [ ] `status=completed` filters to completed rides
+    - [ ] `from` and `to` date filters work correctly
+    - [ ] Pagination (`per_page`) works correctly
+    - [ ] Driver with no rides returns HTTP 200 with empty array (`"rides": []`), NOT 404
+
+---
+
+### 16.6 Driver Subscription & Ride Credit Testing Sequence (Option B)
+
+#### Step 1: Admin Creates Subscription Plan
+*   **Method / Route:** `POST {{base_url}}/admin/subscription-plans`
+*   **Headers:** `Authorization: Bearer {{admin_token}}`, `Content-Type: application/json`
+*   **Body (JSON):**
+    ```json
+    {
+      "name": "Starter Plan",
+      "description": "20 Ride Credits",
+      "price_eur": 10.00,
+      "ride_credits": 20,
+      "duration_days": 30,
+      "status": true
+    }
+    ```
+
+#### Step 1B: Admin Updates Subscription Plan
+*   **Method / Route:** `PUT {{base_url}}/admin/subscription-plans/1`
+*   **Headers:** `Authorization: Bearer {{admin_token}}`, `Content-Type: application/json`
+*   **Body (JSON):**
+    ```json
+    {
+      "name": "Updated Starter Plan",
+      "price_eur": 12.50,
+      "ride_credits": 25
+    }
+    ```
+
+#### Step 1C: Admin Toggles Subscription Plan Status
+*   **Method / Route:** `PATCH {{base_url}}/admin/subscription-plans/1/status`
+*   **Headers:** `Authorization: Bearer {{admin_token}}`, `Content-Type: application/json`
+*   **Body (JSON):**
+    ```json
+    {
+      "active": false
+    }
+    ```
+
+#### Step 1D: Admin Deletes (Soft Delete) Subscription Plan
+*   **Method / Route:** `DELETE {{base_url}}/admin/subscription-plans/1`
+*   **Headers:** `Authorization: Bearer {{admin_token}}`
+
+#### Step 2: Driver Views Available Plans
+*   **Method / Route:** `GET {{base_url}}/driver/subscription/plans`
+*   **Headers:** `Authorization: Bearer {{driver_token}}`
+
+#### Step 3: Driver Purchases Subscription Plan
+*   **Method / Route:** `POST {{base_url}}/driver/subscription/purchase`
+*   **Body (JSON):**
+    ```json
+    {
+      "subscription_plan_id": 1
+    }
+    ```
+
+#### Step 4: Stripe Webhook Confirms Payment
+*   **Method / Route:** `POST {{base_url}}/stripe/webhook`
+*   **Body (JSON):**
+    ```json
+    {
+      "id": "evt_test_sub_001",
+      "type": "payment_intent.succeeded",
+      "data": {
+        "object": {
+          "id": "pi_test_12345",
+          "metadata": {
+            "type": "driver_subscription",
+            "driver_subscription_id": "1"
+          }
+        }
+      }
+    }
+    ```
+
+#### Step 5: Option B Credit Deduction on Accept
+*   **Method / Route:** `POST {{base_url}}/driver/ride-requests/{request_id}/accept`
+*   **Result:** Deducts 1 credit immediately. Response includes updated `"subscription": { "credits_remaining": 19 }`.
+*   **Cancellation Rule:** If rider or driver cancels afterwards, credits remain 19 (NO REFUND).
+
+

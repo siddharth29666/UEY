@@ -106,4 +106,16 @@ Route::middleware(['auth:sanctum', 'ability:role:admin'])->prefix('admin')->grou
     Route::delete('/vehicle-types/{id}', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'destroy']);
     Route::patch('/vehicle-types/{id}/status', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'status']);
     Route::post('/vehicle-types/{id}/restore', [\App\Http\Controllers\Admin\VehicleTypeController::class, 'restore']);
+
+    // Admin Subscription Plan CRUD & Audits
+    Route::get('/subscription-plans', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'index']);
+    Route::post('/subscription-plans', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'store']);
+    Route::get('/subscription-plans/{id}', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'show']);
+    Route::put('/subscription-plans/{id}', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'update']);
+    Route::delete('/subscription-plans/{id}', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'destroy']);
+    Route::patch('/subscription-plans/{id}/status', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'status']);
+    Route::post('/subscription-plans/{id}/restore', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'restore']);
+    Route::get('/driver-subscriptions', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'driverSubscriptions']);
+    Route::get('/driver-subscriptions/{id}', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'showDriverSubscription']);
+    Route::get('/driver-credit-transactions', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'creditTransactions']);
 });

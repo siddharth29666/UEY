@@ -4394,3 +4394,323 @@ This module provides APIs for listing active promos, viewing usage history, vali
       }
       ```
 
+---
+
+## Module: Driver Ride History
+
+### 1. Get Driver Ride History
+*   **Purpose:** Retrieves a paginated list of past and historical rides for the logged-in driver with optional filters.
+*   **Endpoint URL:** `/driver/rides/history`
+*   **HTTP Method:** `GET`
+*   **Authentication Required:** Yes (Sanctum — Driver role capability)
+*   **Parameters (Query):**
+    - `status` (string, optional: `completed`, `cancelled`, etc.)
+    - `from` / `date_from` (string, optional: `YYYY-MM-DD`)
+    - `to` / `date_to` (string, optional: `YYYY-MM-DD`)
+    - `page` (integer, optional, default: 1)
+    - `per_page` (integer, optional, default: 15)
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "rides": [
+        {
+          "id": 15,
+          "rider_id": 4,
+          "driver_profile_id": 2,
+          "vehicle_type_id": 1,
+          "pickup_address": "London Eye, London",
+          "destination_address": "Tower Bridge, London",
+          "status": "completed",
+          "estimated_distance": 4.5,
+          "estimated_duration": 18,
+          "estimated_fare": 15.50,
+          "actual_fare": 15.50,
+          "created_at": "2026-07-22T10:00:00.000000Z"
+        }
+      ],
+      "meta": {
+        "current_page": 1,
+        "per_page": 15,
+        "total": 1,
+        "last_page": 1
+      }
+    }
+    ```
+
+---
+
+## Module: Driver Subscription & Ride Credit Plan System (Option B)
+
+### Overview & Business Rule (Option B)
+*   **Ride Credit Consumption:** Driver must possess an active subscription plan with available ride credits to accept ride requests.
+*   **Immediate Atomic Deduction:** When a Driver accepts a ride request, **1 credit is deducted immediately**.
+*   **Non-Refundable Rule (Option B):** Credits are **NOT refunded** if the Rider cancels the ride or if the Driver cancels the ride after acceptance. Completed rides do not alter credits further.
+*   **Currency:** All subscription plans are priced in **EUR (€)**.
+
+---
+
+### 1. Get Available Subscription Plans
+*   **Endpoint:** `GET /driver/subscription/plans`
+*   **Authentication:** Sanctum (Driver)
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "plans": [
+        {
+          "id": 1,
+          "name": "Plan A",
+          "description": "Starter 20 Ride Credits",
+          "price_eur": 10.00,
+          "currency": "EUR",
+          "ride_credits": 20,
+          "duration_days": 30,
+          "status": true
+        }
+      ]
+    }
+    ```
+
+---
+
+### 2. Purchase Subscription Plan
+*   **Endpoint:** `POST /driver/subscription/purchase`
+*   **Authentication:** Sanctum (Driver)
+*   **Payload:**
+    ```json
+    {
+      "subscription_plan_id": 1
+    }
+    ```
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Subscription purchase initiated.",
+      "data": {
+        "subscription": {
+          "id": 5,
+          "amount_eur": 10.00,
+          "currency": "EUR",
+          "credits_allocated": 20,
+          "status": "pending"
+        },
+        "payment_intent_id": "pi_123456",
+        "client_secret": "pi_123456_secret_789",
+        "checkout_session_id": "cs_test_123",
+        "checkout_url": "https://checkout.stripe.com/..."
+      }
+    }
+    ```
+
+---
+
+### 3. Get Current Driver Subscription & Credits
+*   **Endpoints:** 
+    - `GET /driver/subscription/current`
+    - `GET /driver/subscription/credits`
+*   **Authentication:** Sanctum (Driver)
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "has_active_subscription": true,
+        "plan_name": "Plan A",
+        "credits_allocated": 20,
+        "credits_used": 2,
+        "credits_remaining": 18,
+        "expires_at": "2026-08-22T10:00:00.000000Z",
+        "days_remaining": 30
+      }
+    }
+    ```
+
+---
+
+### 4. Admin Subscription Plan Management & Audit APIs
+
+#### A. List All Subscription Plans (Admin)
+*   **Endpoint:** `GET /admin/subscription-plans`
+*   **Authentication:** Sanctum (`role:admin`)
+*   **Query Parameters:** `status` (boolean, optional: `true`/`false`)
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": [
+        {
+          "id": 1,
+          "name": "Starter Plan",
+          "description": "20 Ride Credits",
+          "price_eur": 10.00,
+          "currency": "EUR",
+          "ride_credits": 20,
+          "duration_days": 30,
+          "status": true,
+          "sort_order": 1,
+          "created_at": "2026-07-23T00:00:00.000000Z"
+        }
+      ]
+    }
+    ```
+
+#### B. Create Subscription Plan (Admin)
+*   **Endpoint:** `POST /admin/subscription-plans`
+*   **Authentication:** Sanctum (`role:admin`)
+*   **Payload:**
+    ```json
+    {
+      "name": "Pro Driver Plan",
+      "description": "50 Ride Credits for active drivers",
+      "price_eur": 20.00,
+      "ride_credits": 50,
+      "duration_days": 30,
+      "status": true,
+      "sort_order": 2
+    }
+    ```
+*   **Response (201 Created):**
+    ```json
+    {
+      "success": true,
+      "message": "Subscription plan created successfully.",
+      "data": {
+        "id": 2,
+        "name": "Pro Driver Plan",
+        "price_eur": 20.00,
+        "currency": "EUR",
+        "ride_credits": 50,
+        "duration_days": 30,
+        "status": true
+      }
+    }
+    ```
+
+#### C. Get Subscription Plan Details (Admin)
+*   **Endpoint:** `GET /admin/subscription-plans/{id}`
+*   **Authentication:** Sanctum (`role:admin`)
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "id": 1,
+        "name": "Starter Plan",
+        "price_eur": 10.00,
+        "currency": "EUR",
+        "ride_credits": 20,
+        "duration_days": 30,
+        "status": true
+      }
+    }
+    ```
+
+#### D. Update Subscription Plan (Admin)
+*   **Endpoint:** `PUT /admin/subscription-plans/{id}`
+*   **Authentication:** Sanctum (`role:admin`)
+*   **Payload:**
+    ```json
+    {
+      "name": "Updated Starter Plan",
+      "price_eur": 12.50,
+      "ride_credits": 25
+    }
+    ```
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Subscription plan updated successfully.",
+      "data": {
+        "id": 1,
+        "name": "Updated Starter Plan",
+        "price_eur": 12.50,
+        "ride_credits": 25
+      }
+    }
+    ```
+
+#### E. Delete Subscription Plan (Admin)
+*   **Endpoint:** `DELETE /admin/subscription-plans/{id}`
+*   **Authentication:** Sanctum (`role:admin`)
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Subscription plan deleted successfully."
+    }
+    ```
+
+#### F. Toggle Subscription Plan Status (Admin)
+*   **Endpoint:** `PATCH /admin/subscription-plans/{id}/status`
+*   **Authentication:** Sanctum (`role:admin`)
+*   **Payload:** `{"active": false}`
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Subscription plan status updated successfully.",
+      "data": { "id": 1, "status": false }
+    }
+    ```
+
+#### G. Restore Soft-Deleted Subscription Plan (Admin)
+*   **Endpoint:** `POST /admin/subscription-plans/{id}/restore`
+*   **Authentication:** Sanctum (`role:admin`)
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Subscription plan restored successfully."
+    }
+    ```
+
+#### H. List All Platform Driver Subscriptions (Admin)
+*   **Endpoint:** `GET /admin/driver-subscriptions`
+*   **Authentication:** Sanctum (`role:admin`)
+*   **Query Parameters:** `status`, `driver_id`, `page`, `per_page`
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "subscriptions": [
+        {
+          "id": 1,
+          "driver_profile_id": 2,
+          "subscription_plan_id": 1,
+          "amount_eur": 10.00,
+          "credits_allocated": 20,
+          "credits_used": 2,
+          "credits_remaining": 18,
+          "status": "active"
+        }
+      ]
+    }
+    ```
+
+#### I. Audit Driver Credit Transactions (Admin)
+*   **Endpoint:** `GET /admin/driver-credit-transactions`
+*   **Authentication:** Sanctum (`role:admin`)
+*   **Query Parameters:** `type` (`subscription_purchase`, `ride_accept`, `expiry`), `driver_id`, `page`, `per_page`
+*   **Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "transactions": [
+        {
+          "id": 1,
+          "driver_profile_id": 2,
+          "type": "ride_accept",
+          "amount": -1,
+          "balance_before": 20,
+          "balance_after": 19,
+          "reference": "RIDE_ACCEPT_12"
+        }
+      ]
+    }
+    ```
+
+
+

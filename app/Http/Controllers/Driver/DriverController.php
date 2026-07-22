@@ -40,7 +40,8 @@ class DriverController extends Controller
         protected DriverVerificationService $verificationService,
         protected DriverLocationService $locationService,
         protected RideLifecycleService $lifecycleService,
-        protected \App\Services\DriverDashboardService $dashboardService
+        protected \App\Services\DriverDashboardService $dashboardService,
+        protected \App\Services\DriverSubscriptionService $subscriptionService
     ) {}
 
     /**
@@ -865,9 +866,106 @@ class DriverController extends Controller
         }
     }
 
-    public function rideHistory(Request $request)
+    /**
+     * Get paginated ride history for the authenticated driver.
+     */
+    #[OA\Get(
+        path: '/driver/rides/history',
+        summary: 'Driver Ride History',
+        description: 'Retrieves a paginated list of past rides for the authenticated driver with optional filters for status and date range.',
+        security: [['bearerAuth' => []]],
+        tags: ['Driver Module'],
+        parameters: [
+            new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'from', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'to', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'date_from', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'date_to', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1)),
+            new OA\Parameter(name: 'per_page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15)),
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Driver ride history retrieved successfully.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(
+                            property: 'rides',
+                            type: 'array',
+                            items: new OA\Items(ref: '#/components/schemas/Ride')
+                        ),
+                        new OA\Property(property: 'meta', type: 'object'),
+                        new OA\Property(property: 'links', type: 'object'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, ref: '#/components/responses/UnauthorizedResponse'),
+        ]
+    )]
+    public function rideHistory(Request $request): JsonResponse
     {
-        // TODO: Implement rideHistory logic to list past completed or cancelled rides for this driver
+        $user = $request->user();
+        $driverProfile = $user->driverProfile;
+
+        if (! $driverProfile) {
+            return response()->json([
+                'success' => true,
+                'rides' => [],
+                'meta' => [
+                    'current_page' => 1,
+                    'per_page' => (int) $request->query('per_page', 15),
+                    'total' => 0,
+                    'last_page' => 1,
+                ],
+                'links' => [
+                    'first' => null,
+                    'last' => null,
+                    'prev' => null,
+                    'next' => null,
+                ],
+            ]);
+        }
+
+        $query = Ride::where('driver_profile_id', $driverProfile->id)
+            ->with(['rider', 'driverProfile.user', 'vehicleType', 'payment']);
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->query('status'));
+        }
+
+        $from = $request->query('from') ?? $request->query('date_from');
+        if ($from) {
+            $query->whereDate('created_at', '>=', $from);
+        }
+
+        $to = $request->query('to') ?? $request->query('date_to');
+        if ($to) {
+            $query->whereDate('created_at', '<=', $to);
+        }
+
+        $query->orderBy('id', 'desc');
+
+        $perPage = (int) $request->query('per_page', 15);
+        $paginator = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'rides' => RideResource::collection($paginator->items()),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'per_page' => $paginator->perPage(),
+                'total' => $paginator->total(),
+                'last_page' => $paginator->lastPage(),
+            ],
+            'links' => [
+                'first' => $paginator->url(1),
+                'last' => $paginator->url($paginator->lastPage()),
+                'prev' => $paginator->previousPageUrl(),
+                'next' => $paginator->nextPageUrl(),
+            ],
+        ]);
     }
 
     public function earningsSummary(Request $request)
@@ -1017,13 +1115,17 @@ class DriverController extends Controller
         }
 
         try {
-            $ride = DB::transaction(function () use ($request, $driverProfile) {
+            $creditInfo = null;
+            $ride = DB::transaction(function () use ($request, $driverProfile, &$creditInfo) {
                 // Lock the ride for update to prevent race conditions
                 $ride = Ride::where('id', $request->ride_id)->lockForUpdate()->first();
 
                 if (! $ride || $ride->status !== RideStatus::PENDING) {
                     throw new \Exception('Ride request is no longer available.');
                 }
+
+                // OPTION B: Atomically consume 1 ride credit for accepting this ride
+                $creditInfo = $this->subscriptionService->consumeRideCredit($driverProfile, $ride->id, $request->id);
 
                 // Accept this request
                 $request->update(['status' => RideRequestStatus::ACCEPTED]);
@@ -1054,6 +1156,7 @@ class DriverController extends Controller
                 'success' => true,
                 'message' => 'Ride request accepted successfully.',
                 'ride' => new RideResource($ride->load(['rider', 'driverProfile.user'])),
+                'subscription' => $creditInfo,
             ]);
 
         } catch (\Exception $e) {

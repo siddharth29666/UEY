@@ -176,6 +176,15 @@ class WalletService
                 return;
             }
 
+            // Check if this webhook is for a driver subscription
+            $metadata = $dataObject['metadata'] ?? [];
+            if (isset($metadata['type']) && $metadata['type'] === 'driver_subscription') {
+                if ($type === 'payment_intent.succeeded' || $type === 'checkout.session.completed') {
+                    app(DriverSubscriptionService::class)->handleSuccessfulPayment($intentId, $payload);
+                }
+                return;
+            }
+
             $topup = WalletTopup::where('stripe_payment_intent', $intentId)->first();
             if (! $topup || $topup->payment_status !== 'pending') {
                 return;

@@ -162,4 +162,24 @@ class DriverProfile extends Model
 
         return 'approved';
     }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(DriverSubscription::class, 'driver_profile_id');
+    }
+
+    public function creditTransactions(): HasMany
+    {
+        return $this->hasMany(DriverCreditTransaction::class, 'driver_profile_id');
+    }
+
+    public function activeSubscription(): HasOne
+    {
+        return $this->hasOne(DriverSubscription::class, 'driver_profile_id')
+            ->where('status', 'active')
+            ->where('starts_at', '<=', now())
+            ->where('expires_at', '>=', now())
+            ->where('credits_remaining', '>', 0)
+            ->latest('id');
+    }
 }

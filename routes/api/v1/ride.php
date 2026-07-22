@@ -17,16 +17,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/', [RiderController::class, 'rideHistory']);
     });
 
-    // Phase 5 Driver Ride Actions
+    // Phase 5 Driver Ride Actions & History
     Route::middleware('ability:role:driver')->prefix('driver')->group(function () {
         Route::get('/ride-requests', [DriverController::class, 'rideRequests']);
         Route::post('/ride-requests/{request}/accept', [DriverController::class, 'acceptRideRequest']);
         Route::post('/ride-requests/{request}/decline', [DriverController::class, 'declineRideRequest']);
         Route::get('/active-ride', [DriverController::class, 'activeRide']);
+        Route::get('/rides/history', [DriverController::class, 'rideHistory']);
     });
 
     // Phase 6 Driver Ride Lifecycle Execution Actions
-    Route::middleware('ability:role:driver')->prefix('driver/rides/{ride}')->group(function () {
+    Route::middleware('ability:role:driver')->prefix('driver/rides/{ride}')->whereNumber('ride')->group(function () {
         Route::get('/', [DriverController::class, 'showRide']);
         Route::post('/arriving', [DriverController::class, 'markArriving']);
         Route::post('/arrived', [DriverController::class, 'markArrived']);
@@ -50,10 +51,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('ability:role:driver')->prefix('driver')->group(function () {
         Route::post('/requests/{request}/accept', [DriverController::class, 'acceptRequest']);
         Route::post('/requests/{request}/decline', [DriverController::class, 'declineRequest']);
-        Route::post('/rides/{ride}/arrive', [DriverController::class, 'arriveAtPickup']);
+        Route::post('/rides/{ride}/arrive', [DriverController::class, 'markArriving']);
         Route::post('/rides/{ride}/start', [DriverController::class, 'startRide']);
         Route::post('/rides/{ride}/complete', [DriverController::class, 'completeRide']);
-        Route::get('/rides/history', [DriverController::class, 'rideHistory']);
         Route::post('/rides/{ride}/review', [DriverController::class, 'reviewRider']);
     });
 

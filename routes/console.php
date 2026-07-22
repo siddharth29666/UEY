@@ -50,3 +50,9 @@ Schedule::command('app:referral-bonus')
     ->withoutOverlapping()
     ->onOneServer()
     ->runInBackground();
+
+Schedule::command('app:expire-subscriptions')
+    ->dailyAt('00:00')
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground();
