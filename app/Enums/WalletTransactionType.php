@@ -12,4 +12,5 @@ enum WalletTransactionType: string
     case REFERRAL_BONUS = 'referral_bonus';
     case ADMIN_CREDIT = 'admin_credit';
     case ADMIN_DEBIT = 'admin_debit';
+    case SUBSCRIPTION_PURCHASE = 'subscription_purchase';
 }

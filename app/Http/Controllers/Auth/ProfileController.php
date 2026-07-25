@@ -72,7 +72,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         if ($user->isDriver()) {
-            $user->load('driverProfile.vehicles');
+            $user->load('driverProfile.vehicles.vehicleType');
         }
 
         return response()->json([

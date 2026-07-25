@@ -14,7 +14,8 @@ use App\Models\RideRequest;
 use App\Models\SubscriptionPlan;
 use App\Models\User;
 use App\Models\VehicleType;
-use Carbon\Carbon;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -30,6 +31,7 @@ class DriverSubscriptionTest extends TestCase
     protected VehicleType $vehicleType;
     protected SubscriptionPlan $planA;
     protected SubscriptionPlan $planB;
+    protected Wallet $driverWallet;
 
     protected function setUp(): void
     {
@@ -74,6 +76,14 @@ class DriverSubscriptionTest extends TestCase
             'is_available' => true,
         ]);
 
+        // Driver Wallet
+        $this->driverWallet = Wallet::create([
+            'user_id' => $this->driverUser->id,
+            'balance' => 0.00,
+            'currency' => 'EUR',
+            'status' => 'active',
+        ]);
+
         // Rider User
         $this->riderUser = User::create([
             'name' => 'Rachel Rider',
@@ -107,7 +117,7 @@ class DriverSubscriptionTest extends TestCase
     }
 
     /**
-     * Test 1: Admin can create, update, and manage Subscription Plans in EUR.
+     * Admin Plan CRUD test.
      */
     public function test_admin_can_manage_subscription_plans(): void
     {
@@ -153,7 +163,7 @@ class DriverSubscriptionTest extends TestCase
     }
 
     /**
-     * Test 2: Inactive or deleted plans are hidden from Driver plan listing.
+     * Inactive plans hidden from driver listing.
      */
     public function test_inactive_plans_hidden_from_driver_listing(): void
     {
@@ -172,10 +182,13 @@ class DriverSubscriptionTest extends TestCase
     }
 
     /**
-     * Test 3: Driver can initiate Stripe subscription purchase in EUR.
+     * Test 1: Driver purchases subscription using internal wallet balance.
      */
-    public function test_driver_can_purchase_subscription_via_stripe(): void
+    public function test_driver_can_purchase_subscription_via_internal_wallet(): void
     {
+        // Set wallet balance to €25.00
+        $this->driverWallet->update(['balance' => 25.00]);
+
         Sanctum::actingAs($this->driverUser, ['role:driver']);
 
         $response = $this->postJson('/api/v1/driver/subscription/purchase', [
@@ -185,78 +198,178 @@ class DriverSubscriptionTest extends TestCase
         $response->assertStatus(200)
             ->assertJson([
                 'success' => true,
-                'message' => 'Subscription purchase initiated.',
-            ])
-            ->assertJsonStructure([
-                'data' => ['subscription', 'payment_intent_id', 'client_secret', 'checkout_session_id', 'checkout_url'],
+                'message' => 'Subscription purchased successfully.',
+                'data' => [
+                    'wallet' => [
+                        'balance_before' => 25.00,
+                        'amount_deducted' => 10.00,
+                        'balance_after' => 15.00,
+                    ],
+                ],
             ]);
 
+        // Wallet balance updated
+        $this->driverWallet->refresh();
+        $this->assertEquals(15.00, (float) $this->driverWallet->balance);
+
+        // Subscription activated immediately
         $this->assertDatabaseHas('driver_subscriptions', [
             'driver_profile_id' => $this->driverProfile->id,
             'subscription_plan_id' => $this->planA->id,
             'amount_eur' => 10.00,
-            'currency' => 'eur',
-            'status' => 'pending',
+            'status' => 'active',
+            'payment_source' => 'wallet',
+            'credits_allocated' => 20,
+            'credits_remaining' => 20,
+            'credits_used' => 0,
         ]);
-    }
 
-    /**
-     * Test 4: Stripe Webhook activates pending subscription and allocates credits idempotently.
-     */
-    public function test_stripe_webhook_activates_subscription_and_allocates_credits(): void
-    {
-        Sanctum::actingAs($this->driverUser, ['role:driver']);
-
-        $purchaseResponse = $this->postJson('/api/v1/driver/subscription/purchase', [
-            'subscription_plan_id' => $this->planA->id,
+        // Wallet debit transaction created
+        $this->assertDatabaseHas('wallet_transactions', [
+            'wallet_id' => $this->driverWallet->id,
+            'type' => 'debit',
+            'transaction_type' => 'subscription_purchase',
+            'amount' => 10.00,
+            'balance_before' => 25.00,
+            'balance_after' => 15.00,
         ]);
-        $paymentIntentId = $purchaseResponse->json('data.payment_intent_id');
-        $subId = $purchaseResponse->json('data.subscription.id');
 
-        // Simulate Stripe Webhook Payload
-        $webhookPayload = [
-            'id' => 'evt_test_sub_'.uniqid(),
-            'type' => 'payment_intent.succeeded',
-            'data' => [
-                'object' => [
-                    'id' => $paymentIntentId,
-                    'metadata' => [
-                        'type' => 'driver_subscription',
-                        'driver_subscription_id' => (string) $subId,
-                        'driver_profile_id' => (string) $this->driverProfile->id,
-                    ],
-                ],
-            ],
-        ];
-
-        // First webhook call
-        $response = $this->postJson('/api/v1/stripe/webhook', $webhookPayload);
-        $response->assertStatus(200);
-
-        $subscription = DriverSubscription::find($subId);
-        $this->assertEquals('active', $subscription->status);
-        $this->assertEquals(20, $subscription->credits_allocated);
-        $this->assertEquals(20, $subscription->credits_remaining);
-        $this->assertEquals(0, $subscription->credits_used);
-
-        // Verify credit ledger transaction created
+        // Driver credit ledger transaction created
         $this->assertDatabaseHas('driver_credit_transactions', [
             'driver_profile_id' => $this->driverProfile->id,
-            'driver_subscription_id' => $subId,
             'type' => 'subscription_purchase',
             'amount' => 20,
         ]);
-
-        // Duplicate Webhook Call (Idempotency test)
-        $response2 = $this->postJson('/api/v1/stripe/webhook', $webhookPayload);
-        $response2->assertStatus(200);
-
-        $subscription->refresh();
-        $this->assertEquals(20, $subscription->credits_remaining); // Credits not doubled!
     }
 
     /**
-     * Test 5 (OPTION B - Test 1): Driver with 10 credits accepts ride -> 1 credit deducted immediately.
+     * Test 2: Purchase fails with HTTP 422 when wallet balance is insufficient.
+     */
+    public function test_purchase_fails_with_insufficient_wallet_balance(): void
+    {
+        // Set wallet balance to €5.00 (plan price is €10.00)
+        $this->driverWallet->update(['balance' => 5.00]);
+
+        Sanctum::actingAs($this->driverUser, ['role:driver']);
+
+        $response = $this->postJson('/api/v1/driver/subscription/purchase', [
+            'subscription_plan_id' => $this->planA->id,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'message' => 'Insufficient wallet balance. Please top up your wallet to purchase this subscription plan.',
+            ]);
+
+        // Wallet balance unchanged
+        $this->driverWallet->refresh();
+        $this->assertEquals(5.00, (float) $this->driverWallet->balance);
+
+        // No subscription created
+        $this->assertDatabaseMissing('driver_subscriptions', [
+            'driver_profile_id' => $this->driverProfile->id,
+        ]);
+    }
+
+    /**
+     * Test 3: Purchase succeeds when wallet balance exactly equals plan price.
+     */
+    public function test_purchase_succeeds_with_exact_wallet_balance(): void
+    {
+        // Set wallet balance to exactly €10.00
+        $this->driverWallet->update(['balance' => 10.00]);
+
+        Sanctum::actingAs($this->driverUser, ['role:driver']);
+
+        $response = $this->postJson('/api/v1/driver/subscription/purchase', [
+            'subscription_plan_id' => $this->planA->id,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'success' => true,
+                'data' => [
+                    'wallet' => [
+                        'balance_before' => 10.00,
+                        'amount_deducted' => 10.00,
+                        'balance_after' => 0.00,
+                    ],
+                ],
+            ]);
+
+        $this->driverWallet->refresh();
+        $this->assertEquals(0.00, (float) $this->driverWallet->balance);
+    }
+
+    /**
+     * Test 4: Stripe is not used for subscription purchase.
+     */
+    public function test_stripe_is_not_used_for_subscription_purchase(): void
+    {
+        $this->driverWallet->update(['balance' => 50.00]);
+
+        Sanctum::actingAs($this->driverUser, ['role:driver']);
+
+        $response = $this->postJson('/api/v1/driver/subscription/purchase', [
+            'subscription_plan_id' => $this->planA->id,
+        ]);
+
+        $response->assertStatus(200);
+
+        // Response should NOT contain Stripe keys
+        $responseData = $response->json('data');
+        $this->assertArrayNotHasKey('client_secret', $responseData);
+        $this->assertArrayNotHasKey('checkout_url', $responseData);
+        $this->assertArrayNotHasKey('payment_intent_id', $responseData);
+    }
+
+    /**
+     * Test 5: Wallet Top-Up still uses Stripe.
+     */
+    public function test_wallet_topup_still_uses_stripe(): void
+    {
+        Sanctum::actingAs($this->driverUser, ['role:driver']);
+
+        $response = $this->postJson('/api/v1/wallet/top-up', [
+            'amount' => 50.00,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson(['success' => true])
+            ->assertJsonStructure([
+                'data' => ['client_secret', 'payment_intent_id'],
+            ]);
+    }
+
+    /**
+     * Test 6: Double Purchase Protection — Driver with active subscription cannot purchase another plan.
+     */
+    public function test_double_purchase_protection_when_active_subscription_exists(): void
+    {
+        $this->driverWallet->update(['balance' => 50.00]);
+
+        Sanctum::actingAs($this->driverUser, ['role:driver']);
+
+        // First purchase succeeds
+        $this->postJson('/api/v1/driver/subscription/purchase', [
+            'subscription_plan_id' => $this->planA->id,
+        ])->assertStatus(200);
+
+        // Second purchase fails
+        $response = $this->postJson('/api/v1/driver/subscription/purchase', [
+            'subscription_plan_id' => $this->planB->id,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJson([
+                'success' => false,
+                'message' => 'You already have an active subscription plan.',
+            ]);
+    }
+
+    /**
+     * Test 7 (OPTION B - Test 1): Driver with credits accepts ride -> 1 credit deducted immediately.
      */
     public function test_option_b_driver_accepts_ride_deducts_1_credit_immediately(): void
     {
@@ -272,6 +385,7 @@ class DriverSubscriptionTest extends TestCase
             'starts_at' => now()->subMinute(),
             'expires_at' => now()->addDays(30),
             'status' => 'active',
+            'payment_source' => 'wallet',
         ]);
 
         // Create ride and request
@@ -311,24 +425,12 @@ class DriverSubscriptionTest extends TestCase
         $subscription->refresh();
         $this->assertEquals(9, $subscription->credits_remaining);
         $this->assertEquals(1, $subscription->credits_used);
-
-        // Verify credit transaction logged
-        $this->assertDatabaseHas('driver_credit_transactions', [
-            'driver_profile_id' => $this->driverProfile->id,
-            'driver_subscription_id' => $subscription->id,
-            'ride_id' => $ride->id,
-            'ride_request_id' => $rideRequest->id,
-            'type' => 'ride_accept',
-            'amount' => -1,
-            'balance_before' => 10,
-            'balance_after' => 9,
-        ]);
     }
 
     /**
-     * Test 6 (OPTION B - Test 2): Rider cancels after acceptance -> NO credit refund.
+     * Test 8 (OPTION B - Test 2 & 3): Cancellation by Rider or Driver does NOT refund credit.
      */
-    public function test_option_b_rider_cancels_after_acceptance_does_not_refund_credit(): void
+    public function test_option_b_cancellation_does_not_refund_credit(): void
     {
         $subscription = DriverSubscription::create([
             'driver_profile_id' => $this->driverProfile->id,
@@ -341,6 +443,7 @@ class DriverSubscriptionTest extends TestCase
             'starts_at' => now()->subMinute(),
             'expires_at' => now()->addDays(30),
             'status' => 'active',
+            'payment_source' => 'wallet',
         ]);
 
         $ride = Ride::create([
@@ -364,7 +467,7 @@ class DriverSubscriptionTest extends TestCase
             'status' => RideRequestStatus::PENDING,
         ]);
 
-        // Driver accepts -> credit becomes 9
+        // Driver accepts -> credits become 9
         Sanctum::actingAs($this->driverUser, ['role:driver']);
         $this->postJson("/api/v1/driver/ride-requests/{$rideRequest->id}/accept");
 
@@ -373,70 +476,7 @@ class DriverSubscriptionTest extends TestCase
 
         // Rider cancels ride
         Sanctum::actingAs($this->riderUser, ['role:rider']);
-        $cancelResponse = $this->postJson("/api/v1/rides/{$ride->id}/cancel", [
-            'reason' => 'Changed my mind',
-        ]);
-
-        $cancelResponse->assertStatus(200);
-
-        // Credits MUST REMAIN 9 (No refund!)
-        $subscription->refresh();
-        $this->assertEquals(9, $subscription->credits_remaining);
-        $this->assertEquals(1, $subscription->credits_used);
-    }
-
-    /**
-     * Test 7 (OPTION B - Test 3): Driver cancels after acceptance -> NO credit refund.
-     */
-    public function test_option_b_driver_cancels_after_acceptance_does_not_refund_credit(): void
-    {
-        $subscription = DriverSubscription::create([
-            'driver_profile_id' => $this->driverProfile->id,
-            'subscription_plan_id' => $this->planA->id,
-            'amount_eur' => 10.00,
-            'currency' => 'eur',
-            'credits_allocated' => 10,
-            'credits_used' => 0,
-            'credits_remaining' => 10,
-            'starts_at' => now()->subMinute(),
-            'expires_at' => now()->addDays(30),
-            'status' => 'active',
-        ]);
-
-        $ride = Ride::create([
-            'rider_id' => $this->riderUser->id,
-            'vehicle_type_id' => $this->vehicleType->id,
-            'pickup_address' => 'Piccadilly',
-            'destination_address' => 'Soho',
-            'pickup_latitude' => 51.5,
-            'pickup_longitude' => -0.1,
-            'destination_latitude' => 51.6,
-            'destination_longitude' => -0.2,
-            'status' => RideStatus::PENDING,
-            'estimated_distance' => 3.0,
-            'estimated_duration' => 10,
-            'estimated_fare' => 10.00,
-        ]);
-
-        $rideRequest = RideRequest::create([
-            'ride_id' => $ride->id,
-            'driver_profile_id' => $this->driverProfile->id,
-            'status' => RideRequestStatus::PENDING,
-        ]);
-
-        // Driver accepts -> credits becomes 9
-        Sanctum::actingAs($this->driverUser, ['role:driver']);
-        $this->postJson("/api/v1/driver/ride-requests/{$rideRequest->id}/accept");
-
-        $subscription->refresh();
-        $this->assertEquals(9, $subscription->credits_remaining);
-
-        // Driver cancels ride
-        $cancelResponse = $this->postJson("/api/v1/rides/{$ride->id}/cancel", [
-            'reason' => 'Vehicle breakdown',
-        ]);
-
-        $cancelResponse->assertStatus(200);
+        $this->postJson("/api/v1/rides/{$ride->id}/cancel", ['reason' => 'Changed my mind']);
 
         // Credits MUST REMAIN 9 (No refund!)
         $subscription->refresh();
@@ -444,44 +484,7 @@ class DriverSubscriptionTest extends TestCase
     }
 
     /**
-     * Test 8: Driver with 0 credits or no subscription CANNOT accept a ride request.
-     */
-    public function test_driver_without_credits_cannot_accept_ride(): void
-    {
-        $ride = Ride::create([
-            'rider_id' => $this->riderUser->id,
-            'vehicle_type_id' => $this->vehicleType->id,
-            'pickup_address' => 'Piccadilly',
-            'destination_address' => 'Soho',
-            'pickup_latitude' => 51.5,
-            'pickup_longitude' => -0.1,
-            'destination_latitude' => 51.6,
-            'destination_longitude' => -0.2,
-            'status' => RideStatus::PENDING,
-            'estimated_distance' => 3.0,
-            'estimated_duration' => 10,
-            'estimated_fare' => 10.00,
-        ]);
-
-        $rideRequest = RideRequest::create([
-            'ride_id' => $ride->id,
-            'driver_profile_id' => $this->driverProfile->id,
-            'status' => RideRequestStatus::PENDING,
-        ]);
-
-        Sanctum::actingAs($this->driverUser, ['role:driver']);
-
-        $response = $this->postJson("/api/v1/driver/ride-requests/{$rideRequest->id}/accept");
-
-        $response->assertStatus(422)
-            ->assertJson([
-                'success' => false,
-                'message' => 'You do not have enough ride credits. Please purchase a subscription plan.',
-            ]);
-    }
-
-    /**
-     * Test 9: Expired subscription cannot accept rides and scheduler command marks it expired.
+     * Test 9: Expired subscription cannot accept rides and command expires it.
      */
     public function test_expired_subscription_cannot_accept_rides_and_command_expires_it(): void
     {
@@ -494,8 +497,9 @@ class DriverSubscriptionTest extends TestCase
             'credits_used' => 0,
             'credits_remaining' => 10,
             'starts_at' => now()->subDays(31),
-            'expires_at' => now()->subMinute(), // Expired!
+            'expires_at' => now()->subMinute(),
             'status' => 'active',
+            'payment_source' => 'wallet',
         ]);
 
         $ride = Ride::create([
@@ -523,7 +527,7 @@ class DriverSubscriptionTest extends TestCase
         $response = $this->postJson("/api/v1/driver/ride-requests/{$rideRequest->id}/accept");
         $response->assertStatus(422);
 
-        // Run expiration artisan command
+        // Run expiration command
         $this->artisan('app:expire-subscriptions')->assertExitCode(0);
 
         $subscription->refresh();

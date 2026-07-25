@@ -12,477 +12,6 @@
         }
     ],
     "paths": {
-        "/driver/rides/history": {
-            "get": {
-                "tags": ["Driver Module"],
-                "summary": "Driver Ride History",
-                "description": "Retrieves a paginated list of past rides for the authenticated driver with optional filters for status and date range.",
-                "operationId": "driverRideHistory",
-                "parameters": [
-                    { "name": "status", "in": "query", "schema": { "type": "string" } },
-                    { "name": "from", "in": "query", "schema": { "type": "string", "format": "date" } },
-                    { "name": "to", "in": "query", "schema": { "type": "string", "format": "date" } },
-                    { "name": "date_from", "in": "query", "schema": { "type": "string", "format": "date" } },
-                    { "name": "date_to", "in": "query", "schema": { "type": "string", "format": "date" } },
-                    { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
-                    { "name": "per_page", "in": "query", "schema": { "type": "integer", "default": 15 } }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Driver ride history retrieved successfully.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "rides": { "type": "array", "items": { "$ref": "#/components/schemas/Ride" } },
-                                        "meta": { "type": "object" },
-                                        "links": { "type": "object" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/driver/subscription/plans": {
-            "get": {
-                "tags": ["Driver Subscription"],
-                "summary": "Get Subscription Plans",
-                "description": "Retrieves all active, non-deleted subscription plans in EUR currency.",
-                "operationId": "getSubscriptionPlans",
-                "responses": {
-                    "200": {
-                        "description": "Subscription plans list retrieved.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "plans": { "type": "array", "items": { "$ref": "#/components/schemas/SubscriptionPlanResource" } }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/driver/subscription/current": {
-            "get": {
-                "tags": ["Driver Subscription"],
-                "summary": "Get Current Driver Subscription",
-                "description": "Retrieves the authenticated driver's current active subscription details.",
-                "operationId": "getCurrentDriverSubscription",
-                "responses": {
-                    "200": {
-                        "description": "Current subscription details.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "subscription": { "$ref": "#/components/schemas/DriverSubscriptionResource", "nullable": true }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/driver/subscription/credits": {
-            "get": {
-                "tags": ["Driver Subscription"],
-                "summary": "Get Driver Credit Balance Overview",
-                "description": "Retrieves current available ride credits, allocated total, used count, and expiration date.",
-                "operationId": "getDriverCreditBalance",
-                "responses": {
-                    "200": {
-                        "description": "Credit balance details.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "data": { "type": "object" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/driver/subscription/purchase": {
-            "post": {
-                "tags": ["Driver Subscription"],
-                "summary": "Purchase Subscription Plan via Stripe",
-                "description": "Initiates a subscription plan purchase in EUR and returns Stripe checkout session/payment intent details.",
-                "operationId": "purchaseSubscriptionPlan",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": ["subscription_plan_id"],
-                                "properties": {
-                                    "subscription_plan_id": { "type": "integer", "example": 1 }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Stripe purchase initiated successfully.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "data": { "type": "object" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/admin/subscription-plans": {
-            "get": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — List Subscription Plans",
-                "description": "Returns all subscription plans including active, inactive, and soft deleted. Admin only.",
-                "operationId": "adminListSubscriptionPlans",
-                "responses": {
-                    "200": {
-                        "description": "Subscription plans list retrieved.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "data": { "type": "array", "items": { "$ref": "#/components/schemas/SubscriptionPlanResource" } }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            },
-            "post": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — Create Subscription Plan",
-                "description": "Creates a new subscription plan in EUR and syncs with Stripe. Admin only.",
-                "operationId": "adminCreateSubscriptionPlan",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": ["name", "price_eur", "ride_credits", "duration_days"],
-                                "properties": {
-                                    "name": { "type": "string", "example": "Starter Plan" },
-                                    "description": { "type": "string", "example": "20 Ride Credits" },
-                                    "price_eur": { "type": "number", "format": "float", "example": 10.00 },
-                                    "ride_credits": { "type": "integer", "example": 20 },
-                                    "duration_days": { "type": "integer", "example": 30 },
-                                    "status": { "type": "boolean", "example": true }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": { "description": "Subscription plan created." }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/admin/subscription-plans/{id}": {
-            "get": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — Show Subscription Plan Details",
-                "description": "Retrieves single subscription plan details by ID. Admin only.",
-                "operationId": "adminShowSubscriptionPlan",
-                "parameters": [
-                    { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Subscription plan details.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "data": { "$ref": "#/components/schemas/SubscriptionPlanResource" }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": { "description": "Subscription plan not found." }
-                },
-                "security": [{ "bearerAuth": [] }]
-            },
-            "put": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — Update Subscription Plan",
-                "description": "Updates an existing subscription plan by ID. Admin only.",
-                "operationId": "adminUpdateSubscriptionPlan",
-                "parameters": [
-                    { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "properties": {
-                                    "name": { "type": "string", "example": "Updated Starter Plan" },
-                                    "description": { "type": "string", "example": "Updated Description" },
-                                    "price_eur": { "type": "number", "format": "float", "example": 12.50 },
-                                    "ride_credits": { "type": "integer", "example": 25 },
-                                    "duration_days": { "type": "integer", "example": 30 },
-                                    "status": { "type": "boolean", "example": true },
-                                    "sort_order": { "type": "integer", "example": 1 }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Subscription plan updated successfully.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "message": { "type": "string", "example": "Subscription plan updated successfully." },
-                                        "data": { "$ref": "#/components/schemas/SubscriptionPlanResource" }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": { "description": "Subscription plan not found." }
-                },
-                "security": [{ "bearerAuth": [] }]
-            },
-            "delete": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — Delete Subscription Plan",
-                "description": "Soft deletes a subscription plan by ID. Admin only.",
-                "operationId": "adminDeleteSubscriptionPlan",
-                "parameters": [
-                    { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Subscription plan deleted successfully.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "message": { "type": "string", "example": "Subscription plan deleted successfully." }
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "404": { "description": "Subscription plan not found." }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/admin/subscription-plans/{id}/status": {
-            "patch": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — Toggle Subscription Plan Status",
-                "description": "Toggles a subscription plan active/inactive status. Admin only.",
-                "operationId": "adminToggleSubscriptionPlanStatus",
-                "parameters": [
-                    { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "type": "object",
-                                "required": ["active"],
-                                "properties": {
-                                    "active": { "type": "boolean", "example": false }
-                                }
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Subscription plan status updated successfully.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "message": { "type": "string", "example": "Subscription plan status updated successfully." },
-                                        "data": { "$ref": "#/components/schemas/SubscriptionPlanResource" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/admin/subscription-plans/{id}/restore": {
-            "post": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — Restore Soft Deleted Subscription Plan",
-                "description": "Restores a soft-deleted subscription plan by ID. Admin only.",
-                "operationId": "adminRestoreSubscriptionPlan",
-                "parameters": [
-                    { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Subscription plan restored successfully.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "message": { "type": "string", "example": "Subscription plan restored successfully." },
-                                        "data": { "$ref": "#/components/schemas/SubscriptionPlanResource" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/admin/driver-subscriptions": {
-            "get": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — List All Driver Subscriptions",
-                "description": "Retrieves paginated driver subscription records across platform. Admin only.",
-                "operationId": "adminListDriverSubscriptions",
-                "parameters": [
-                    { "name": "status", "in": "query", "schema": { "type": "string" } },
-                    { "name": "driver_id", "in": "query", "schema": { "type": "integer" } },
-                    { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
-                    { "name": "per_page", "in": "query", "schema": { "type": "integer", "default": 15 } }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Driver subscriptions list.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "subscriptions": { "type": "array", "items": { "$ref": "#/components/schemas/DriverSubscriptionResource" } },
-                                        "meta": { "type": "object" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/admin/driver-subscriptions/{id}": {
-            "get": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — Show Driver Subscription Details",
-                "description": "Retrieves detailed driver subscription info by ID. Admin only.",
-                "operationId": "adminShowDriverSubscription",
-                "parameters": [
-                    { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Driver subscription details.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "subscription": { "$ref": "#/components/schemas/DriverSubscriptionResource" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
-        "/admin/driver-credit-transactions": {
-            "get": {
-                "tags": ["Admin Subscription Plans"],
-                "summary": "Admin — Audit Credit Transactions",
-                "description": "Audit journal of credit transaction entries (subscription purchases, ride accept deductions, manual adjustments, expiries). Admin only.",
-                "operationId": "adminAuditCreditTransactions",
-                "parameters": [
-                    { "name": "type", "in": "query", "schema": { "type": "string" } },
-                    { "name": "driver_id", "in": "query", "schema": { "type": "integer" } },
-                    { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
-                    { "name": "per_page", "in": "query", "schema": { "type": "integer", "default": 15 } }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Credit transactions journal.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "success": { "type": "boolean", "example": true },
-                                        "transactions": { "type": "array", "items": { "$ref": "#/components/schemas/DriverCreditTransactionResource" } },
-                                        "meta": { "type": "object" }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [{ "bearerAuth": [] }]
-            }
-        },
         "/admin/audit-logs": {
             "get": {
                 "tags": [
@@ -1713,6 +1242,91 @@
                 ]
             }
         },
+        "/admin/promo-codes/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Admin Promo Code Management"
+                ],
+                "summary": "Activate or Deactivate Promo Code",
+                "description": "Enables or disables a promo code.",
+                "operationId": "31152ef4d47e44986a705b53470dabe8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "active"
+                                ],
+                                "properties": {
+                                    "active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Promo Code status updated successfully."
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/promo-codes/{id}/restore": {
+            "post": {
+                "tags": [
+                    "Admin Promo Code Management"
+                ],
+                "summary": "Restore Soft Deleted Promo Code",
+                "description": "Restores a previously soft deleted promo code config.",
+                "operationId": "095ba85dc8b5b30827263952141e6a3c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promo Code restored successfully."
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/reviews": {
             "get": {
                 "tags": [
@@ -2438,6 +2052,641 @@
                 ]
             }
         },
+        "/admin/subscription-plans": {
+            "get": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — List Subscription Plans",
+                "description": "Returns all subscription plans including active, inactive, and soft deleted. Admin only.",
+                "operationId": "c7fbe4715d7834c5282748a695d6646e",
+                "responses": {
+                    "200": {
+                        "description": "Subscription plans list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SubscriptionPlanResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — Create Subscription Plan",
+                "description": "Creates a new subscription plan in EUR and syncs with Stripe. Admin only.",
+                "operationId": "d9b25831165cfec71dc8427534ad358f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price_eur",
+                                    "ride_credits",
+                                    "duration_days"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Starter Plan"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "20 Ride Credits"
+                                    },
+                                    "price_eur": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10
+                                    },
+                                    "ride_credits": {
+                                        "type": "integer",
+                                        "example": 20
+                                    },
+                                    "duration_days": {
+                                        "type": "integer",
+                                        "example": 30
+                                    },
+                                    "status": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Subscription plan created successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription plan created successfully."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SubscriptionPlanResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/subscription-plans/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — Show Subscription Plan Details",
+                "description": "Retrieves single subscription plan details by ID. Admin only.",
+                "operationId": "6fe55782294fc4ea9cf3eeb69369fe61",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription plan details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SubscriptionPlanResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription plan not found."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — Update Subscription Plan",
+                "description": "Updates an existing subscription plan by ID. Admin only.",
+                "operationId": "f99394d0e2611fd1ad433f5bb45c34c6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Updated Starter Plan"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Updated Description"
+                                    },
+                                    "price_eur": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 12.5
+                                    },
+                                    "ride_credits": {
+                                        "type": "integer",
+                                        "example": 25
+                                    },
+                                    "duration_days": {
+                                        "type": "integer",
+                                        "example": 30
+                                    },
+                                    "status": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Subscription plan updated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription plan updated successfully."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SubscriptionPlanResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription plan not found."
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — Delete Subscription Plan",
+                "description": "Soft deletes a subscription plan by ID. Admin only.",
+                "operationId": "227d489a23a54a35971d307946752a8f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription plan deleted successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription plan deleted successfully."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Subscription plan not found."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/subscription-plans/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — Toggle Subscription Plan Status",
+                "description": "Toggles a subscription plan active/inactive status. Admin only.",
+                "operationId": "d54f28a035b4e62dd60992f97f8ce53f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "active"
+                                ],
+                                "properties": {
+                                    "active": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Subscription plan status updated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription plan status updated successfully."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SubscriptionPlanResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/subscription-plans/{id}/restore": {
+            "post": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — Restore Soft Deleted Subscription Plan",
+                "description": "Restores a soft-deleted subscription plan by ID. Admin only.",
+                "operationId": "c88265ca214ff71125aa466b220c157e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription plan restored successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription plan restored successfully."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SubscriptionPlanResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/driver-subscriptions": {
+            "get": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — List All Driver Subscriptions",
+                "description": "Retrieves paginated driver subscription records across platform. Admin only.",
+                "operationId": "a095c5527b27915c5051bd6171d0f3aa",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "driver_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver subscriptions list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "subscriptions": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DriverSubscriptionResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/driver-subscriptions/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — Show Driver Subscription Details",
+                "description": "Retrieves detailed driver subscription info by ID. Admin only.",
+                "operationId": "95bc8bc9a7902b5f6e3f664624714c92",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver subscription details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "subscription": {
+                                            "$ref": "#/components/schemas/DriverSubscriptionResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/driver-credit-transactions": {
+            "get": {
+                "tags": [
+                    "Admin Subscription Plans"
+                ],
+                "summary": "Admin — Audit Credit Transactions",
+                "description": "Audit journal of credit transaction entries (subscription purchases, ride accept deductions, manual adjustments, expiries). Admin only.",
+                "operationId": "fbe85e8ac2623d9737653a88a5cec53e",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "driver_id",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Credit transactions journal.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "transactions": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DriverCreditTransactionResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/settings": {
             "get": {
                 "tags": [
@@ -3026,6 +3275,395 @@
                 ]
             }
         },
+        "/admin/vehicle-types": {
+            "get": {
+                "tags": [
+                    "Admin Vehicle Types"
+                ],
+                "summary": "Admin: List All Vehicle Types",
+                "description": "Retrieves all vehicle types (active and inactive) sorted alphabetically.",
+                "operationId": "4742c44388856193343ecc77ee33bede",
+                "responses": {
+                    "200": {
+                        "description": "List of all vehicle types."
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Vehicle Types"
+                ],
+                "summary": "Admin: Create Vehicle Type",
+                "description": "Creates a new vehicle type with rates and capacity settings.",
+                "operationId": "7759a59eb844f34e23005904fd9198bc",
+                "requestBody": {
+                    "required": true
+                },
+                "responses": {
+                    "201": {
+                        "description": "Vehicle type created successfully."
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/ForbiddenResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/vehicle-types/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Vehicle Types"
+                ],
+                "summary": "Admin: Show Vehicle Type",
+                "description": "Retrieves details of a specific vehicle type.",
+                "operationId": "cd04c7d5dbbc364531497b4b7f47dbf1",
+                "responses": {
+                    "200": {
+                        "description": "Vehicle type details."
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Vehicle Types"
+                ],
+                "summary": "Admin: Update Vehicle Type",
+                "description": "Updates configuration rates or metadata for a vehicle type.",
+                "operationId": "e997e2b61843cf59dbf189ae36b50fab",
+                "requestBody": {
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Vehicle type updated successfully."
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Vehicle Types"
+                ],
+                "summary": "Admin: Delete Vehicle Type",
+                "description": "Soft deletes a vehicle type from the system.",
+                "operationId": "531d32cc0663b20db4366042aa193953",
+                "responses": {
+                    "200": {
+                        "description": "Vehicle type deleted successfully."
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/vehicle-types/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Admin Vehicle Types"
+                ],
+                "summary": "Admin: Toggle Vehicle Type Status",
+                "description": "Activates or deactivates a vehicle type.",
+                "operationId": "6e3690cf423e2fc540352ae87a007b43",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "active"
+                                ],
+                                "properties": {
+                                    "active": {
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Vehicle type status updated successfully."
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/vehicle-types/{id}/restore": {
+            "post": {
+                "tags": [
+                    "Admin Vehicle Types"
+                ],
+                "summary": "Admin: Restore Vehicle Type",
+                "description": "Restores a previously soft deleted vehicle type.",
+                "operationId": "a53b576bcb0df20a003a449c5bad1a36",
+                "responses": {
+                    "200": {
+                        "description": "Vehicle type restored successfully."
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/auth/google/redirect": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Google OAuth Redirect",
+                "description": "Generates Google OAuth 2.0 authorization URL. Redirects browser or returns JSON URL if requested.",
+                "operationId": "76dd9ae054b7445ddd08f6b154168d43",
+                "parameters": [
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "rider",
+                            "enum": [
+                                "rider",
+                                "driver"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Google OAuth redirect URL generated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "url": {
+                                            "type": "string",
+                                            "example": "https://accounts.google.com/o/oauth2/v2/auth?..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "302": {
+                        "description": "Redirect to Google OAuth consent page."
+                    }
+                }
+            }
+        },
+        "/auth/google/callback": {
+            "get": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Google OAuth Callback (GET)",
+                "description": "Receives Google OAuth authorization code, exchanges it for tokens, authenticates user, and returns Sanctum Bearer token.",
+                "operationId": "42247b84d4452aa88cebe1a5a36980fc",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "role",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "rider",
+                            "enum": [
+                                "rider",
+                                "driver"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Google authentication successful.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Google authentication successful."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "user": {
+                                                    "$ref": "#/components/schemas/User"
+                                                },
+                                                "access_token": {
+                                                    "type": "string"
+                                                },
+                                                "token_type": {
+                                                    "type": "string",
+                                                    "example": "Bearer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Google OAuth Callback (POST)",
+                "description": "Accepts Google OAuth authorization code in JSON payload for mobile/API clients.",
+                "operationId": "9f030ffa5a7c11efd46860c5450f2a9a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "code"
+                                ],
+                                "properties": {
+                                    "code": {
+                                        "type": "string",
+                                        "example": "4/0AX4XfWh..."
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "rider",
+                                        "enum": [
+                                            "rider",
+                                            "driver"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Google authentication successful.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Google authentication successful."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "tags": [
@@ -3219,7 +3857,67 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Password reset OTP sent successfully."
+                                            "example": "Password reset OTP has been sent to your email address."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                }
+            }
+        },
+        "/auth/forgot-password/verify": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Verify Password Reset Email OTP",
+                "description": "Verifies the 6-digit password reset OTP code received via email.",
+                "operationId": "4491f8eaac2b96fdff34fb060c3b3849",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "otp"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Password reset OTP verified successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Password reset OTP verified successfully."
                                         }
                                     },
                                     "type": "object"
@@ -5340,6 +6038,12 @@
                                                         }
                                                     },
                                                     "type": "object"
+                                                },
+                                                "last_seen_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2026-06-23T19:12:00Z",
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
@@ -5712,6 +6416,118 @@
                     },
                     "422": {
                         "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/rides/history": {
+            "get": {
+                "tags": [
+                    "Driver Module"
+                ],
+                "summary": "Driver Ride History",
+                "description": "Retrieves a paginated list of past rides for the authenticated driver with optional filters for status and date range.",
+                "operationId": "75aef9cded1fe9ea109524a69f11bb42",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver ride history retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "rides": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Ride"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
                     }
                 },
                 "security": [
@@ -6098,6 +6914,298 @@
                     },
                     "401": {
                         "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/subscription/plans": {
+            "get": {
+                "tags": [
+                    "Driver Subscription"
+                ],
+                "summary": "Get Subscription Plans",
+                "description": "Retrieves all active, non-deleted subscription plans in EUR currency.",
+                "operationId": "198096fb2949c8d46614f24458f3c263",
+                "responses": {
+                    "200": {
+                        "description": "Subscription plans list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "plans": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SubscriptionPlanResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/subscription/current": {
+            "get": {
+                "tags": [
+                    "Driver Subscription"
+                ],
+                "summary": "Get Current Driver Subscription",
+                "description": "Retrieves the authenticated driver's current active subscription details.",
+                "operationId": "8df6b361cd68731d8b0b1f78bac1c216",
+                "responses": {
+                    "200": {
+                        "description": "Current subscription details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "subscription": {
+                                            "oneOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/DriverSubscriptionResource"
+                                                }
+                                            ],
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/subscription/history": {
+            "get": {
+                "tags": [
+                    "Driver Subscription"
+                ],
+                "summary": "Get Subscription Purchase History",
+                "description": "Retrieves paginated history of subscription plan purchases for authenticated driver.",
+                "operationId": "b597125f3bb4c55be16eae596e2e196c",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Subscription history list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "subscriptions": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/DriverSubscriptionResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/subscription/credits": {
+            "get": {
+                "tags": [
+                    "Driver Subscription"
+                ],
+                "summary": "Get Driver Credit Balance Overview",
+                "description": "Retrieves current available ride credits, allocated total, used count, and expiration date.",
+                "operationId": "6f6fe0aea677adfeaff68d09bfd857df",
+                "responses": {
+                    "200": {
+                        "description": "Credit balance details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/driver/subscription/purchase": {
+            "post": {
+                "tags": [
+                    "Driver Subscription"
+                ],
+                "summary": "Purchase Subscription Plan via Driver Wallet",
+                "description": "Deducts subscription plan price in EUR from driver internal wallet balance and activates subscription immediately.",
+                "operationId": "84efcd2b8cf07b6640cc03197a318e63",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "subscription_plan_id"
+                                ],
+                                "properties": {
+                                    "subscription_plan_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Subscription purchased successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Subscription purchased successfully."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "subscription": {
+                                                    "$ref": "#/components/schemas/DriverSubscriptionResource"
+                                                },
+                                                "wallet": {
+                                                    "properties": {
+                                                        "balance_before": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 25
+                                                        },
+                                                        "amount_deducted": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 10
+                                                        },
+                                                        "balance_after": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 15
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Insufficient wallet balance or validation error.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Insufficient wallet balance. Please top up your wallet to purchase this subscription plan."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -9099,6 +10207,228 @@
                 ]
             }
         },
+        "/promos/validate": {
+            "post": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "Validate Promo Code",
+                "description": "Validates a promo code against vehicle type and estimated fare constraints.",
+                "operationId": "40f1276bbafff077f1d4f568075d7df9",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "promo_code",
+                                    "vehicle_type_id",
+                                    "estimated_fare"
+                                ],
+                                "properties": {
+                                    "promo_code": {
+                                        "type": "string",
+                                        "example": "WELCOME50"
+                                    },
+                                    "vehicle_type_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "estimated_fare": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 350
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Promo code is valid.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "promo": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "code": {
+                                                            "type": "string",
+                                                            "example": "WELCOME50"
+                                                        },
+                                                        "discount_type": {
+                                                            "type": "string",
+                                                            "example": "percentage"
+                                                        },
+                                                        "discount_value": {
+                                                            "type": "string",
+                                                            "example": "50"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "discount_amount": {
+                                                    "type": "string",
+                                                    "example": "100.00"
+                                                },
+                                                "final_fare": {
+                                                    "type": "string",
+                                                    "example": "250.00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Invalid or unavailable promo code.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Promo code is invalid or unavailable."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/promos": {
+            "get": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "List Available Promos",
+                "description": "Retrieves all available promo codes for the authenticated rider.",
+                "operationId": "8582a588107d4fb739670dd616824be5",
+                "responses": {
+                    "200": {
+                        "description": "Promo list retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PromoResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/promos/history": {
+            "get": {
+                "tags": [
+                    "Promo Codes"
+                ],
+                "summary": "Rider Promo Usage History",
+                "description": "Retrieves history of promo code redemptions with pagination.",
+                "operationId": "9427977531eca075836488d4d86cc754",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promo history retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PromoHistoryResource"
+                                            }
+                                        },
+                                        "meta": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/rides/estimate": {
             "post": {
                 "tags": [
@@ -9511,6 +10841,40 @@
                 ]
             }
         },
+        "/vehicle-types": {
+            "get": {
+                "tags": [
+                    "Vehicle Types"
+                ],
+                "summary": "List Available Vehicle Types",
+                "description": "Retrieves a list of all active vehicle types sorted alphabetically by name.",
+                "operationId": "f6a69bd3e8db1a73f9f310e0a3acb5de",
+                "responses": {
+                    "200": {
+                        "description": "A list of active vehicle types.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VehicleType"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/wallet": {
             "get": {
                 "tags": [
@@ -9719,6 +11083,10 @@
                                         "currency": {
                                             "type": "string",
                                             "example": "USD"
+                                        },
+                                        "stripe_publishable_key": {
+                                            "type": "string",
+                                            "example": "pk_test_12345"
                                         },
                                         "wallet_topup": {
                                             "$ref": "#/components/schemas/WalletTopup"
@@ -11605,25 +12973,306 @@
                         },
                         "type": "object",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "VehicleType": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
                     },
-                    "wallet": {
-                        "properties": {
-                            "id": {
-                                "type": "integer",
-                                "example": 2
-                            },
-                            "balance": {
-                                "type": "number",
-                                "format": "float",
-                                "example": 87.5
-                            },
-                            "currency": {
-                                "type": "string",
-                                "example": "GBP"
+                    "name": {
+                        "type": "string",
+                        "example": "Economy"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "base_fare": {
+                        "type": "string",
+                        "example": "2.50"
+                    },
+                    "per_km_rate": {
+                        "type": "string",
+                        "example": "1.20"
+                    },
+                    "per_minute_rate": {
+                        "type": "string",
+                        "example": "0.30"
+                    },
+                    "minimum_fare": {
+                        "type": "string",
+                        "example": "5.00"
+                    },
+                    "commission_percentage": {
+                        "type": "string",
+                        "example": "15.00"
+                    },
+                    "icon_url": {
+                        "type": "string",
+                        "example": "https://uey-assets.s3.amazonaws.com/vehicle-types/icons/sedan.png",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "PromoResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "WELCOME50"
+                    },
+                    "discount_type": {
+                        "type": "string",
+                        "example": "percentage"
+                    },
+                    "discount_value": {
+                        "type": "string",
+                        "example": "50.00"
+                    },
+                    "max_discount": {
+                        "type": "string",
+                        "example": "200.00",
+                        "nullable": true
+                    },
+                    "minimum_fare": {
+                        "type": "string",
+                        "example": "300.00"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-12-31T23:59:59Z"
+                    },
+                    "first_ride_only": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "eligible": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "PromoHistoryResource": {
+                "properties": {
+                    "ride_id": {
+                        "type": "integer",
+                        "example": 55
+                    },
+                    "promo_code": {
+                        "type": "string",
+                        "example": "WELCOME50"
+                    },
+                    "discount_amount": {
+                        "type": "string",
+                        "example": "120.00"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "completed"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "SubscriptionPlanResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Monthly Starter"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "20 Ride Credits",
+                        "nullable": true
+                    },
+                    "price_eur": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "EUR"
+                    },
+                    "ride_credits": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "duration_days": {
+                        "type": "integer",
+                        "example": 30
+                    },
+                    "status": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "DriverSubscriptionResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "driver_profile_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "subscription_plan_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "plan": {
+                        "oneOf": [
+                            {
+                                "$ref": "#/components/schemas/SubscriptionPlanResource"
                             }
-                        },
+                        ],
+                        "nullable": true
+                    },
+                    "amount_eur": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10
+                    },
+                    "currency": {
+                        "type": "string",
+                        "example": "EUR"
+                    },
+                    "credits_allocated": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "credits_used": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "credits_remaining": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    },
+                    "payment_source": {
+                        "type": "string",
+                        "example": "wallet"
+                    },
+                    "starts_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "expires_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "days_remaining": {
+                        "type": "integer",
+                        "example": 25
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "DriverCreditTransactionResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "driver_profile_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "driver_subscription_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "ride_id": {
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "ride_request_id": {
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "deduction"
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "balance_before": {
+                        "type": "integer",
+                        "example": 20
+                    },
+                    "balance_after": {
+                        "type": "integer",
+                        "example": 19
+                    },
+                    "reference": {
+                        "type": "string",
+                        "example": "ACCEPT_RIDE_5",
+                        "nullable": true
+                    },
+                    "metadata": {
                         "type": "object",
                         "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
                     }
                 },
                 "type": "object"
@@ -11701,6 +13350,11 @@
                         "type": "string",
                         "format": "password",
                         "example": "password123"
+                    },
+                    "referral_code": {
+                        "type": "string",
+                        "example": "ABC12345",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -11770,6 +13424,11 @@
                     "vehicle_type_id": {
                         "type": "integer",
                         "example": 1
+                    },
+                    "referral_code": {
+                        "type": "string",
+                        "example": "ABC12345",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -11832,6 +13491,11 @@
                     "auto_accept": {
                         "type": "boolean",
                         "example": true
+                    },
+                    "vehicle_type_id": {
+                        "description": "Vehicle type ID (driver only)",
+                        "type": "integer",
+                        "example": 1
                     }
                 },
                 "type": "object"
@@ -11949,6 +13613,11 @@
                         "type": "number",
                         "format": "float",
                         "example": -0.1482
+                    },
+                    "promo_code": {
+                        "type": "string",
+                        "example": "WELCOME50",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -11995,6 +13664,11 @@
                     "vehicle_type_id": {
                         "type": "integer",
                         "example": 1
+                    },
+                    "promo_code": {
+                        "type": "string",
+                        "example": "WELCOME50",
+                        "nullable": true
                     }
                 },
                 "type": "object"
@@ -12528,7 +14202,111 @@
                 "properties": {
                     "admin_note": {
                         "type": "string",
-                        "example": "Dispatched emergency services, resolved successfully."
+                        "example": "False alarm, situation resolved safely.",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "CreateVehicleTypeRequest": {
+                "required": [
+                    "name",
+                    "capacity",
+                    "base_fare",
+                    "per_km_rate",
+                    "per_minute_rate",
+                    "minimum_fare",
+                    "commission_percentage"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Sedan"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "base_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 2.5
+                    },
+                    "per_km_rate": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1.2
+                    },
+                    "per_minute_rate": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.3
+                    },
+                    "minimum_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 5
+                    },
+                    "commission_percentage": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 15
+                    },
+                    "icon_url": {
+                        "type": "string",
+                        "example": "https://uey-assets.s3.amazonaws.com/vehicle-types/icons/sedan.png",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateVehicleTypeRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Sedan Plus"
+                    },
+                    "capacity": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "base_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 3
+                    },
+                    "per_km_rate": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1.4
+                    },
+                    "per_minute_rate": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0.35
+                    },
+                    "minimum_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 6
+                    },
+                    "commission_percentage": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 15
+                    },
+                    "icon_url": {
+                        "type": "string",
+                        "example": "https://uey-assets.s3.amazonaws.com/vehicle-types/icons/sedan.png",
+                        "nullable": true
+                    },
+                    "active": {
+                        "type": "boolean",
+                        "example": false
                     }
                 },
                 "type": "object"
@@ -12618,60 +14396,6 @@
                         }
                     }
                 }
-            },
-            "SubscriptionPlanResource": {
-                "properties": {
-                    "id": { "type": "integer", "example": 1 },
-                    "name": { "type": "string", "example": "Starter Plan" },
-                    "description": { "type": "string", "example": "20 Ride Credits" },
-                    "price_eur": { "type": "number", "format": "float", "example": 10.00 },
-                    "price": { "type": "number", "format": "float", "example": 10.00 },
-                    "currency": { "type": "string", "example": "EUR" },
-                    "ride_credits": { "type": "integer", "example": 20 },
-                    "duration_days": { "type": "integer", "example": 30 },
-                    "status": { "type": "boolean", "example": true },
-                    "sort_order": { "type": "integer", "example": 1 },
-                    "created_at": { "type": "string", "format": "date-time" },
-                    "updated_at": { "type": "string", "format": "date-time" }
-                },
-                "type": "object"
-            },
-            "DriverSubscriptionResource": {
-                "properties": {
-                    "id": { "type": "integer", "example": 1 },
-                    "driver_profile_id": { "type": "integer", "example": 2 },
-                    "subscription_plan_id": { "type": "integer", "example": 1 },
-                    "plan": { "$ref": "#/components/schemas/SubscriptionPlanResource" },
-                    "amount_eur": { "type": "number", "format": "float", "example": 10.00 },
-                    "currency": { "type": "string", "example": "EUR" },
-                    "credits_allocated": { "type": "integer", "example": 20 },
-                    "credits_used": { "type": "integer", "example": 2 },
-                    "credits_remaining": { "type": "integer", "example": 18 },
-                    "status": { "type": "string", "example": "active" },
-                    "starts_at": { "type": "string", "format": "date-time" },
-                    "expires_at": { "type": "string", "format": "date-time" },
-                    "days_remaining": { "type": "integer", "example": 30 },
-                    "created_at": { "type": "string", "format": "date-time" },
-                    "updated_at": { "type": "string", "format": "date-time" }
-                },
-                "type": "object"
-            },
-            "DriverCreditTransactionResource": {
-                "properties": {
-                    "id": { "type": "integer", "example": 1 },
-                    "driver_profile_id": { "type": "integer", "example": 2 },
-                    "driver_subscription_id": { "type": "integer", "example": 1 },
-                    "ride_id": { "type": "integer", "example": 12, "nullable": true },
-                    "ride_request_id": { "type": "integer", "example": 15, "nullable": true },
-                    "type": { "type": "string", "example": "ride_accept" },
-                    "amount": { "type": "integer", "example": -1 },
-                    "balance_before": { "type": "integer", "example": 20 },
-                    "balance_after": { "type": "integer", "example": 19 },
-                    "reference": { "type": "string", "example": "RIDE_ACCEPT_12" },
-                    "metadata": { "type": "object", "nullable": true },
-                    "created_at": { "type": "string", "format": "date-time" }
-                },
-                "type": "object"
             }
         },
         "securitySchemes": {
@@ -12684,18 +14408,6 @@
         }
     },
     "tags": [
-        {
-            "name": "Driver Subscription",
-            "description": "Driver Subscription & Credit System"
-        },
-        {
-            "name": "Admin Subscription Plans",
-            "description": "Admin Subscription Plan Management"
-        },
-        {
-            "name": "Driver Module",
-            "description": "Driver Module Operations"
-        },
         {
             "name": "Admin Audit Logs",
             "description": "Admin Audit Logs"
@@ -12741,6 +14453,10 @@
             "description": "Admin Rider Management"
         },
         {
+            "name": "Admin Subscription Plans",
+            "description": "Admin Subscription Plans"
+        },
+        {
             "name": "Admin System Settings",
             "description": "Admin System Settings"
         },
@@ -12751,6 +14467,10 @@
         {
             "name": "Admin Withdrawal Management",
             "description": "Admin Withdrawal Management"
+        },
+        {
+            "name": "Admin Vehicle Types",
+            "description": "Admin Vehicle Types"
         },
         {
             "name": "Authentication",
@@ -12785,12 +14505,20 @@
             "description": "Driver Ride Lifecycle"
         },
         {
+            "name": "Driver Module",
+            "description": "Driver Module"
+        },
+        {
             "name": "Driver Matching",
             "description": "Driver Matching"
         },
         {
             "name": "Driver Documents",
             "description": "Driver Documents"
+        },
+        {
+            "name": "Driver Subscription",
+            "description": "Driver Subscription"
         },
         {
             "name": "Emergency Contacts",
@@ -12829,12 +14557,20 @@
             "description": "Reviews"
         },
         {
+            "name": "Promo Codes",
+            "description": "Promo Codes"
+        },
+        {
             "name": "Ride Booking",
             "description": "Ride Booking"
         },
         {
             "name": "Rider Rides",
             "description": "Rider Rides"
+        },
+        {
+            "name": "Vehicle Types",
+            "description": "Vehicle Types"
         }
     ]
 }

@@ -11,6 +11,7 @@ class VehicleResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'vehicle_type_id' => (int) $this->vehicle_type_id,
             'make' => $this->make,
             'model' => $this->model,
             'year' => $this->year,

@@ -49,19 +49,12 @@ class SendOtpController extends Controller
     {
         try {
             $dto = SendOtpDTO::fromRequest($request);
-            $otp = $this->otpService->sendOtp($dto->phone, $dto->type);
+            $this->otpService->sendOtp($dto->phone, $dto->type);
 
-            $response = [
+            return response()->json([
                 'success' => true,
                 'message' => 'OTP sent successfully.',
-            ];
-
-            // If local environment, return the generated OTP in response
-            if (! is_null($otp)) {
-                $response['otp'] = $otp;
-            }
-
-            return response()->json($response);
+            ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

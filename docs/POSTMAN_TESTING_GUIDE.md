@@ -2426,31 +2426,46 @@ Follow this sequence to test the entire lifecycle:
 *   **Method / Route:** `GET {{base_url}}/driver/subscription/plans`
 *   **Headers:** `Authorization: Bearer {{driver_token}}`
 
-#### Step 3: Driver Purchases Subscription Plan
+#### Step 3: Driver Tops Up Wallet (Via Stripe)
+*   **Method / Route:** `POST {{base_url}}/wallet/top-up`
+*   **Headers:** `Authorization: Bearer {{driver_token}}`, `Content-Type: application/json`
+*   **Body (JSON):** `{"amount": 50.00}`
+*   **Notes:** Stripe PaymentIntent is generated for wallet top-up. Webhook confirms deposit to wallet balance.
+
+#### Step 4: Driver Purchases Subscription Plan (Via Wallet Balance)
 *   **Method / Route:** `POST {{base_url}}/driver/subscription/purchase`
+*   **Headers:** `Authorization: Bearer {{driver_token}}`, `Content-Type: application/json`
 *   **Body (JSON):**
     ```json
     {
       "subscription_plan_id": 1
     }
     ```
-
-#### Step 4: Stripe Webhook Confirms Payment
-*   **Method / Route:** `POST {{base_url}}/stripe/webhook`
-*   **Body (JSON):**
+*   **Success Result (200 OK):**
     ```json
     {
-      "id": "evt_test_sub_001",
-      "type": "payment_intent.succeeded",
+      "success": true,
+      "message": "Subscription purchased successfully.",
       "data": {
-        "object": {
-          "id": "pi_test_12345",
-          "metadata": {
-            "type": "driver_subscription",
-            "driver_subscription_id": "1"
-          }
+        "subscription": {
+          "id": 1,
+          "status": "active",
+          "payment_source": "wallet",
+          "credits_remaining": 20
+        },
+        "wallet": {
+          "balance_before": 50.00,
+          "amount_deducted": 10.00,
+          "balance_after": 40.00
         }
       }
+    }
+    ```
+*   **Insufficient Balance Result (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "Insufficient wallet balance. Please top up your wallet to purchase this subscription plan."
     }
     ```
 
@@ -2458,5 +2473,78 @@ Follow this sequence to test the entire lifecycle:
 *   **Method / Route:** `POST {{base_url}}/driver/ride-requests/{request_id}/accept`
 *   **Result:** Deducts 1 credit immediately. Response includes updated `"subscription": { "credits_remaining": 19 }`.
 *   **Cancellation Rule:** If rider or driver cancels afterwards, credits remain 19 (NO REFUND).
+
+---
+
+## 17. Authentication Testing Flow (Twilio OTP, Email Password Reset, Google OAuth)
+
+### 17.1 Twilio OTP Delivery & Verification
+1. **Send Phone OTP**: `POST {{base_url}}/otp/send` with `{"phone": "+447911999888", "type": "register"}`.
+   - Response: `{"success": true, "message": "OTP sent successfully."}`. OTP is delivered via Twilio SMS and never returned in API payload.
+2. **Verify Phone OTP**: `POST {{base_url}}/otp/verify` with `{"phone": "+447911999888", "code": "123456", "type": "register"}`.
+   - Response: `{"success": true, "message": "OTP verified successfully."}`.
+
+### 17.2 Email Forgot Password Flow
+1. **Request Password Reset OTP**: `POST {{base_url}}/auth/forgot-password` with `{"email": "user@example.com"}`.
+   - Response: `{"success": true, "message": "Password reset OTP has been sent to your email address."}`. Code is emailed via SMTP.
+2. **Verify Password Reset OTP**: `POST {{base_url}}/auth/forgot-password/verify` with `{"email": "user@example.com", "otp": "123456"}`.
+   - Response: `{"success": true, "message": "Password reset OTP verified successfully."}`.
+3. **Reset Password**: `POST {{base_url}}/auth/reset-password` with `{"email": "user@example.com", "otp": "123456", "password": "NewPassword123!", "password_confirmation": "NewPassword123!"}`.
+   - Response: `{"success": true, "message": "Password reset successfully."}`.
+
+### 17.3 Google OAuth Login
+1. **Get Google OAuth Redirect URL**: `GET {{base_url}}/auth/google/redirect?role=rider` (Header `Accept: application/json`).
+   - Response: `{"success": true, "url": "https://accounts.google.com/o/oauth2/v2/auth?..."}`.
+2. **Google OAuth Callback**: `POST {{base_url}}/auth/google/callback` with `{"code": "4/0AX4XfWh...", "role": "rider"}`.
+   - Response: `{"success": true, "message": "Google authentication successful.", "data": {"user": {...}, "access_token": "...", "token_type": "Bearer"}}`.
+
+---
+
+## 18. Driver Vehicle Type Update Profile Testing Flow
+
+### 18.1 Update Driver Vehicle Type via Profile API
+1. **Update Profile Endpoint**: `PUT {{base_url}}/profile`
+2. **Headers**:
+   - `Accept: application/json`
+   - `Content-Type: application/json`
+   - `Authorization: Bearer {{driver_token}}`
+3. **Request Body**:
+   ```json
+   {
+     "vehicle_type_id": 1,
+     "default_navigation": "google_maps",
+     "auto_accept": true
+   }
+   ```
+4. **Expected Response (200 OK)**:
+   ```json
+   {
+     "success": true,
+     "message": "Profile updated successfully.",
+     "user": {
+       "id": 2,
+       "name": "Bob Driver",
+       "role": "driver",
+       "driver_profile": {
+         "id": 1,
+         "vehicle_type_id": 1,
+         "vehicles": [
+           {
+             "id": 1,
+             "vehicle_type_id": 1,
+             "vehicle_type": {
+               "id": 1,
+               "name": "Sedan",
+               "capacity": 4
+             }
+           }
+         ]
+       }
+     }
+   }
+   ```
+5. **Verify Persistence with Get Profile**: `GET {{base_url}}/profile` with `Authorization: Bearer {{driver_token}}`. Confirm `user.driver_profile.vehicles[0].vehicle_type_id` is updated to `1`.
+
+
 
 

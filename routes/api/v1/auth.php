@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetController;
@@ -18,7 +19,13 @@ Route::middleware('throttle:auth')->group(function () {
     Route::post('/otp/send', SendOtpController::class);
     Route::post('/otp/verify', VerifyOtpController::class);
     Route::post('/auth/forgot-password', [PasswordResetController::class, 'forgotPassword']);
+    Route::post('/auth/forgot-password/verify', [PasswordResetController::class, 'verifyForgotPasswordOtp']);
     Route::post('/auth/reset-password', [PasswordResetController::class, 'resetPassword']);
+
+    // Google OAuth Routes
+    Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect']);
+    Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback']);
+    Route::post('/auth/google/callback', [GoogleAuthController::class, 'callback']);
 });
 
 Route::middleware('auth:sanctum')->group(function () {

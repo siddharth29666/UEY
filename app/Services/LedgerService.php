@@ -34,6 +34,7 @@ class LedgerService
             WalletTransactionType::REFERRAL_BONUS => LedgerSource::REFERRAL_BONUS,
             WalletTransactionType::ADMIN_CREDIT => LedgerSource::ADMIN_CREDIT,
             WalletTransactionType::ADMIN_DEBIT => LedgerSource::ADMIN_DEBIT,
+            WalletTransactionType::SUBSCRIPTION_PURCHASE => LedgerSource::SUBSCRIPTION_PURCHASE,
             default => LedgerSource::MANUAL_ADJUSTMENT,
         };
     }

@@ -15,4 +15,5 @@ enum LedgerSource: string
     case MANUAL_ADJUSTMENT = 'manual_adjustment';
     case STRIPE = 'stripe';
     case CASH = 'cash';
+    case SUBSCRIPTION_PURCHASE = 'subscription_purchase';
 }

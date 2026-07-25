@@ -28,6 +28,7 @@ class DriverSubscriptionResource extends JsonResource
             'credits_used' => (int) $this->credits_used,
             'credits_remaining' => (int) $this->credits_remaining,
             'status' => $this->status,
+            'payment_source' => $this->payment_source ?? 'wallet',
             'starts_at' => $this->starts_at?->toIso8601String(),
             'expires_at' => $this->expires_at?->toIso8601String(),
             'days_remaining' => $daysRemaining,

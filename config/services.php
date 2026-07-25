@@ -48,6 +48,20 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
+    'twilio' => [
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'verify_service_sid' => env('TWILIO_VERIFY_SERVICE_SID'),
+        'phone_number' => env('TWILIO_PHONE_NUMBER'),
+    ],
+
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect_uri' => env('GOOGLE_REDIRECT_URI', 'https://u-ey.com/api/v1/auth/google/callback'),
+        'authorized_origin' => env('GOOGLE_AUTHORIZED_ORIGIN', 'https://u-ey.com'),
+    ],
+
     'firebase' => (function () {
         $config = [
             'enabled' => (bool) env('FIREBASE_ENABLED', true),

@@ -12,11 +12,13 @@ use App\Enums\VehicleStatus;
 use App\Models\DriverProfile;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Mail\PasswordResetOtpMail;
 use App\Models\Wallet;
 use App\Notifications\PasswordResetNotification;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
@@ -278,19 +280,40 @@ class AuthService
                 'default_navigation',
                 'auto_accept',
             ])));
+
+            if (isset($data['vehicle_type_id'])) {
+                $vehicles = $user->driverProfile->vehicles;
+                if ($vehicles->isNotEmpty()) {
+                    foreach ($vehicles as $vehicle) {
+                        $vehicle->update(['vehicle_type_id' => (int) $data['vehicle_type_id']]);
+                    }
+                } else {
+                    Vehicle::create([
+                        'driver_profile_id' => $user->driverProfile->id,
+                        'vehicle_type_id' => (int) $data['vehicle_type_id'],
+                        'make' => 'Default Make',
+                        'model' => 'Default Model',
+                        'year' => (int) date('Y'),
+                        'color' => 'Default Color',
+                        'plate_number' => 'PLATE-'.strtoupper(\Illuminate\Support\Str::random(6)),
+                        'status' => VehicleStatus::APPROVED,
+                    ]);
+                }
+            }
+
+            return $user->load('driverProfile.vehicles.vehicleType');
         }
 
-        return $user->load('driverProfile');
+        return $user;
     }
 
     /**
      * Send password reset OTP via email.
-     *
-     * @return string Returns generated OTP
+     * Never returns or logs the OTP code.
      *
      * @throws ValidationException
      */
-    public function sendPasswordResetOtp(string $email): string
+    public function sendPasswordResetOtp(string $email): void
     {
         $user = User::where('email', $email)->first();
         if (! $user) {
@@ -299,8 +322,16 @@ class AuthService
             ]);
         }
 
+        // Check 60s cooldown
+        $record = DB::table('password_reset_tokens')->where('email', $email)->first();
+        if ($record && Carbon::parse($record->created_at)->addSeconds(60)->isFuture()) {
+            throw ValidationException::withMessages([
+                'email' => ['Please wait at least 60 seconds before requesting a new password reset OTP.'],
+            ]);
+        }
+
         // Generate 6-digit OTP
-        $otp = (string) random_int(100000, 999999);
+        $otp = sprintf('%06d', random_int(0, 999999));
 
         // Store OTP in database table (hashed for security)
         DB::table('password_reset_tokens')->updateOrInsert(
@@ -311,10 +342,47 @@ class AuthService
             ]
         );
 
-        // Send OTP notification
-        $user->notify(new PasswordResetNotification($otp));
+        // Send OTP via Mail Mailable
+        Mail::to($user->email)->send(new PasswordResetOtpMail($otp));
+    }
 
-        return $otp;
+    /**
+     * Verify forgot password OTP code.
+     *
+     * @throws ValidationException
+     */
+    public function verifyForgotPasswordOtp(string $email, string $otp): bool
+    {
+        $user = User::where('email', $email)->first();
+        if (! $user) {
+            throw ValidationException::withMessages([
+                'email' => ['User with this email does not exist.'],
+            ]);
+        }
+
+        $record = DB::table('password_reset_tokens')->where('email', $email)->first();
+        if (! $record) {
+            throw ValidationException::withMessages([
+                'otp' => ['No active password reset request found for this email.'],
+            ]);
+        }
+
+        // Check expiry (10 minutes)
+        if (Carbon::parse($record->created_at)->addMinutes(10)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $email)->delete();
+            throw ValidationException::withMessages([
+                'otp' => ['Password reset OTP has expired.'],
+            ]);
+        }
+
+        // Verify OTP code against stored hash
+        if (! Hash::check($otp, $record->token)) {
+            throw ValidationException::withMessages([
+                'otp' => ['The provided OTP is invalid.'],
+            ]);
+        }
+
+        return true;
     }
 
     /**
@@ -357,6 +425,9 @@ class AuthService
         $user->update([
             'password' => Hash::make($password),
         ]);
+
+        // Revoke active tokens
+        $user->tokens()->delete();
 
         // Invalidate OTP after successful use
         DB::table('password_reset_tokens')->where('email', $email)->delete();

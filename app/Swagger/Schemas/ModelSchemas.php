@@ -504,7 +504,6 @@ use OpenApi\Attributes as OA;
             new OA\Property(property: 'name', type: 'string', example: 'John Rider'),
             new OA\Property(property: 'role', type: 'string', example: 'rider'),
         ]),
-        ]),
     ]
 )]
 
@@ -546,6 +545,64 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'promo_code', type: 'string', example: 'WELCOME50'),
         new OA\Property(property: 'discount_amount', type: 'string', example: '120.00'),
         new OA\Property(property: 'status', type: 'string', example: 'completed'),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'SubscriptionPlanResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'name', type: 'string', example: 'Monthly Starter'),
+        new OA\Property(property: 'description', type: 'string', nullable: true, example: '20 Ride Credits'),
+        new OA\Property(property: 'price_eur', type: 'number', format: 'float', example: 10.00),
+        new OA\Property(property: 'price', type: 'number', format: 'float', example: 10.00),
+        new OA\Property(property: 'currency', type: 'string', example: 'EUR'),
+        new OA\Property(property: 'ride_credits', type: 'integer', example: 20),
+        new OA\Property(property: 'duration_days', type: 'integer', example: 30),
+        new OA\Property(property: 'status', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 1),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'DriverSubscriptionResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'driver_profile_id', type: 'integer', example: 1),
+        new OA\Property(property: 'subscription_plan_id', type: 'integer', example: 1),
+        new OA\Property(property: 'plan', ref: '#/components/schemas/SubscriptionPlanResource', nullable: true),
+        new OA\Property(property: 'amount_eur', type: 'number', format: 'float', example: 10.00),
+        new OA\Property(property: 'currency', type: 'string', example: 'EUR'),
+        new OA\Property(property: 'credits_allocated', type: 'integer', example: 20),
+        new OA\Property(property: 'credits_used', type: 'integer', example: 5),
+        new OA\Property(property: 'credits_remaining', type: 'integer', example: 15),
+        new OA\Property(property: 'status', type: 'string', example: 'active'),
+        new OA\Property(property: 'payment_source', type: 'string', example: 'wallet'),
+        new OA\Property(property: 'starts_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'expires_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'days_remaining', type: 'integer', example: 25),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'DriverCreditTransactionResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'driver_profile_id', type: 'integer', example: 1),
+        new OA\Property(property: 'driver_subscription_id', type: 'integer', example: 1),
+        new OA\Property(property: 'ride_id', type: 'integer', nullable: true, example: 5),
+        new OA\Property(property: 'ride_request_id', type: 'integer', nullable: true, example: 5),
+        new OA\Property(property: 'type', type: 'string', example: 'deduction'),
+        new OA\Property(property: 'amount', type: 'integer', example: 1),
+        new OA\Property(property: 'balance_before', type: 'integer', example: 20),
+        new OA\Property(property: 'balance_after', type: 'integer', example: 19),
+        new OA\Property(property: 'reference', type: 'string', nullable: true, example: 'ACCEPT_RIDE_5'),
+        new OA\Property(property: 'metadata', type: 'object', nullable: true),
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
     ]
 )]

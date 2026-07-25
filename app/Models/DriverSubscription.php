@@ -24,6 +24,7 @@ class DriverSubscription extends Model
         'starts_at',
         'expires_at',
         'status',
+        'payment_source',
     ];
 
     protected $casts = [

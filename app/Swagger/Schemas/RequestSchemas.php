@@ -78,6 +78,7 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'push_notifications', type: 'boolean', example: true),
         new OA\Property(property: 'default_navigation', type: 'string', enum: ['google_maps', 'waze', 'apple_maps'], example: 'google_maps'),
         new OA\Property(property: 'auto_accept', type: 'boolean', example: true),
+        new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 1, description: 'Vehicle type ID (driver only)'),
     ]
 )]
 
@@ -328,6 +329,10 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'photo', type: 'string', format: 'binary', nullable: true),
     ]
 )]
+#[OA\Schema(
+    schema: 'ResolveSOSRequest',
+    properties: [
+        new OA\Property(property: 'admin_note', type: 'string', example: 'False alarm, situation resolved safely.', nullable: true),
     ]
 )]
 #[OA\Schema(

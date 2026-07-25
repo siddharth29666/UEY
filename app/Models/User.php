@@ -58,6 +58,8 @@ class User extends Authenticatable
         'referral_code',
         'referred_by',
         'first_ride_completed',
+        'google_id',
+        'auth_provider',
     ];
 
     /**

@@ -83,36 +83,27 @@ Returned when input fields fail to meet specified validation rules.
     }
     ```
 *   **Success Response (200 OK):**
-    *   **In Local/Testing Environment (`APP_ENV=local`):**
-        ```json
-        {
-          "success": true,
-          "message": "OTP sent successfully.",
-          "otp": "654321"
-        }
-        ```
-    *   **In Production Environment (`APP_ENV=production`):**
-        ```json
-        {
-          "success": true,
-          "message": "OTP sent successfully."
-        }
-        ```
+    ```json
+    {
+      "success": true,
+      "message": "OTP sent successfully."
+    }
+    ```
 *   **Error Response (422 Unprocessable Content):**
     ```json
     {
       "success": false,
-      "message": "Rate limit exceeded. Please wait before requesting another OTP."
+      "message": "Please wait at least 60 seconds before requesting a new OTP."
     }
     ```
 *   **Validation Rules:**
     *   `phone`: Required, String, Min 8 characters, Max 20 characters. Must include country code (e.g., `+1` or `+44`).
     *   `type`: Required, Enum. Allowed values: `register`, `login`, `password_reset`.
 *   **Business Logic Explanation:**
-    *   Generates a 6-digit verification code.
-    *   The OTP is valid for **5 minutes**.
-    *   Rate limiting is enforced at **5 requests per minute** per phone number.
-    *   In the local/development environment, the OTP is returned in the JSON payload so the frontend developer or QA tester doesn't need a real SMS gateway integration. In production, this field is completely omitted from the payload.
+    *   Generates and sends an OTP verification code via Twilio Verify API.
+    *   The OTP is delivered via SMS directly to the user's phone number.
+    *   OTP codes are **never returned in the API response** and **never written to logs**.
+    *   Rate limiting is enforced at **60 seconds cooldown** between resends per phone number.
 *   **Database Tables Affected:** `otp_verifications`
 *   **Frontend Flow:**
     1.  User enters phone number and selects role/flow.
@@ -354,6 +345,86 @@ Returned when input fields fail to meet specified validation rules.
     2.  Frontend invokes `/register/driver`.
     3.  Frontend saves the `token` and redirects the driver to the document upload onboarding screen.
 *   **Example Use Case:** Bob registers as a driver with UEY. He completes registration and is sent straight to upload his Driver's License and Vehicle Insurance.
+
+---
+
+### 4B. Password Reset via Email OTP
+*   **Request OTP Endpoint:** `POST /auth/forgot-password`
+*   **Verify OTP Endpoint:** `POST /auth/forgot-password/verify`
+*   **Reset Password Endpoint:** `POST /auth/reset-password`
+*   **Authentication Required:** No
+*   **Request Payload (Forgot Password):**
+    ```json
+    {
+      "email": "user@example.com"
+    }
+    ```
+*   **Success Response (Forgot Password 200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Password reset OTP has been sent to your email address."
+    }
+    ```
+*   **Request Payload (Verify OTP):**
+    ```json
+    {
+      "email": "user@example.com",
+      "otp": "123456"
+    }
+    ```
+*   **Request Payload (Reset Password):**
+    ```json
+    {
+      "email": "user@example.com",
+      "otp": "123456",
+      "password": "NewPassword123!",
+      "password_confirmation": "NewPassword123!"
+    }
+    ```
+*   **Business Logic:**
+    *   Generates a secure 6-digit OTP and stores a hashed version in `password_reset_tokens`.
+    *   Sends OTP to user's email via SMTP Mail (`PasswordResetOtpMail`).
+    *   OTP codes are **never returned in API responses** and **never written to logs**.
+    *   Updating password invalidates the OTP and revokes all active Sanctum tokens.
+
+---
+
+### 4C. Google OAuth 2.0 Login & Registration
+*   **Redirect Endpoint:** `GET /auth/google/redirect?role=rider`
+*   **Callback Endpoint:** `GET /auth/google/callback?code=...` or `POST /auth/google/callback`
+*   **Authentication Required:** No
+*   **Request Payload (POST Callback):**
+    ```json
+    {
+      "code": "4/0AX4XfWh...",
+      "role": "rider"
+    }
+    ```
+*   **Success Response (200 OK):**
+    ```json
+    {
+      "success": true,
+      "message": "Google authentication successful.",
+      "data": {
+        "user": {
+          "id": 10,
+          "name": "Google User",
+          "email": "user@gmail.com",
+          "role": "rider",
+          "auth_provider": "google"
+        },
+        "access_token": "10|abc...",
+        "token_type": "Bearer"
+      }
+    }
+    ```
+*   **Business Logic:**
+    *   Redirects to Google OAuth consent page or exchanges authorization code with Google OAuth servers.
+    *   Validates verified Google email status.
+    *   Logs in existing user by `google_id` or links account if email matches.
+    *   Registers new user and creates wallet automatically if new.
+    *   Returns Sanctum Bearer access token.
 
 ---
 
@@ -611,7 +682,8 @@ Returned when input fields fail to meet specified validation rules.
       "sms_notifications": false,
       "push_notifications": true,
       "default_navigation": "google_maps",
-      "auto_accept": true
+      "auto_accept": true,
+      "vehicle_type_id": 1
     }
     ```
 *   **Success Response (200 OK):**
@@ -624,13 +696,30 @@ Returned when input fields fail to meet specified validation rules.
         "name": "Jane Updated",
         "email": "jane.updated@example.com",
         "phone": "+447911123456",
-        "role": "rider",
+        "role": "driver",
         "status": "active",
         "avatar_url": "https://example.com/avatar.png",
         "notification_preferences": {
           "email": true,
           "sms": false,
           "push": true
+        },
+        "driver_profile": {
+          "id": 1,
+          "vehicle_type_id": 1,
+          "vehicles": [
+            {
+              "id": 1,
+              "vehicle_type_id": 1,
+              "make": "Toyota",
+              "model": "Prius",
+              "vehicle_type": {
+                "id": 1,
+                "name": "Sedan",
+                "capacity": 4
+              }
+            }
+          ]
         },
         "created_at": "2026-06-23T00:58:13+05:30",
         "updated_at": "2026-06-23T01:13:46+05:30"
@@ -643,8 +732,8 @@ Returned when input fields fail to meet specified validation rules.
       "success": false,
       "message": "The given data was invalid.",
       "errors": {
-        "default_navigation": [
-          "The selected default navigation is invalid."
+        "vehicle_type_id": [
+          "The selected vehicle type id is invalid."
         ]
       }
     }
@@ -656,6 +745,7 @@ Returned when input fields fail to meet specified validation rules.
     *   `email_notifications`, `sms_notifications`, `push_notifications`: Optional, Boolean.
     *   `default_navigation`: Optional (Only evaluated for Drivers), Enum (`google_maps`, `waze`, `apple_maps`).
     *   `auto_accept`: Optional (Only evaluated for Drivers), Boolean.
+    *   `vehicle_type_id`: Optional (Only evaluated for Drivers), Integer, Must exist in `vehicle_types` table (`exists:vehicle_types,id`).
 *   **Business Logic Explanation:**
     *   Allows updating base profile information.
     *   If the user has a Driver role, it also updates specific preferences on the linked `driver_profiles` table (e.g., `default_navigation`, `auto_accept`).
@@ -4443,6 +4533,7 @@ This module provides APIs for listing active promos, viewing usage history, vali
 ## Module: Driver Subscription & Ride Credit Plan System (Option B)
 
 ### Overview & Business Rule (Option B)
+*   **Payment Mechanism:** Subscription plans are purchased strictly using the Driver's internal **Wallet** balance in **EUR (€)**. Stripe is used ONLY for Wallet Top-Ups and Cashouts.
 *   **Ride Credit Consumption:** Driver must possess an active subscription plan with available ride credits to accept ride requests.
 *   **Immediate Atomic Deduction:** When a Driver accepts a ride request, **1 credit is deducted immediately**.
 *   **Non-Refundable Rule (Option B):** Credits are **NOT refunded** if the Rider cancels the ride or if the Driver cancels the ride after acceptance. Completed rides do not alter credits further.
@@ -4474,7 +4565,7 @@ This module provides APIs for listing active promos, viewing usage history, vali
 
 ---
 
-### 2. Purchase Subscription Plan
+### 2. Purchase Subscription Plan via Driver Wallet
 *   **Endpoint:** `POST /driver/subscription/purchase`
 *   **Authentication:** Sanctum (Driver)
 *   **Payload:**
@@ -4483,24 +4574,34 @@ This module provides APIs for listing active promos, viewing usage history, vali
       "subscription_plan_id": 1
     }
     ```
-*   **Response (200 OK):**
+*   **Success Response (200 OK):**
     ```json
     {
       "success": true,
-      "message": "Subscription purchase initiated.",
+      "message": "Subscription purchased successfully.",
       "data": {
         "subscription": {
           "id": 5,
           "amount_eur": 10.00,
           "currency": "EUR",
           "credits_allocated": 20,
-          "status": "pending"
+          "credits_remaining": 20,
+          "status": "active",
+          "payment_source": "wallet"
         },
-        "payment_intent_id": "pi_123456",
-        "client_secret": "pi_123456_secret_789",
-        "checkout_session_id": "cs_test_123",
-        "checkout_url": "https://checkout.stripe.com/..."
+        "wallet": {
+          "balance_before": 25.00,
+          "amount_deducted": 10.00,
+          "balance_after": 15.00
+        }
       }
+    }
+    ```
+*   **Error Response — Insufficient Balance (422 Unprocessable Content):**
+    ```json
+    {
+      "success": false,
+      "message": "Insufficient wallet balance. Please top up your wallet to purchase this subscription plan."
     }
     ```
 

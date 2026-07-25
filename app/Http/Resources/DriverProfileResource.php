@@ -19,6 +19,9 @@ class DriverProfileResource extends JsonResource
             'acceptance_rate' => (float) $this->acceptance_rate,
             'ontime_rate' => (float) $this->ontime_rate,
             'total_online_hours' => $this->total_online_hours,
+            'vehicle_type_id' => $this->whenLoaded('vehicles', function () {
+                return $this->vehicles->first()?->vehicle_type_id ? (int) $this->vehicles->first()->vehicle_type_id : null;
+            }),
             'preferences' => [
                 'default_navigation' => $this->default_navigation,
                 'auto_accept' => $this->auto_accept,

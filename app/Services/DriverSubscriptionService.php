@@ -2,10 +2,16 @@
 
 namespace App\Services;
 
+use App\Enums\NotificationType;
+use App\Enums\WalletTransactionStatus;
+use App\Enums\WalletTransactionType;
+use App\Events\WalletDebitEvent;
 use App\Models\DriverCreditTransaction;
 use App\Models\DriverProfile;
 use App\Models\DriverSubscription;
 use App\Models\SubscriptionPlan;
+use App\Models\Wallet;
+use App\Models\WalletTransaction;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 class DriverSubscriptionService
 {
     public function __construct(
-        protected StripeService $stripeService
+        protected ?StripeService $stripeService = null
     ) {}
 
     /**
@@ -28,7 +34,8 @@ class DriverSubscriptionService
     }
 
     /**
-     * Initiate a subscription purchase via Stripe (EUR).
+     * Purchase a subscription plan using driver's internal wallet balance (EUR).
+     * Atomic, double-spending protected via lockForUpdate() on the driver's wallet row.
      */
     public function purchasePlan(DriverProfile $driver, SubscriptionPlan $plan): array
     {
@@ -36,58 +43,108 @@ class DriverSubscriptionService
             throw new \Exception('Selected subscription plan is not active.');
         }
 
+        // Check if driver already has an active subscription
+        $existingSub = $this->getCurrentSubscription($driver);
+        if ($existingSub) {
+            throw new \Exception('You already have an active subscription plan.');
+        }
+
         return DB::transaction(function () use ($driver, $plan) {
-            // Create pending subscription record
+            // Find or create driver's wallet
+            $wallet = Wallet::firstOrCreate(
+                ['user_id' => $driver->user_id],
+                ['balance' => 0.00, 'currency' => 'EUR', 'status' => 'active']
+            );
+
+            // Lock wallet row for update to prevent double-spending & race conditions
+            $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
+
+            $price = (float) $plan->price_eur;
+            $balanceBefore = (float) $wallet->balance;
+
+            if ($balanceBefore < $price) {
+                throw new \Exception('Insufficient wallet balance. Please top up your wallet to purchase this subscription plan.');
+            }
+
+            $balanceAfter = round($balanceBefore - $price, 2);
+
+            // Deduct exact price from wallet
+            $wallet->update(['balance' => $balanceAfter]);
+
+            // Create wallet debit transaction
+            $walletTx = WalletTransaction::create([
+                'wallet_id' => $wallet->id,
+                'type' => 'debit',
+                'transaction_type' => WalletTransactionType::SUBSCRIPTION_PURCHASE,
+                'amount' => $price,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
+                'status' => WalletTransactionStatus::COMPLETED,
+                'reference' => 'SUB_PURCHASE_'.$plan->id.'_'.time(),
+                'remarks' => 'Subscription plan purchase: '.$plan->name,
+                'metadata' => [
+                    'subscription_plan_id' => $plan->id,
+                    'subscription_plan_name' => $plan->name,
+                    'credits_allocated' => $plan->ride_credits,
+                    'duration_days' => $plan->duration_days,
+                    'amount_eur' => $price,
+                ],
+            ]);
+
+            // Mirror to audit ledger
+            app(LedgerService::class)->createFromWalletTransaction($walletTx);
+
+            // Fire WalletDebitEvent
+            event(new WalletDebitEvent($wallet->user, NotificationType::WALLET_DEBIT, null, null, ['amount' => $price]));
+
+            // Create and immediately activate DriverSubscription
             $subscription = DriverSubscription::create([
                 'driver_profile_id' => $driver->id,
                 'subscription_plan_id' => $plan->id,
+                'stripe_checkout_session_id' => null,
+                'stripe_payment_intent_id' => null,
+                'stripe_subscription_id' => null,
                 'amount_eur' => $plan->price_eur,
                 'currency' => 'eur',
                 'credits_allocated' => $plan->ride_credits,
                 'credits_used' => 0,
                 'credits_remaining' => $plan->ride_credits,
-                'status' => 'pending',
+                'starts_at' => now(),
+                'expires_at' => now()->addDays($plan->duration_days),
+                'status' => 'active',
+                'payment_source' => 'wallet',
             ]);
 
-            $metadata = [
-                'driver_profile_id' => (string) $driver->id,
-                'subscription_plan_id' => (string) $plan->id,
-                'driver_subscription_id' => (string) $subscription->id,
-                'plan_name' => $plan->name,
-                'type' => 'driver_subscription',
-            ];
-
-            // Create Stripe PaymentIntent in EUR
-            $paymentIntent = $this->stripeService->createPaymentIntent(
-                (float) $plan->price_eur,
-                'eur',
-                $metadata
-            );
-
-            // Also create a Checkout Session as an alternative option
-            $checkoutSession = $this->stripeService->createCheckoutSession(
-                (float) $plan->price_eur,
-                'eur',
-                $metadata
-            );
-
-            $subscription->update([
-                'stripe_payment_intent_id' => $paymentIntent->id,
-                'stripe_checkout_session_id' => $checkoutSession->id,
+            // Create subscription_purchase credit transaction
+            DriverCreditTransaction::create([
+                'driver_profile_id' => $driver->id,
+                'driver_subscription_id' => $subscription->id,
+                'type' => 'subscription_purchase',
+                'amount' => $plan->ride_credits,
+                'balance_before' => 0,
+                'balance_after' => $plan->ride_credits,
+                'reference' => 'SUB_PURCHASE_'.$subscription->id,
+                'metadata' => [
+                    'plan_name' => $plan->name,
+                    'payment_source' => 'wallet',
+                    'wallet_transaction_id' => $walletTx->id,
+                    'amount_eur' => $price,
+                ],
             ]);
 
             return [
-                'subscription' => $subscription->fresh(),
-                'payment_intent_id' => $paymentIntent->id,
-                'client_secret' => $paymentIntent->client_secret,
-                'checkout_session_id' => $checkoutSession->id,
-                'checkout_url' => $checkoutSession->url,
+                'subscription' => $subscription->fresh(['subscriptionPlan']),
+                'wallet' => [
+                    'balance_before' => $balanceBefore,
+                    'amount_deducted' => $price,
+                    'balance_after' => $balanceAfter,
+                ],
             ];
         });
     }
 
     /**
-     * Activate a pending subscription after verified Stripe payment (Idempotent).
+     * Activate a pending subscription after verified Stripe payment (Backward Compatibility / Historical).
      */
     public function handleSuccessfulPayment(string $paymentIdentifier, array $payload = []): ?DriverSubscription
     {
@@ -127,6 +184,7 @@ class DriverSubscriptionService
                 'status' => 'active',
                 'starts_at' => $startsAt,
                 'expires_at' => $expiresAt,
+                'payment_source' => 'stripe',
             ]);
 
             // Create subscription_purchase credit ledger transaction
@@ -141,6 +199,7 @@ class DriverSubscriptionService
                 'metadata' => [
                     'plan_name' => $plan ? $plan->name : 'Subscription Plan',
                     'stripe_identifier' => $paymentIdentifier,
+                    'payment_source' => 'stripe',
                 ],
             ]);
 
@@ -180,6 +239,8 @@ class DriverSubscriptionService
     public function getAvailableCredits(DriverProfile $driver): array
     {
         $subscription = $this->getCurrentSubscription($driver);
+        $wallet = $driver->user->wallet;
+        $walletBalance = $wallet ? (float) $wallet->balance : 0.00;
 
         if (! $subscription) {
             return [
@@ -190,6 +251,8 @@ class DriverSubscriptionService
                 'credits_remaining' => 0,
                 'expires_at' => null,
                 'days_remaining' => 0,
+                'wallet_balance' => $walletBalance,
+                'payment_source' => null,
             ];
         }
 
@@ -209,6 +272,8 @@ class DriverSubscriptionService
             'credits_remaining' => (int) $subscription->credits_remaining,
             'expires_at' => $subscription->expires_at?->toIso8601String(),
             'days_remaining' => $daysRemaining,
+            'wallet_balance' => $walletBalance,
+            'payment_source' => $subscription->payment_source ?? 'wallet',
         ];
     }
 
@@ -262,10 +327,6 @@ class DriverSubscriptionService
             $before = (int) $subscription->credits_remaining;
             $subscription->credits_used += 1;
             $subscription->credits_remaining -= 1;
-
-            if ($subscription->credits_remaining == 0) {
-                // All credits exhausted
-            }
 
             $subscription->save();
             $after = (int) $subscription->credits_remaining;

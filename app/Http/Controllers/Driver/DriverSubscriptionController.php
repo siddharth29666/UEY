@@ -191,12 +191,12 @@ class DriverSubscriptionController extends Controller
     }
 
     /**
-     * Initiate subscription purchase through Stripe (EUR).
+     * Purchase subscription plan using internal driver wallet balance (EUR).
      */
     #[OA\Post(
         path: '/driver/subscription/purchase',
-        summary: 'Purchase Subscription Plan via Stripe',
-        description: 'Initiates a subscription plan purchase in EUR and returns Stripe checkout session/payment intent details.',
+        summary: 'Purchase Subscription Plan via Driver Wallet',
+        description: 'Deducts subscription plan price in EUR from driver internal wallet balance and activates subscription immediately.',
         security: [['bearerAuth' => []]],
         tags: ['Driver Subscription'],
         requestBody: new OA\RequestBody(
@@ -211,15 +211,32 @@ class DriverSubscriptionController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Stripe purchase initiated successfully.',
+                description: 'Subscription purchased successfully.',
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'data', type: 'object'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Subscription purchased successfully.'),
+                        new OA\Property(property: 'data', type: 'object', properties: [
+                            new OA\Property(property: 'subscription', ref: '#/components/schemas/DriverSubscriptionResource'),
+                            new OA\Property(property: 'wallet', type: 'object', properties: [
+                                new OA\Property(property: 'balance_before', type: 'number', format: 'float', example: 25.00),
+                                new OA\Property(property: 'amount_deducted', type: 'number', format: 'float', example: 10.00),
+                                new OA\Property(property: 'balance_after', type: 'number', format: 'float', example: 15.00),
+                            ]),
+                        ]),
                     ]
                 )
             ),
-            new OA\Response(response: 422, ref: '#/components/responses/ValidationErrorResponse'),
+            new OA\Response(
+                response: 422,
+                description: 'Insufficient wallet balance or validation error.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: false),
+                        new OA\Property(property: 'message', type: 'string', example: 'Insufficient wallet balance. Please top up your wallet to purchase this subscription plan.'),
+                    ]
+                )
+            ),
         ]
     )]
     public function purchase(PurchaseSubscriptionRequest $request): JsonResponse
@@ -239,13 +256,14 @@ class DriverSubscriptionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Subscription purchase initiated.',
+                'message' => 'Subscription purchased successfully.',
                 'data' => [
                     'subscription' => new DriverSubscriptionResource($result['subscription']),
-                    'payment_intent_id' => $result['payment_intent_id'],
-                    'client_secret' => $result['client_secret'],
-                    'checkout_session_id' => $result['checkout_session_id'],
-                    'checkout_url' => $result['checkout_url'],
+                    'wallet' => [
+                        'balance_before' => (float) $result['wallet']['balance_before'],
+                        'amount_deducted' => (float) $result['wallet']['amount_deducted'],
+                        'balance_after' => (float) $result['wallet']['balance_after'],
+                    ],
                 ],
             ]);
         } catch (\Exception $e) {

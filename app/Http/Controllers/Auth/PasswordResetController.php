@@ -7,6 +7,7 @@ use App\Http\Requests\ForgotPasswordRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Services\AuthService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 class PasswordResetController extends Controller
@@ -39,7 +40,7 @@ class PasswordResetController extends Controller
                 content: new OA\JsonContent(
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'message', type: 'string', example: 'Password reset OTP sent successfully.'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Password reset OTP has been sent to your email address.'),
                     ]
                 )
             ),
@@ -55,7 +56,60 @@ class PasswordResetController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Password reset OTP sent successfully.',
+            'message' => 'Password reset OTP has been sent to your email address.',
+        ]);
+    }
+
+    /**
+     * Verify Password Reset OTP.
+     */
+    #[OA\Post(
+        path: '/auth/forgot-password/verify',
+        summary: 'Verify Password Reset Email OTP',
+        description: 'Verifies the 6-digit password reset OTP code received via email.',
+        tags: ['Authentication'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'otp'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'user@example.com'),
+                    new OA\Property(property: 'otp', type: 'string', example: '123456'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Password reset OTP verified successfully.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: 'Password reset OTP verified successfully.'),
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                ref: '#/components/responses/ValidationErrorResponse'
+            ),
+        ]
+    )]
+    public function verifyForgotPasswordOtp(Request $request): JsonResponse
+    {
+        $request->validate([
+            'email' => ['required', 'email'],
+            'otp' => ['required', 'string', 'size:6'],
+        ]);
+
+        $this->authService->verifyForgotPasswordOtp(
+            $request->input('email'),
+            $request->input('otp')
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password reset OTP verified successfully.',
         ]);
     }
 

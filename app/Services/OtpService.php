@@ -5,21 +5,20 @@ namespace App\Services;
 use App\Enums\OtpType;
 use App\Models\OtpVerification;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\App;
 
 class OtpService
 {
+    public function __construct(
+        protected TwilioOtpService $twilioOtpService
+    ) {}
+
     /**
-     * Generate and store an OTP for the given phone number.
-     *
-     * @return string|null Returns the OTP string if APP_ENV is local, otherwise null.
-     *
-     * @throws \Exception If the resend cooldown has not expired.
+     * Send an OTP code to a user's phone via Twilio Verify.
+     * Never returns OTP in string or API response.
      */
     public function sendOtp(string $phone, OtpType $type): ?string
     {
-        // 1. Check for cooldown (resend support)
-        // If there's an active OTP created in the last 60 seconds, block resend to prevent spamming
+        // 1. Cooldown check (60s)
         $recentOtp = OtpVerification::where('phone', $phone)
             ->where('type', $type)
             ->where('created_at', '>', Carbon::now()->subMinute())
@@ -29,71 +28,68 @@ class OtpService
             throw new \Exception('Please wait at least 60 seconds before requesting a new OTP.');
         }
 
-        // 2. Generate a 6-digit OTP
-        $otp = (string) rand(100000, 999999);
-        $expiryMinutes = 5;
+        // 2. Send verification code via Twilio Verify
+        $this->twilioOtpService->sendVerificationCode($phone);
 
-        // 3. Save the OTP record
+        // 3. Save internal verification tracking record (without storing raw OTP plaintext)
         OtpVerification::create([
             'phone' => $phone,
-            'code' => $otp,
+            'code' => 'TWILIO_VERIFY',
             'type' => $type,
-            'expires_at' => Carbon::now()->addMinutes($expiryMinutes),
+            'expires_at' => Carbon::now()->addMinutes(10),
             'verified_at' => null,
             'created_at' => Carbon::now(),
         ]);
 
-        // 4. Return OTP in response ONLY when local
-
-        if (config('services.otp.return_in_response')) {
-            return $otp;
-        }
-
+        // Never return OTP code in response or logs
         return null;
-        // if (App::environment('local')) {
-        //     return $otp;
-        // }
-
-        // return null;
-
     }
 
     /**
-     * Verify the OTP code for a phone number.
+     * Verify the OTP code for a phone number via Twilio Verify API.
      */
     public function verifyOtp(string $phone, string $code, OtpType $type): bool
     {
-        // Find the latest active OTP for this phone and type
-        $otpRecord = OtpVerification::where('phone', $phone)
-            ->where('code', $code)
-            ->where('type', $type)
-            ->whereNull('verified_at')
-            ->where('expires_at', '>', Carbon::now())
-            ->orderBy('id', 'desc')
-            ->first();
+        $approved = $this->twilioOtpService->verifyCode($phone, $code);
 
-        if (! $otpRecord) {
+        if (! $approved) {
             return false;
         }
 
-        // Mark it as verified
-        $otpRecord->update([
-            'verified_at' => Carbon::now(),
-        ]);
+        // Find or create the verification record to mark as verified
+        $otpRecord = OtpVerification::where('phone', $phone)
+            ->where('type', $type)
+            ->whereNull('verified_at')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($otpRecord) {
+            $otpRecord->update([
+                'verified_at' => Carbon::now(),
+            ]);
+        } else {
+            OtpVerification::create([
+                'phone' => $phone,
+                'code' => 'TWILIO_VERIFY',
+                'type' => $type,
+                'expires_at' => Carbon::now()->addMinutes(15),
+                'verified_at' => Carbon::now(),
+                'created_at' => Carbon::now(),
+            ]);
+        }
 
         return true;
     }
 
     /**
-     * Check if a phone number has been verified for registration/login.
-     * Used as a guard check before allowing profile registration.
+     * Check if a phone number has been verified for registration/login within last 15 minutes.
      */
     public function isVerified(string $phone, OtpType $type): bool
     {
         return OtpVerification::where('phone', $phone)
             ->where('type', $type)
             ->whereNotNull('verified_at')
-            ->where('expires_at', '>', Carbon::now()->subMinutes(15)) // must have verified within last 15 mins
+            ->where('expires_at', '>', Carbon::now()->subMinutes(15))
             ->exists();
     }
 }
