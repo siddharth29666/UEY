@@ -37,7 +37,27 @@ class LogoutController extends Controller
     )]
     public function __invoke(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+
+        // 1. If a specific device_token/fcm_token/device_id is provided, remove that device record
+        $token = $request->input('fcm_token') ?? $request->input('device_token') ?? $request->header('X-Device-Token');
+        $deviceId = $request->input('device_id');
+
+        if ($token || $deviceId) {
+            \App\Models\UserDevice::where('user_id', $user->id)
+                ->where(function ($query) use ($token, $deviceId) {
+                    if ($token) {
+                        $query->where('device_token', $token);
+                    }
+                    if ($deviceId) {
+                        $query->orWhere('id', $deviceId);
+                    }
+                })
+                ->delete();
+        }
+
+        // 2. Revoke current Sanctum access token
+        $user->currentAccessToken()?->delete();
 
         return response()->json([
             'success' => true,

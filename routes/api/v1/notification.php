@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
     // Device management
     Route::post('/devices/register', [DeviceController::class, 'register']);
+    Route::post('/notifications/device-token', [DeviceController::class, 'register']);
     Route::put('/devices/{device}', [DeviceController::class, 'update']);
     Route::delete('/devices/{device}', [DeviceController::class, 'destroy']);
 

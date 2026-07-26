@@ -606,4 +606,98 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
     ]
 )]
+
+#[OA\Schema(
+    schema: 'CancellationReasonResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'reason', type: 'string', example: 'Driver taking too long'),
+        new OA\Property(property: 'type', type: 'string', enum: ['rider', 'driver', 'both'], example: 'rider'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 1),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'FaqCategoryResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'name', type: 'string', example: 'Payments & Fare'),
+        new OA\Property(property: 'slug', type: 'string', example: 'payments-and-fare'),
+        new OA\Property(property: 'icon', type: 'string', nullable: true, example: 'credit-card'),
+        new OA\Property(property: 'audience', type: 'string', enum: ['rider', 'driver', 'both'], example: 'both'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 1),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'FaqResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'faq_category_id', type: 'integer', example: 1),
+        new OA\Property(property: 'category_name', type: 'string', example: 'Payments & Fare'),
+        new OA\Property(property: 'question', type: 'string', example: 'How do I request a ride?'),
+        new OA\Property(property: 'answer', type: 'string', example: 'Open the app, enter pickup and drop-off, select vehicle type and request.'),
+        new OA\Property(property: 'audience', type: 'string', enum: ['rider', 'driver', 'both'], example: 'rider'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 1),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'ContactSubmissionResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'user_id', type: 'integer', nullable: true, example: 5),
+        new OA\Property(property: 'name', type: 'string', example: 'John Rider'),
+        new OA\Property(property: 'email', type: 'string', example: 'john@example.com'),
+        new OA\Property(property: 'phone', type: 'string', nullable: true, example: '+1234567890'),
+        new OA\Property(property: 'subject', type: 'string', example: 'App Billing Question'),
+        new OA\Property(property: 'message', type: 'string', example: 'Question regarding trip charge.'),
+        new OA\Property(property: 'status', type: 'string', enum: ['new', 'read', 'in_progress', 'resolved', 'archived'], example: 'new'),
+        new OA\Property(property: 'admin_notes', type: 'string', nullable: true, example: 'Resolved via email.'),
+        new OA\Property(property: 'responded_at', type: 'string', format: 'date-time', nullable: true),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'LegalPageResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'slug', type: 'string', example: 'privacy-policy'),
+        new OA\Property(property: 'title', type: 'string', example: 'Privacy Policy'),
+        new OA\Property(property: 'content', type: 'string', example: 'UEY Privacy Policy terms...'),
+        new OA\Property(property: 'version', type: 'string', example: '1.0'),
+        new OA\Property(property: 'is_published', type: 'boolean', example: true),
+        new OA\Property(property: 'published_at', type: 'string', format: 'date-time', nullable: true),
+        new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+        new OA\Property(property: 'updated_at', type: 'string', format: 'date-time'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'VehicleResource',
+    properties: [
+        new OA\Property(property: 'id', type: 'integer', example: 1),
+        new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 1),
+        new OA\Property(property: 'make', type: 'string', example: 'Toyota'),
+        new OA\Property(property: 'model', type: 'string', example: 'Camry'),
+        new OA\Property(property: 'year', type: 'integer', example: 2022),
+        new OA\Property(property: 'color', type: 'string', example: 'Black'),
+        new OA\Property(property: 'plate_number', type: 'string', example: 'UEY-7788'),
+        new OA\Property(property: 'status', type: 'string', enum: ['pending', 'approved', 'rejected'], example: 'pending'),
+        new OA\Property(property: 'rejection_reason', type: 'string', nullable: true, example: 'Plate number mismatch'),
+        new OA\Property(property: 'driver', type: 'object', nullable: true),
+        new OA\Property(property: 'vehicle_type', type: 'object', nullable: true),
+    ]
+)]
 class ModelSchemas {}

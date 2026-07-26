@@ -40,6 +40,7 @@ class DriverProfile extends Model
         'last_located_at',
         'last_seen_at',
         'total_reviews',
+        'is_available',
     ];
 
     /**
@@ -181,5 +182,15 @@ class DriverProfile extends Model
             ->where('expires_at', '>=', now())
             ->where('credits_remaining', '>', 0)
             ->latest('id');
+    }
+
+    public function setIsAvailableAttribute($value): void
+    {
+        $this->attributes['is_online'] = (bool) $value;
+    }
+
+    public function getIsAvailableAttribute(): bool
+    {
+        return (bool) ($this->attributes['is_online'] ?? false);
     }
 }

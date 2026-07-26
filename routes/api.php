@@ -28,6 +28,7 @@ Route::prefix('v1')->group(function () {
     require __DIR__.'/api/v1/ledger.php';
     require __DIR__.'/api/v1/vehicle_type.php';
     require __DIR__.'/api/v1/promo.php';
+    require __DIR__.'/api/v1/cms.php';
 });
 
 Broadcast::routes(['middleware' => ['auth:sanctum']]);

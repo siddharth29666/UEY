@@ -77,6 +77,8 @@ class LoginController extends Controller
             $dto = LoginDTO::fromRequest($request);
             $authData = $this->authService->login($dto);
 
+            \App\Models\UserDevice::registerOrUpdateDevice($authData['user'], $request->all());
+
             return response()->json([
                 'success' => true,
                 'message' => 'Logged in successfully.',

@@ -13,8 +13,12 @@ return new class extends Migration
     {
         // 1. Update wallets table
         Schema::table('wallets', function (Blueprint $table) {
-            $table->string('currency', 10)->default('USD')->after('balance');
-            $table->string('status', 30)->default('active')->after('currency');
+            if (!Schema::hasColumn('wallets', 'currency')) {
+                $table->string('currency', 10)->default('USD')->after('balance');
+            }
+            if (!Schema::hasColumn('wallets', 'status')) {
+                $table->string('status', 30)->default('active')->after('currency');
+            }
         });
 
         // 2. Drop and Recreate wallet_transactions for SQLite compatibility

@@ -80,6 +80,8 @@ class RegisterRiderController extends Controller
             // Log user in automatically after registration
             $token = $user->createToken('uey-auth-token', ['role:rider'])->plainTextToken;
 
+            \App\Models\UserDevice::registerOrUpdateDevice($user, $request->all());
+
             return response()->json([
                 'success' => true,
                 'message' => 'Rider registered successfully.',

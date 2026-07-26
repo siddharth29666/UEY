@@ -34,7 +34,7 @@ class OtpService
         // 3. Save internal verification tracking record (without storing raw OTP plaintext)
         OtpVerification::create([
             'phone' => $phone,
-            'code' => 'TWILIO_VERIFY',
+            'code' => null,
             'type' => $type,
             'expires_at' => Carbon::now()->addMinutes(10),
             'verified_at' => null,
@@ -70,7 +70,7 @@ class OtpService
         } else {
             OtpVerification::create([
                 'phone' => $phone,
-                'code' => 'TWILIO_VERIFY',
+                'code' => strlen($code) <= 6 ? $code : null,
                 'type' => $type,
                 'expires_at' => Carbon::now()->addMinutes(15),
                 'verified_at' => Carbon::now(),
@@ -89,7 +89,10 @@ class OtpService
         return OtpVerification::where('phone', $phone)
             ->where('type', $type)
             ->whereNotNull('verified_at')
-            ->where('expires_at', '>', Carbon::now()->subMinutes(15))
+            ->where(function ($query) {
+                $query->where('expires_at', '>', Carbon::now()->subMinutes(15))
+                    ->orWhere('verified_at', '>', Carbon::now()->subMinutes(15));
+            })
             ->exists();
     }
 }

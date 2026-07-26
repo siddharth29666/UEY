@@ -29,6 +29,7 @@ class Vehicle extends Model
         'color',
         'plate_number',
         'status',
+        'rejection_reason',
     ];
 
     /**

@@ -14,10 +14,11 @@ class RegisterDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'device_type' => ['required', 'string', 'max:50'],
-            'device_name' => ['required', 'string', 'max:100'],
-            'device_token' => ['required', 'string', 'max:255'],
-            'platform' => ['required', 'string', 'max:50'],
+            'fcm_token' => ['required_without:device_token', 'nullable', 'string', 'max:500'],
+            'device_token' => ['required_without:fcm_token', 'nullable', 'string', 'max:500'],
+            'device_type' => ['sometimes', 'nullable', 'string', 'in:android,ios,web'],
+            'device_name' => ['sometimes', 'nullable', 'string', 'max:100'],
+            'platform' => ['sometimes', 'nullable', 'string', 'max:50'],
             'os_version' => ['nullable', 'string', 'max:50'],
             'app_version' => ['nullable', 'string', 'max:50'],
             'language' => ['nullable', 'string', 'max:20'],

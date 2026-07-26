@@ -105,10 +105,9 @@ class AuthFlowTest extends TestCase
 
         $this->assertDatabaseHas('otp_verifications', [
             'phone' => '+447911123456',
-            'code' => '123456',
             'type' => 'register',
-            'verified_at' => Carbon::now()->toDateTimeString(),
         ]);
+        $this->assertNotNull(OtpVerification::where('phone', '+447911123456')->first()?->verified_at);
     }
 
     /**

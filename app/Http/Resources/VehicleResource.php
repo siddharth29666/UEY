@@ -17,7 +17,17 @@ class VehicleResource extends JsonResource
             'year' => $this->year,
             'color' => $this->color,
             'plate_number' => $this->plate_number,
-            'status' => $this->status->value,
+            'status' => $this->status instanceof \BackedEnum ? $this->status->value : (string) $this->status,
+            'rejection_reason' => $this->rejection_reason,
+            'driver' => $this->whenLoaded('driverProfile', function () {
+                return [
+                    'id' => $this->driverProfile->id,
+                    'user_id' => $this->driverProfile->user_id,
+                    'name' => $this->driverProfile->user?->name,
+                    'email' => $this->driverProfile->user?->email,
+                    'phone' => $this->driverProfile->user?->phone,
+                ];
+            }),
             'vehicle_type' => $this->whenLoaded('vehicleType', function () {
                 return [
                     'id' => $this->vehicleType->id,

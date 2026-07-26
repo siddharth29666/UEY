@@ -364,6 +364,466 @@
                 ]
             }
         },
+        "/admin/cancellation-reasons": {
+            "get": {
+                "tags": [
+                    "Admin Cancellation Reasons"
+                ],
+                "summary": "Admin — List Cancellation Reasons",
+                "description": "Returns all cancellation reasons including active and inactive. Admin only.",
+                "operationId": "f618b8f2c49a9509bccb3a8b44331f77",
+                "responses": {
+                    "200": {
+                        "description": "Cancellation reasons retrieved.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CancellationReasonResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/UnauthorizedResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Cancellation Reasons"
+                ],
+                "summary": "Admin — Create Cancellation Reason",
+                "description": "Creates a new cancellation reason. Admin only.",
+                "operationId": "7d3088af291eae4d7b4e4007e8e107d4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Driver taking too long"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "rider",
+                                        "enum": [
+                                            "rider",
+                                            "driver",
+                                            "both"
+                                        ]
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Cancellation reason created successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cancellation reason created successfully."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/CancellationReasonResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationErrorResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/cancellation-reasons/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Cancellation Reasons"
+                ],
+                "summary": "Admin — Show Cancellation Reason",
+                "description": "Retrieves details of a specific cancellation reason.",
+                "operationId": "342e59cdc5bdd769ca65729d7d68c819",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancellation reason details.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/CancellationReasonResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Cancellation reason not found."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Cancellation Reasons"
+                ],
+                "summary": "Admin — Update Cancellation Reason",
+                "description": "Updates an existing cancellation reason.",
+                "operationId": "78c1e6f1a2014faac1401344fda44571",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Driver requested cancellation"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "example": "driver",
+                                        "enum": [
+                                            "rider",
+                                            "driver",
+                                            "both"
+                                        ]
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cancellation reason updated successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cancellation reason updated successfully."
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/CancellationReasonResource"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Cancellation Reasons"
+                ],
+                "summary": "Admin — Delete Cancellation Reason",
+                "description": "Soft deletes a cancellation reason.",
+                "operationId": "0fecb6642077ed9f6fbe252cc229e6b3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancellation reason deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/cancellation-reasons/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Admin Cancellation Reasons"
+                ],
+                "summary": "Admin — Toggle Cancellation Reason Status",
+                "description": "Activates or deactivates a cancellation reason.",
+                "operationId": "50a7bf67e34c6dba13370ff6377c7552",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/contact-submissions": {
+            "get": {
+                "tags": [
+                    "Admin Contact Us Management"
+                ],
+                "summary": "Admin — List Contact Submissions",
+                "description": "Returns list of user contact us submissions.",
+                "operationId": "6e4ff42d227b5f5a3284331908fe8cd4",
+                "responses": {
+                    "200": {
+                        "description": "Contact submissions list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ContactSubmissionResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/contact-submissions/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Contact Us Management"
+                ],
+                "summary": "Admin — Show Contact Submission",
+                "description": "Retrieves details of a contact submission.",
+                "operationId": "7bbaef46e68dca5b28e011dcf42a783b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission details."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Contact Us Management"
+                ],
+                "summary": "Admin — Update Contact Submission",
+                "description": "Updates status or notes of a contact submission.",
+                "operationId": "a9143780649bb63d8becf337b1e14f43",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "resolved",
+                                        "enum": [
+                                            "new",
+                                            "read",
+                                            "in_progress",
+                                            "resolved",
+                                            "archived"
+                                        ]
+                                    },
+                                    "admin_notes": {
+                                        "type": "string",
+                                        "example": "Contacted user via phone and resolved inquiry."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Submission updated successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Contact Us Management"
+                ],
+                "summary": "Admin — Delete Contact Submission",
+                "description": "Soft deletes a contact submission.",
+                "operationId": "4a81119147853c21ae058f3387651a26",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Submission deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/documents/pending": {
             "get": {
                 "tags": [
@@ -975,6 +1435,623 @@
                 ]
             }
         },
+        "/admin/faq-categories": {
+            "get": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — List FAQ Categories",
+                "description": "Returns all FAQ categories including inactive.",
+                "operationId": "20f76e4b040808b526916758940c3a34",
+                "responses": {
+                    "200": {
+                        "description": "FAQ categories list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/FaqCategoryResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — Create FAQ Category",
+                "description": "Creates a new FAQ Category.",
+                "operationId": "813e64024a25e06797c799fe163e1b69",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "audience"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Payments & Fare"
+                                    },
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "payments-and-fare"
+                                    },
+                                    "icon": {
+                                        "type": "string",
+                                        "example": "credit-card"
+                                    },
+                                    "audience": {
+                                        "type": "string",
+                                        "example": "both",
+                                        "enum": [
+                                            "rider",
+                                            "driver",
+                                            "both"
+                                        ]
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Category created successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/faq-categories/{id}": {
+            "get": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — Show FAQ Category",
+                "description": "Returns details of a specific FAQ Category.",
+                "operationId": "3f943f5654df28384c09d084760d1065",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category details."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — Update FAQ Category",
+                "description": "Updates an existing FAQ Category.",
+                "operationId": "67dacf1b59b759bd9e3639330a044ba3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category updated successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — Delete FAQ Category",
+                "description": "Soft deletes an FAQ Category.",
+                "operationId": "d4f75c82e4b1911a6382ce142605be08",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Category deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/faqs": {
+            "get": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — List FAQs",
+                "description": "Returns all FAQs including inactive.",
+                "operationId": "3ed90e0c4dd63620ca9acb19a61f1433",
+                "responses": {
+                    "200": {
+                        "description": "FAQs list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/FaqResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — Create FAQ",
+                "description": "Creates a new FAQ item.",
+                "operationId": "070037e171412ec19b2712a9ff847b01",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "faq_category_id",
+                                    "question",
+                                    "answer",
+                                    "audience"
+                                ],
+                                "properties": {
+                                    "faq_category_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "question": {
+                                        "type": "string",
+                                        "example": "How do I request a ride?"
+                                    },
+                                    "answer": {
+                                        "type": "string",
+                                        "example": "Open the app, set your pickup and drop-off location, select vehicle type and tap Request."
+                                    },
+                                    "audience": {
+                                        "type": "string",
+                                        "example": "rider",
+                                        "enum": [
+                                            "rider",
+                                            "driver",
+                                            "both"
+                                        ]
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "FAQ created successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/faqs/{id}": {
+            "get": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — Show FAQ",
+                "description": "Returns details of a specific FAQ.",
+                "operationId": "8be949680c2d5675f8f5cdad237af25c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQ details."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — Update FAQ",
+                "description": "Updates an existing FAQ item.",
+                "operationId": "9408e3dfec609c7d279ddd4e0a4a6482",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQ updated successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — Delete FAQ",
+                "description": "Soft deletes an FAQ item.",
+                "operationId": "3499fde88b546bbe13e5898466ac4574",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQ deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/faqs/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Admin FAQ Management"
+                ],
+                "summary": "Admin — Toggle FAQ Status",
+                "description": "Activates or deactivates an FAQ.",
+                "operationId": "d28e22378652d121bda1a0a246e92790",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQ status updated successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/legal-pages": {
+            "get": {
+                "tags": [
+                    "Admin Legal Pages Management"
+                ],
+                "summary": "Admin — List Legal Pages",
+                "description": "Returns all legal pages including draft/unpublished pages.",
+                "operationId": "5f02592ec3f7d24db7706340b913d0e8",
+                "responses": {
+                    "200": {
+                        "description": "Legal pages list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/LegalPageResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Legal Pages Management"
+                ],
+                "summary": "Admin — Create Legal Page",
+                "description": "Creates a new legal page.",
+                "operationId": "3777d44560ba5ae914a57f116db7b041",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "title",
+                                    "content"
+                                ],
+                                "properties": {
+                                    "slug": {
+                                        "type": "string",
+                                        "example": "privacy-policy"
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Privacy Policy"
+                                    },
+                                    "content": {
+                                        "type": "string",
+                                        "example": "# Privacy Policy..."
+                                    },
+                                    "version": {
+                                        "type": "string",
+                                        "example": "1.0"
+                                    },
+                                    "is_published": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Legal page created successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/legal-pages/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Legal Pages Management"
+                ],
+                "summary": "Admin — Show Legal Page",
+                "description": "Retrieves details of a legal page.",
+                "operationId": "c4b53784bc9149d205705a8898d293e7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Legal page details."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin Legal Pages Management"
+                ],
+                "summary": "Admin — Update Legal Page",
+                "description": "Updates an existing legal page.",
+                "operationId": "2ab5b96949d9556910fb690cff443b57",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Legal page updated successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Legal Pages Management"
+                ],
+                "summary": "Admin — Delete Legal Page",
+                "description": "Soft deletes a legal page.",
+                "operationId": "ef5b88f85b5fb552ac59dc88b0416e9e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Legal page deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/legal-pages/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Admin Legal Pages Management"
+                ],
+                "summary": "Admin — Toggle Legal Page Status",
+                "description": "Publishes or unpublishes a legal page.",
+                "operationId": "487acb11b0b5a4b501a0a5c1695a5435",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Status updated successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/notifications/broadcast": {
             "post": {
                 "tags": [
@@ -1318,6 +2395,780 @@
                     },
                     "404": {
                         "$ref": "#/components/responses/NotFoundResponse"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/revenue/daily": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Daily Revenue Report",
+                "description": "Returns revenue, rides summary, commission, and driver earnings for a selected day.",
+                "operationId": "d3f951db996ec46218a3b26d1b16162d",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date",
+                            "example": "2026-07-26"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Daily revenue report retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/revenue/weekly": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Weekly Revenue Report",
+                "description": "Returns weekly day-by-day revenue breakdown and metrics.",
+                "operationId": "41979182c035b8486d7f63c980a9d723",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Weekly revenue report retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/revenue/monthly": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Monthly Revenue Report",
+                "description": "Returns monthly day-by-day revenue breakdown and metrics.",
+                "operationId": "8503e20648974c065b220fa140c9e96d",
+                "parameters": [
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2026
+                        }
+                    },
+                    {
+                        "name": "month",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 7
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Monthly revenue report retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/revenue/custom": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Custom Date Range Revenue Report",
+                "description": "Returns custom date range revenue report with day-by-day breakdown.",
+                "operationId": "9e0ae293ece20cd1e524578282d6acb2",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Custom revenue report retrieved successfully."
+                    },
+                    "422": {
+                        "description": "Validation error."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/platform-commission": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Platform Commission Report",
+                "description": "Returns platform commission earnings filtered by date, driver, or vehicle type.",
+                "operationId": "51c8ffd4cb761dc6823a1e64e903ff68",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "driver_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "vehicle_type_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Platform commission report retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/driver-earnings": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Driver Earnings Summary Report",
+                "description": "Returns driver earnings summary with pagination, date filtering, and sorting.",
+                "operationId": "1938fc73ef9731ea35a9912fc05b7efc",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "driver_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "net_earnings",
+                                "completed_rides",
+                                "gross_earnings"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver earnings summary retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/promo-discounts": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Promo Discount Summary Report",
+                "description": "Returns summary of promo code usage, discounts applied, and revenue impact.",
+                "operationId": "bda78e0169e73b416920dadb2f005e2e",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "promo_code",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Promo discount report retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/referral-rewards": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Referral Reward Summary Report",
+                "description": "Returns summary of total referrals, successful invites, and referrer/referred user payouts.",
+                "operationId": "da31c8a724a03b47292b279d546c034c",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Referral reward report retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/wallet-statement": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Wallet Statement Report",
+                "description": "Returns wallet statement opening/closing balances, total credits, debits, and transaction list.",
+                "operationId": "ff03070cc685844d7a0863d64e0d418e",
+                "parameters": [
+                    {
+                        "name": "wallet_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Wallet statement retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/wallet-credit-debit": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Credit/Debit History Report",
+                "description": "Returns granular list of wallet credit and debit transactions.",
+                "operationId": "f88fdd7c49e25e3bc2e7f041a63d2663",
+                "parameters": [
+                    {
+                        "name": "wallet_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "credit",
+                                "debit"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Credit/Debit history report retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/cashouts": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Cashout Report",
+                "description": "Returns withdrawal/cashout request records and status filters.",
+                "operationId": "90083449914b28f326b7b055f9b7f607",
+                "parameters": [
+                    {
+                        "name": "driver_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "approved",
+                                "rejected",
+                                "completed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cashout report retrieved successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/reports/ledger": {
+            "get": {
+                "tags": [
+                    "Admin Reports"
+                ],
+                "summary": "Admin — Double-Entry Ledger Report",
+                "description": "Returns audit ledger records for double-entry financial accounting.",
+                "operationId": "a41d8b1aa8bc281dde54c1e102e6f372",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "transaction_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "reference",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "export",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "csv",
+                                "excel"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ledger report retrieved successfully."
                     }
                 },
                 "security": [
@@ -2754,6 +4605,67 @@
                 ]
             }
         },
+        "/admin/settings/{key}": {
+            "get": {
+                "tags": [
+                    "Admin System Settings"
+                ],
+                "summary": "Admin — Get Setting By Key",
+                "description": "Retrieves a single system setting value by key.",
+                "operationId": "d8c2170c152a16bb39044d429a51e85e",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Setting value retrieved."
+                    },
+                    "404": {
+                        "description": "Setting key not found."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin System Settings"
+                ],
+                "summary": "Admin — Delete Setting Key",
+                "description": "Deletes a custom setting key and refreshes cache.",
+                "operationId": "4a05211a1c6b201378b96542a67964e0",
+                "parameters": [
+                    {
+                        "name": "key",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Setting key deleted successfully."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/admin/settings/cache-refresh": {
             "post": {
                 "tags": [
@@ -2765,6 +4677,283 @@
                 "responses": {
                     "200": {
                         "description": "Settings cache cleared."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/vehicles": {
+            "get": {
+                "tags": [
+                    "Admin Vehicle Management"
+                ],
+                "summary": "Admin — List Driver Vehicles",
+                "description": "Retrieves driver vehicles with filters for status, vehicle_type_id, driver_id, and search query.",
+                "operationId": "3d1215c220c2e8401cc615b55820900b",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pending",
+                                "approved",
+                                "rejected"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "vehicle_type_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "driver_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Driver vehicles retrieved successfully.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VehicleResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/vehicles/pending": {
+            "get": {
+                "tags": [
+                    "Admin Vehicle Management"
+                ],
+                "summary": "Admin — List Pending Driver Vehicles",
+                "description": "Returns only driver vehicles with pending approval status.",
+                "operationId": "8f4fbf4b228f2fc2cce5bac018d4e194",
+                "responses": {
+                    "200": {
+                        "description": "Pending driver vehicles retrieved."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/vehicles/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Vehicle Management"
+                ],
+                "summary": "Admin — Show Vehicle Details",
+                "description": "Retrieves complete vehicle details including driver profile and vehicle type.",
+                "operationId": "2b9dc4de213f28d84dd1af90bef89b17",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vehicle details retrieved."
+                    },
+                    "404": {
+                        "description": "Vehicle not found."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/vehicles/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin Vehicle Management"
+                ],
+                "summary": "Admin — Approve Driver Vehicle",
+                "description": "Approves a driver vehicle and sets status to approved.",
+                "operationId": "07ccb10b28b4416fb77ffb07cea1e57f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vehicle approved successfully."
+                    },
+                    "404": {
+                        "description": "Vehicle not found."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/vehicles/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin Vehicle Management"
+                ],
+                "summary": "Admin — Reject Driver Vehicle",
+                "description": "Rejects a driver vehicle with optional rejection reason.",
+                "operationId": "015fbae960cee9848970efa6f72a7769",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "rejection_reason": {
+                                        "type": "string",
+                                        "example": "Vehicle plate number does not match registration documents."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Vehicle rejected successfully."
+                    },
+                    "404": {
+                        "description": "Vehicle not found."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/admin/vehicles/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Admin Vehicle Management"
+                ],
+                "summary": "Admin — Update Vehicle Status",
+                "description": "Updates vehicle status directly to approved, rejected, or pending.",
+                "operationId": "00703339bbb05050461f62ec10ede121",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "string",
+                                        "example": "approved",
+                                        "enum": [
+                                            "pending",
+                                            "approved",
+                                            "rejected"
+                                        ]
+                                    },
+                                    "rejection_reason": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Vehicle status updated successfully."
+                    },
+                    "404": {
+                        "description": "Vehicle not found."
+                    },
+                    "422": {
+                        "description": "Validation Error."
                     }
                 },
                 "security": [
@@ -5114,6 +7303,234 @@
                         "bearerAuth": []
                     }
                 ]
+            }
+        },
+        "/cancellation-reasons": {
+            "get": {
+                "tags": [
+                    "Public CMS & Legal"
+                ],
+                "summary": "Public — List Cancellation Reasons",
+                "description": "Returns active cancellation reasons for riders or drivers.",
+                "operationId": "8a3f5069c5f04aa2af43a531a16706d1",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "rider",
+                                "driver",
+                                "both"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cancellation reasons list.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CancellationReasonResource"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/faq-categories": {
+            "get": {
+                "tags": [
+                    "Public CMS & Legal"
+                ],
+                "summary": "Public — List FAQ Categories",
+                "description": "Returns active FAQ categories.",
+                "operationId": "819a2316aa33923856710da853c0bbb7",
+                "parameters": [
+                    {
+                        "name": "audience",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "rider",
+                                "driver",
+                                "both"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQ categories list."
+                    }
+                }
+            }
+        },
+        "/faqs": {
+            "get": {
+                "tags": [
+                    "Public CMS & Legal"
+                ],
+                "summary": "Public — List FAQs",
+                "description": "Returns active FAQs filtered by audience.",
+                "operationId": "f886daf751315a0791a94bbff8703d2d",
+                "parameters": [
+                    {
+                        "name": "audience",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "rider",
+                                "driver",
+                                "both"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "faq_category_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "FAQs list."
+                    }
+                }
+            }
+        },
+        "/contact-us": {
+            "post": {
+                "tags": [
+                    "Public CMS & Legal"
+                ],
+                "summary": "Public — Submit Contact Form",
+                "description": "Submits a contact form inquiry.",
+                "operationId": "54169e2654b5f9d9dff29e680b5c9628",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "email",
+                                    "subject",
+                                    "message"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "John Rider"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "example": "john@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "+1234567890"
+                                    },
+                                    "subject": {
+                                        "type": "string",
+                                        "example": "App Billing Question"
+                                    },
+                                    "message": {
+                                        "type": "string",
+                                        "example": "I have a question about my ride receipt."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Contact form submitted successfully."
+                    }
+                }
+            }
+        },
+        "/privacy-policy": {
+            "get": {
+                "tags": [
+                    "Public CMS & Legal"
+                ],
+                "summary": "Public — Get Privacy Policy",
+                "description": "Returns currently published Privacy Policy.",
+                "operationId": "f53643a1d88d90397c937d4076556bf3",
+                "responses": {
+                    "200": {
+                        "description": "Privacy policy content."
+                    }
+                }
+            }
+        },
+        "/terms-and-conditions": {
+            "get": {
+                "tags": [
+                    "Public CMS & Legal"
+                ],
+                "summary": "Public — Get Terms & Conditions",
+                "description": "Returns currently published Terms & Conditions.",
+                "operationId": "438a77413e798087476b0237515592cf",
+                "responses": {
+                    "200": {
+                        "description": "Terms & Conditions content."
+                    }
+                }
+            }
+        },
+        "/legal-pages/{slug}": {
+            "get": {
+                "tags": [
+                    "Public CMS & Legal"
+                ],
+                "summary": "Public — Get Legal Page by Slug",
+                "description": "Returns published legal page content by slug.",
+                "operationId": "991438a324bfca31f8aba726c7107f2a",
+                "parameters": [
+                    {
+                        "name": "slug",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Legal page details."
+                    },
+                    "404": {
+                        "description": "Legal page not found."
+                    }
+                }
             }
         },
         "/devices/register": {
@@ -13277,6 +15694,302 @@
                 },
                 "type": "object"
             },
+            "CancellationReasonResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Driver taking too long"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "rider",
+                        "enum": [
+                            "rider",
+                            "driver",
+                            "both"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "FaqCategoryResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Payments & Fare"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "payments-and-fare"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "example": "credit-card",
+                        "nullable": true
+                    },
+                    "audience": {
+                        "type": "string",
+                        "example": "both",
+                        "enum": [
+                            "rider",
+                            "driver",
+                            "both"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "FaqResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "faq_category_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "category_name": {
+                        "type": "string",
+                        "example": "Payments & Fare"
+                    },
+                    "question": {
+                        "type": "string",
+                        "example": "How do I request a ride?"
+                    },
+                    "answer": {
+                        "type": "string",
+                        "example": "Open the app, enter pickup and drop-off, select vehicle type and request."
+                    },
+                    "audience": {
+                        "type": "string",
+                        "example": "rider",
+                        "enum": [
+                            "rider",
+                            "driver",
+                            "both"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "ContactSubmissionResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "John Rider"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "john@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+1234567890",
+                        "nullable": true
+                    },
+                    "subject": {
+                        "type": "string",
+                        "example": "App Billing Question"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Question regarding trip charge."
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "new",
+                        "enum": [
+                            "new",
+                            "read",
+                            "in_progress",
+                            "resolved",
+                            "archived"
+                        ]
+                    },
+                    "admin_notes": {
+                        "type": "string",
+                        "example": "Resolved via email.",
+                        "nullable": true
+                    },
+                    "responded_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "LegalPageResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "privacy-policy"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Privacy Policy"
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "UEY Privacy Policy terms..."
+                    },
+                    "version": {
+                        "type": "string",
+                        "example": "1.0"
+                    },
+                    "is_published": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "published_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "VehicleResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "vehicle_type_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "make": {
+                        "type": "string",
+                        "example": "Toyota"
+                    },
+                    "model": {
+                        "type": "string",
+                        "example": "Camry"
+                    },
+                    "year": {
+                        "type": "integer",
+                        "example": 2022
+                    },
+                    "color": {
+                        "type": "string",
+                        "example": "Black"
+                    },
+                    "plate_number": {
+                        "type": "string",
+                        "example": "UEY-7788"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "pending",
+                        "enum": [
+                            "pending",
+                            "approved",
+                            "rejected"
+                        ]
+                    },
+                    "rejection_reason": {
+                        "type": "string",
+                        "example": "Plate number mismatch",
+                        "nullable": true
+                    },
+                    "driver": {
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "vehicle_type": {
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "SendOtpRequest": {
                 "required": [
                     "phone",
@@ -14310,6 +17023,313 @@
                     }
                 },
                 "type": "object"
+            },
+            "StoreCancellationReasonRequest": {
+                "required": [
+                    "reason",
+                    "type"
+                ],
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "example": "Driver taking too long"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "rider",
+                        "enum": [
+                            "rider",
+                            "driver",
+                            "both"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateCancellationReasonRequest": {
+                "properties": {
+                    "reason": {
+                        "type": "string",
+                        "example": "Rider requested cancellation"
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "both",
+                        "enum": [
+                            "rider",
+                            "driver",
+                            "both"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 2
+                    }
+                },
+                "type": "object"
+            },
+            "StoreFaqCategoryRequest": {
+                "required": [
+                    "name",
+                    "audience"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Payments & Fare"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "payments-and-fare"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "example": "credit-card"
+                    },
+                    "audience": {
+                        "type": "string",
+                        "example": "both",
+                        "enum": [
+                            "rider",
+                            "driver",
+                            "both"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateFaqCategoryRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "Payments & Pricing"
+                    },
+                    "slug": {
+                        "type": "string",
+                        "example": "payments-and-pricing"
+                    },
+                    "icon": {
+                        "type": "string",
+                        "example": "dollar-sign"
+                    },
+                    "audience": {
+                        "type": "string",
+                        "example": "both",
+                        "enum": [
+                            "rider",
+                            "driver",
+                            "both"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "StoreFaqRequest": {
+                "required": [
+                    "faq_category_id",
+                    "question",
+                    "answer",
+                    "audience"
+                ],
+                "properties": {
+                    "faq_category_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "question": {
+                        "type": "string",
+                        "example": "How do I request a ride?"
+                    },
+                    "answer": {
+                        "type": "string",
+                        "example": "Open the app, enter location and request."
+                    },
+                    "audience": {
+                        "type": "string",
+                        "example": "rider",
+                        "enum": [
+                            "rider",
+                            "driver",
+                            "both"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 1
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateFaqRequest": {
+                "properties": {
+                    "faq_category_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "question": {
+                        "type": "string",
+                        "example": "How do I cancel a ride?"
+                    },
+                    "answer": {
+                        "type": "string",
+                        "example": "Tap cancel on the active ride screen."
+                    },
+                    "audience": {
+                        "type": "string",
+                        "example": "rider",
+                        "enum": [
+                            "rider",
+                            "driver",
+                            "both"
+                        ]
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "sort_order": {
+                        "type": "integer",
+                        "example": 2
+                    }
+                },
+                "type": "object"
+            },
+            "SubmitContactFormRequest": {
+                "required": [
+                    "name",
+                    "email",
+                    "subject",
+                    "message"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "John Rider"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "john@example.com"
+                    },
+                    "phone": {
+                        "type": "string",
+                        "example": "+1234567890"
+                    },
+                    "subject": {
+                        "type": "string",
+                        "example": "App Billing Question"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Question regarding trip charge."
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateContactSubmissionRequest": {
+                "properties": {
+                    "status": {
+                        "type": "string",
+                        "example": "resolved",
+                        "enum": [
+                            "new",
+                            "read",
+                            "in_progress",
+                            "resolved",
+                            "archived"
+                        ]
+                    },
+                    "admin_notes": {
+                        "type": "string",
+                        "example": "Resolved via phone call."
+                    }
+                },
+                "type": "object"
+            },
+            "StoreLegalPageRequest": {
+                "required": [
+                    "title",
+                    "content"
+                ],
+                "properties": {
+                    "slug": {
+                        "type": "string",
+                        "example": "privacy-policy"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Privacy Policy"
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "# Privacy Policy..."
+                    },
+                    "version": {
+                        "type": "string",
+                        "example": "1.0"
+                    },
+                    "is_published": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "UpdateLegalPageRequest": {
+                "properties": {
+                    "slug": {
+                        "type": "string",
+                        "example": "terms-and-conditions"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Terms & Conditions"
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "# Terms & Conditions..."
+                    },
+                    "version": {
+                        "type": "string",
+                        "example": "1.1"
+                    },
+                    "is_published": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
             }
         },
         "responses": {
@@ -14417,6 +17437,14 @@
             "description": "Admin Authentication"
         },
         {
+            "name": "Admin Cancellation Reasons",
+            "description": "Admin Cancellation Reasons"
+        },
+        {
+            "name": "Admin Contact Us Management",
+            "description": "Admin Contact Us Management"
+        },
+        {
             "name": "Admin",
             "description": "Admin"
         },
@@ -14433,12 +17461,24 @@
             "description": "Admin Driver Management"
         },
         {
+            "name": "Admin FAQ Management",
+            "description": "Admin FAQ Management"
+        },
+        {
+            "name": "Admin Legal Pages Management",
+            "description": "Admin Legal Pages Management"
+        },
+        {
             "name": "Admin Notification Broadcast",
             "description": "Admin Notification Broadcast"
         },
         {
             "name": "Admin Promo Code Management",
             "description": "Admin Promo Code Management"
+        },
+        {
+            "name": "Admin Reports",
+            "description": "Admin Reports"
         },
         {
             "name": "Admin Review Moderation",
@@ -14459,6 +17499,10 @@
         {
             "name": "Admin System Settings",
             "description": "Admin System Settings"
+        },
+        {
+            "name": "Admin Vehicle Management",
+            "description": "Admin Vehicle Management"
         },
         {
             "name": "Admin Wallet Administration",
@@ -14487,6 +17531,10 @@
         {
             "name": "Real-Time Chat",
             "description": "Real-Time Chat"
+        },
+        {
+            "name": "Public CMS & Legal",
+            "description": "Public CMS & Legal"
         },
         {
             "name": "Notifications",

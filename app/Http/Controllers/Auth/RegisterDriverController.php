@@ -118,6 +118,8 @@ class RegisterDriverController extends Controller
             // Log user in automatically after registration (awaits document approval)
             $token = $user->createToken('uey-auth-token', ['role:driver'])->plainTextToken;
 
+            \App\Models\UserDevice::registerOrUpdateDevice($user, $request->all());
+
             return response()->json([
                 'success' => true,
                 'message' => 'Driver registered successfully. Account is pending documents approval.',

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('otp_verifications', function (Blueprint $table) {
             $table->id();
             $table->string('phone', 20);
-            $table->string('code', 6);
+            $table->string('code', 6)->nullable();
             $table->enum('type', ['register', 'login', 'password_reset'])->default('register');
             $table->timestamp('expires_at');
             $table->timestamp('verified_at')->nullable();

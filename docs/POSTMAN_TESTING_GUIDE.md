@@ -2545,6 +2545,156 @@ Follow this sequence to test the entire lifecycle:
    ```
 5. **Verify Persistence with Get Profile**: `GET {{base_url}}/profile` with `Authorization: Bearer {{driver_token}}`. Confirm `user.driver_profile.vehicles[0].vehicle_type_id` is updated to `1`.
 
+---
+
+## 19. Section 19 — Phase 16 Admin CMS & Platform Settings Testing Guide
+
+### Step 1 — Test Dynamic System Settings
+1. **Update Settings**: `PUT {{base_url}}/admin/settings` with `Authorization: Bearer {{admin_token}}`
+   ```json
+   {
+     "app_name": "UEY Mobility",
+     "currency": "EUR",
+     "night_charge_enabled": true,
+     "night_charge_type": "percentage",
+     "night_charge_value": 15,
+     "night_start_time": "22:00",
+     "night_end_time": "06:00"
+   }
+   ```
+2. **List Settings**: `GET {{base_url}}/admin/settings` with `Authorization: Bearer {{admin_token}}`. Confirm `app_name` and `night_charge_*` keys exist.
+3. **Get Setting by Key**: `GET {{base_url}}/admin/settings/app_name` with `Authorization: Bearer {{admin_token}}`.
+
+### Step 2 — Test Cancellation Reasons
+1. **Create Reason**: `POST {{base_url}}/admin/cancellation-reasons` with `Authorization: Bearer {{admin_token}}`
+   ```json
+   {
+     "reason": "Driver taking too long",
+     "type": "rider",
+     "is_active": true
+   }
+   ```
+2. **Public Fetch Reasons**: `GET {{base_url}}/cancellation-reasons?type=rider`.
+
+### Step 3 — Test FAQ Management
+1. **Create FAQ Category**: `POST {{base_url}}/admin/faq-categories` with `Authorization: Bearer {{admin_token}}`
+   ```json
+   {
+     "name": "Payments",
+     "audience": "both"
+   }
+   ```
+2. **Create FAQ Item**: `POST {{base_url}}/admin/faqs` with `Authorization: Bearer {{admin_token}}`
+   ```json
+   {
+     "faq_category_id": 1,
+     "question": "How to add credit card?",
+     "answer": "Go to Wallet -> Add Card.",
+     "audience": "rider"
+   }
+   ```
+3. **Public Fetch FAQs**: `GET {{base_url}}/faqs?audience=rider`.
+
+### Step 4 — Test Contact Us Submissions
+1. **Public Submit Form**: `POST {{base_url}}/contact-us`
+   ```json
+   {
+     "name": "Alice Rider",
+     "email": "alice@example.com",
+     "subject": "Help with ride",
+     "message": "Lost an item in vehicle."
+   }
+   ```
+2. **Admin Review Submissions**: `GET {{base_url}}/admin/contact-submissions` with `Authorization: Bearer {{admin_token}}`.
+3. **Admin Resolve Submission**: `PUT {{base_url}}/admin/contact-submissions/1` with `{"status": "resolved", "admin_notes": "Driver returned item."}`.
+
+### Step 5 — Test Legal Pages (Privacy Policy & Terms)
+1. **Create Privacy Policy**: `POST {{base_url}}/admin/legal-pages` with `Authorization: Bearer {{admin_token}}`
+   ```json
+   {
+     "slug": "privacy-policy",
+     "title": "Privacy Policy",
+     "content": "# Privacy Policy...",
+     "version": "1.0",
+     "is_published": true
+   }
+   ```
+2. **Public Fetch Privacy Policy**: `GET {{base_url}}/privacy-policy`. Confirm 200 OK with content.
+
+### Step 6 — Test Admin Driver Vehicle Approval Flow
+1. **List Pending Vehicles**: `GET {{base_url}}/admin/vehicles/pending` with `Authorization: Bearer {{admin_token}}`.
+2. **Approve Vehicle**: `POST {{base_url}}/admin/vehicles/1/approve` with `Authorization: Bearer {{admin_token}}`. Confirm 200 OK with `status: "approved"`.
+3. **Reject Vehicle**: `POST {{base_url}}/admin/vehicles/1/reject` with `Authorization: Bearer {{admin_token}}` and payload `{"rejection_reason": "Expired registration"}`. Confirm 200 OK with `status: "rejected"`.
+4. **Update Status via PATCH**: `PATCH {{base_url}}/admin/vehicles/1/status` with `{"status": "approved"}`.
+
+---
+
+## 20. Section 20 — Phase 17 Admin Reports & Export System Testing Guide
+
+### Step 1 — Test Revenue Reports & CSV/Excel Exports
+1. **Daily Revenue**: `GET {{base_url}}/admin/reports/revenue/daily?date=2026-07-26` with `Authorization: Bearer {{admin_token}}`.
+2. **Daily Revenue CSV Export**: `GET {{base_url}}/admin/reports/revenue/daily?date=2026-07-26&export=csv` with `Authorization: Bearer {{admin_token}}`. Verify CSV headers and attachment download.
+3. **Daily Revenue Excel Export**: `GET {{base_url}}/admin/reports/revenue/daily?date=2026-07-26&export=excel` with `Authorization: Bearer {{admin_token}}`. Verify Content-Type `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` and binary `.xlsx` workbook attachment download.
+4. **Weekly Revenue**: `GET {{base_url}}/admin/reports/revenue/weekly?start_date=2026-07-20&end_date=2026-07-26`.
+5. **Monthly Revenue**: `GET {{base_url}}/admin/reports/revenue/monthly?year=2026&month=7`.
+6. **Custom Revenue**: `GET {{base_url}}/admin/reports/revenue/custom?start_date=2026-07-01&end_date=2026-07-26`.
+
+### Step 2 — Test Platform Commission & Driver Earnings Reports
+1. **Platform Commission Excel Export**: `GET {{base_url}}/admin/reports/platform-commission?export=excel`.
+2. **Driver Earnings Summary Excel Export**: `GET {{base_url}}/admin/reports/driver-earnings?export=excel`.
+
+### Step 3 — Test Promo & Referral Reports
+1. **Promo Discount Summary Excel Export**: `GET {{base_url}}/admin/reports/promo-discounts?export=excel`.
+2. **Referral Reward Summary Excel Export**: `GET {{base_url}}/admin/reports/referral-rewards?export=excel`.
+
+### Step 4 — Test Wallet, Cashout & Ledger Reports
+1. **Wallet Statement Excel Export**: `GET {{base_url}}/admin/reports/wallet-statement?export=excel`.
+2. **Credit/Debit History Excel Export**: `GET {{base_url}}/admin/reports/wallet-credit-debit?type=credit&export=excel`.
+3. **Cashout Report Excel Export**: `GET {{base_url}}/admin/reports/cashouts?status=completed&export=excel`.
+4. **Ledger Report Excel Export**: `GET {{base_url}}/admin/reports/ledger?export=excel`.
+5. **Invalid Export Format (Validation)**: `GET {{base_url}}/admin/reports/revenue/daily?export=pdf`. Confirm 422 Unprocessable Content.
+
+---
+
+## 21. Section 21 — Device-Based FCM Token Management Testing Guide
+
+### Step 1 — Test Login / Registration with FCM Token
+1. **Login with FCM Token**: `POST {{base_url}}/login` with body:
+   ```json
+   {
+     "phone": "+447911111111",
+     "password": "password123",
+     "fcm_token": "device_fcm_token_xyz_123",
+     "device_type": "android",
+     "device_name": "Pixel 7 Pro"
+   }
+   ```
+2. Confirm 200 OK and check `user_devices` table for new active device record.
+
+### Step 2 — Test Device Token Refresh Endpoint
+1. **Rotate FCM Token**: `POST {{base_url}}/notifications/device-token` with `Authorization: Bearer {{token}}`:
+   ```json
+   {
+     "fcm_token": "updated_firebase_fcm_token_999",
+     "device_type": "android"
+   }
+   ```
+2. Confirm 201 Created and device token is updated.
+
+### Step 3 — Test Selective Device Logout
+1. **Logout Specific Device**: `POST {{base_url}}/logout` with `Authorization: Bearer {{token}}`:
+   ```json
+   {
+     "fcm_token": "updated_firebase_fcm_token_999"
+   }
+   ```
+2. Confirm 200 OK and verify the logged-out device is removed while other user devices remain active.
+
+
+
+
+
+
 
 
 

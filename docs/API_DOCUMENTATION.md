@@ -4813,5 +4813,106 @@ This module provides APIs for listing active promos, viewing usage history, vali
     }
     ```
 
+---
+
+## 19. Phase 16 — Admin CMS & Platform Settings APIs
+
+### 19A. Dynamic General Settings
+- **GET /admin/settings**: List all platform configurations.
+- **GET /admin/settings/{key}**: Get specific setting by key.
+- **PUT /admin/settings**: Update dynamic settings (app_name, logo_url, contact_email, currency, timezone, night_charge_*, referral_*, promo_default_*).
+- **DELETE /admin/settings/{key}**: Delete custom setting key.
+- **POST /admin/settings/cache-refresh**: Clear system settings cache.
+
+### 19B. Cancellation Reasons
+- **GET /admin/cancellation-reasons**: List all cancellation reasons (Admin).
+- **POST /admin/cancellation-reasons**: Create new cancellation reason.
+- **PUT /admin/cancellation-reasons/{id}**: Update cancellation reason.
+- **PATCH /admin/cancellation-reasons/{id}/status**: Toggle active status.
+- **DELETE /admin/cancellation-reasons/{id}**: Soft delete cancellation reason.
+- **GET /cancellation-reasons**: Public/User list active cancellation reasons filtered by `type=rider|driver|both`.
+
+### 19C. FAQ & FAQ Categories
+- **GET /admin/faq-categories**: List FAQ Categories (Admin).
+- **POST /admin/faq-categories**: Create FAQ Category.
+- **PUT /admin/faq-categories/{id}**: Update FAQ Category.
+- **DELETE /admin/faq-categories/{id}**: Delete FAQ Category.
+- **GET /admin/faqs**: List FAQs (Admin).
+- **POST /admin/faqs**: Create FAQ item.
+- **PUT /admin/faqs/{id}**: Update FAQ item.
+- **PATCH /admin/faqs/{id}/status**: Toggle FAQ active status.
+- **DELETE /admin/faqs/{id}**: Delete FAQ item.
+- **GET /faq-categories**: Public list active FAQ categories.
+- **GET /faqs**: Public list active FAQs filtered by `audience=rider|driver|both`.
+
+### 19D. Contact Us Submissions
+- **POST /contact-us**: Public/User submit contact form.
+- **GET /admin/contact-submissions**: Admin list contact submissions with pagination & status filters.
+- **GET /admin/contact-submissions/{id}**: Admin view contact submission.
+- **PUT /admin/contact-submissions/{id}**: Admin update status (`new`, `read`, `in_progress`, `resolved`, `archived`) and admin notes.
+- **DELETE /admin/contact-submissions/{id}**: Admin delete submission.
+
+### 19E. Legal Pages (Privacy Policy & Terms & Conditions)
+- **GET /admin/legal-pages**: Admin list legal pages.
+- **POST /admin/legal-pages**: Admin create legal page.
+- **PUT /admin/legal-pages/{id}**: Admin update legal page.
+- **PATCH /admin/legal-pages/{id}/status**: Admin publish/unpublish legal page.
+- **DELETE /admin/legal-pages/{id}**: Admin soft delete legal page.
+- **GET /privacy-policy**: Public get published Privacy Policy.
+- **GET /terms-and-conditions**: Public get published Terms & Conditions.
+- **GET /legal-pages/{slug}**: Public get published legal page by slug.
+
+### 19F. Admin Driver Vehicle Approval Flow
+- **GET /admin/vehicles**: List driver vehicles with filters (`status`, `vehicle_type_id`, `driver_id`, `search`).
+- **GET /admin/vehicles/pending**: List pending driver vehicles awaiting approval.
+- **GET /admin/vehicles/{id}**: Get complete driver vehicle details.
+- **POST /admin/vehicles/{id}/approve**: Approve driver vehicle (`status=approved`).
+- **POST /admin/vehicles/{id}/reject**: Reject driver vehicle (`status=rejected`, optional `rejection_reason`).
+- **PATCH /admin/vehicles/{id}/status**: Set vehicle status directly (`pending`, `approved`, `rejected`).
+
+---
+
+## 20. Phase 17 — Reports & Export System APIs
+
+### 20A. Revenue Reports
+- **GET /admin/reports/revenue/daily?date=YYYY-MM-DD**: Get daily revenue summary & breakdown.
+- **GET /admin/reports/revenue/weekly?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD**: Get weekly revenue report.
+- **GET /admin/reports/revenue/monthly?year=YYYY&month=MM**: Get monthly revenue report.
+- **GET /admin/reports/revenue/custom?start_date=YYYY-MM-DD&end_date=YYYY-MM-DD**: Get custom date range revenue report.
+- **Export Options**: Append `?export=csv` for CSV stream download or `?export=excel` for binary `.xlsx` OpenXML Excel workbook download (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`).
+
+### 20B. Commission & Earnings Reports
+- **GET /admin/reports/platform-commission**: Get platform commission report with filters (`start_date`, `end_date`, `driver_id`, `vehicle_type_id`). Supports `?export=csv` and `?export=excel`.
+- **GET /admin/reports/driver-earnings**: Get driver earnings summary with pagination & sorting. Supports `?export=csv` and `?export=excel`.
+
+### 20C. Promo & Referral Reports
+- **GET /admin/reports/promo-discounts**: Get promo discount summary and code usage metrics. Supports `?export=csv` and `?export=excel`.
+- **GET /admin/reports/referral-rewards**: Get referral reward summary and user bonus payouts. Supports `?export=csv` and `?export=excel`.
+
+### 20D. Wallet & Ledger Reports
+- **GET /admin/reports/wallet-statement**: Get wallet statement with opening/closing balance and transactions. Supports `?export=csv` and `?export=excel`.
+- **GET /admin/reports/wallet-credit-debit**: Get credit/debit transaction history. Supports `?export=csv` and `?export=excel`.
+- **GET /admin/reports/cashouts**: Get driver cashout/withdrawal report. Supports `?export=csv` and `?export=excel`.
+- **GET /admin/reports/ledger**: Get double-entry ledger audit report. Supports `?export=csv` and `?export=excel`.
+
+---
+
+## 21. Device-Based FCM Token Management APIs
+
+### 21A. Registration & Login Device Binding
+- **POST /register/rider** & **POST /register/driver**: Accept optional `fcm_token` (or `device_token`), `device_type` (`android`, `ios`, `web`), `device_name`, `platform`, `device_id`. Binds active device upon registration.
+- **POST /login**: Accepts optional `fcm_token` (or `device_token`), `device_type`, `device_name`, `platform`, `device_id`. Automatically binds/updates device record upon login.
+
+### 21B. Device Token Management
+- **POST /devices/register** / **POST /notifications/device-token**: Register or rotate FCM device token for authenticated user (`fcm_token` / `device_token`, `device_type`, `device_name`, `platform`).
+- **PUT /devices/{device}**: Update existing device metadata.
+- **DELETE /devices/{device}**: Deregister specific device.
+- **POST /logout**: Revokes current Sanctum token. Accepts optional `fcm_token` or `device_id` to deactivate logging-out device while preserving other registered user devices.
+
+
+
+
+
+
 
 

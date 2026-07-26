@@ -47,26 +47,15 @@ class DeviceController extends Controller
     public function register(RegisterDeviceRequest $request): JsonResponse
     {
         $user = $request->user();
-        $token = $request->input('device_token');
+        $token = $request->input('fcm_token') ?? $request->input('device_token');
 
         $exists = UserDevice::where('user_id', $user->id)
             ->where('device_token', $token)
             ->exists();
 
-        $device = UserDevice::updateOrCreate(
-            ['device_token' => $token],
-            [
-                'user_id' => $user->id,
-                'device_type' => $request->input('device_type'),
-                'device_name' => $request->input('device_name'),
-                'platform' => $request->input('platform'),
-                'os_version' => $request->input('os_version'),
-                'app_version' => $request->input('app_version'),
-                'language' => $request->input('language'),
-                'timezone' => $request->input('timezone'),
-                'last_used_at' => now(),
-            ]
-        );
+        $device = UserDevice::registerOrUpdateDevice($user, array_merge($request->validated(), [
+            'device_token' => $token,
+        ]));
 
         if (! $exists) {
             event(new AdminAnnouncementEvent($user, NotificationType::SYSTEM, 'Security Alert', __('notifications.auth.login_new_device')));

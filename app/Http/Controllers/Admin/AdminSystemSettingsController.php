@@ -51,6 +51,33 @@ class AdminSystemSettingsController extends Controller
     }
 
     /**
+     * Get a specific setting by key.
+     */
+    #[OA\Get(
+        path: '/admin/settings/{key}',
+        summary: 'Admin — Get Setting By Key',
+        description: 'Retrieves a single system setting value by key.',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin System Settings'],
+        parameters: [
+            new OA\Parameter(name: 'key', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Setting value retrieved.'),
+            new OA\Response(response: 404, description: 'Setting key not found.'),
+        ]
+    )]
+    public function show(string $key): JsonResponse
+    {
+        $setting = Setting::where('key', $key)->firstOrFail();
+
+        return response()->json([
+            'success' => true,
+            'setting' => new SettingResource($setting),
+        ]);
+    }
+
+    /**
      * Save/Update multiple settings.
      */
     #[OA\Put(
@@ -90,6 +117,34 @@ class AdminSystemSettingsController extends Controller
             'success' => true,
             'message' => 'System settings updated successfully.',
             'settings' => $newSettings,
+        ]);
+    }
+
+    /**
+     * Delete a setting key.
+     */
+    #[OA\Delete(
+        path: '/admin/settings/{key}',
+        summary: 'Admin — Delete Setting Key',
+        description: 'Deletes a custom setting key and refreshes cache.',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin System Settings'],
+        parameters: [
+            new OA\Parameter(name: 'key', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Setting key deleted successfully.'),
+        ]
+    )]
+    public function destroy(string $key): JsonResponse
+    {
+        $setting = Setting::where('key', $key)->firstOrFail();
+        $setting->delete();
+        $this->settingService->refreshCache();
+
+        return response()->json([
+            'success' => true,
+            'message' => "Setting '{$key}' deleted successfully.",
         ]);
     }
 

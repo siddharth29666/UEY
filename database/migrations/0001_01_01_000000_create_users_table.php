@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('phone')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['rider', 'driver', 'admin'])->default('rider');
-            $table->enum('status', ['active', 'suspended', 'pending_approval'])->default('active');
+            $table->string('role', 30)->default('rider');
+            $table->string('status', 30)->default('active');
             $table->string('avatar_url', 2048)->nullable();
             $table->boolean('email_notifications')->default(true);
             $table->boolean('sms_notifications')->default(true);

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->year('year');
             $table->string('color', 30);
             $table->string('plate_number', 20)->unique();
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->string('status', 30)->default('pending');
             $table->timestamps();
 
             $table->index(['driver_profile_id', 'status'], 'idx_vehicles_lookup');

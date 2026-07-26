@@ -642,4 +642,134 @@ class NotificationTest extends TestCase
         // Restore env
         app()->bind('env', fn() => 'testing');
     }
+
+    public function test_login_with_fcm_token_creates_device_record(): void
+    {
+        $response = $this->postJson('/api/v1/login', [
+            'phone' => '+447911111111',
+            'password' => 'password123',
+            'fcm_token' => 'fcm_token_on_login_999',
+            'device_type' => 'android',
+            'device_name' => 'Galaxy S23',
+        ]);
+
+        $response->assertStatus(200);
+        $this->assertDatabaseHas('user_devices', [
+            'user_id' => $this->user->id,
+            'device_token' => 'fcm_token_on_login_999',
+            'device_type' => 'android',
+        ]);
+    }
+
+    public function test_login_from_second_device_keeps_both_devices_active(): void
+    {
+        // First login from Android
+        $this->postJson('/api/v1/login', [
+            'phone' => '+447911111111',
+            'password' => 'password123',
+            'fcm_token' => 'device_android_token',
+            'device_type' => 'android',
+        ]);
+
+        // Second login from iOS
+        $this->postJson('/api/v1/login', [
+            'phone' => '+447911111111',
+            'password' => 'password123',
+            'fcm_token' => 'device_ios_token',
+            'device_type' => 'ios',
+        ]);
+
+        $this->assertEquals(2, UserDevice::where('user_id', $this->user->id)->count());
+    }
+
+    public function test_registration_with_fcm_token_creates_device_record(): void
+    {
+        $response = $this->postJson('/api/v1/register/rider', [
+            'name' => 'New Rider FCM',
+            'phone' => '+447999888777',
+            'password' => 'password123',
+            'fcm_token' => 'fcm_token_on_register_123',
+            'device_type' => 'ios',
+        ]);
+
+        $response->assertStatus(201);
+        $this->assertDatabaseHas('user_devices', [
+            'device_token' => 'fcm_token_on_register_123',
+            'device_type' => 'ios',
+        ]);
+    }
+
+    public function test_device_token_alias_endpoint_success(): void
+    {
+        Sanctum::actingAs($this->user);
+
+        $response = $this->postJson('/api/v1/notifications/device-token', [
+            'fcm_token' => 'fcm_alias_token_555',
+            'device_type' => 'android',
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseHas('user_devices', [
+            'user_id' => $this->user->id,
+            'device_token' => 'fcm_alias_token_555',
+        ]);
+    }
+
+    public function test_logout_deactivates_logging_out_device_only(): void
+    {
+        $d1 = UserDevice::create([
+            'user_id' => $this->user->id,
+            'device_type' => 'android',
+            'device_name' => 'Device 1',
+            'device_token' => 'token_device_1',
+            'platform' => 'android',
+        ]);
+
+        $d2 = UserDevice::create([
+            'user_id' => $this->user->id,
+            'device_type' => 'ios',
+            'device_name' => 'Device 2',
+            'device_token' => 'token_device_2',
+            'platform' => 'ios',
+        ]);
+
+        Sanctum::actingAs($this->user);
+
+        $response = $this->postJson('/api/v1/logout', [
+            'fcm_token' => 'token_device_1',
+        ]);
+
+        $response->assertStatus(200);
+
+        // Device 1 deleted/deactivated, Device 2 remains
+        $this->assertDatabaseMissing('user_devices', ['id' => $d1->id]);
+        $this->assertDatabaseHas('user_devices', ['id' => $d2->id]);
+    }
+
+    public function test_idor_user_cannot_update_or_delete_other_user_device(): void
+    {
+        $otherUser = User::create([
+            'name' => 'Other User',
+            'phone' => '+447922222222',
+            'email' => 'other@example.com',
+            'password' => Hash::make('password123'),
+            'role' => UserRole::RIDER,
+            'status' => UserStatus::ACTIVE,
+        ]);
+
+        $otherDevice = UserDevice::create([
+            'user_id' => $otherUser->id,
+            'device_type' => 'android',
+            'device_name' => 'Other Device',
+            'device_token' => 'other_token_123',
+            'platform' => 'android',
+        ]);
+
+        Sanctum::actingAs($this->user);
+
+        $response = $this->deleteJson("/api/v1/devices/{$otherDevice->id}");
+        $response->assertStatus(403);
+    }
 }

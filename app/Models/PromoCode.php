@@ -40,4 +40,14 @@ class PromoCode extends Model
         'referral_coupon' => 'boolean',
         'ride_eligibility' => 'array',
     ];
+
+    public function setActiveAttribute($value): void
+    {
+        $this->attributes['is_active'] = (bool) $value;
+    }
+
+    public function getActiveAttribute(): bool
+    {
+        return (bool) ($this->attributes['is_active'] ?? true);
+    }
 }

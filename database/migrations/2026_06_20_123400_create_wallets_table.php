@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->decimal('balance', 10, 2)->default(0.00);
+            $table->string('currency', 10)->default('USD');
+            $table->string('status', 30)->default('active');
             $table->timestamps();
         });
     }

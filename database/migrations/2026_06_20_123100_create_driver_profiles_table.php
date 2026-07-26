@@ -28,15 +28,15 @@ return new class extends Migration
             $table->boolean('auto_accept')->default(false);
 
             // Location
-            $table->decimal('current_lat', 10, 8)->nullable();
-            $table->decimal('current_lng', 11, 8)->nullable();
+            $table->decimal('current_latitude', 10, 8)->nullable();
+            $table->decimal('current_longitude', 11, 8)->nullable();
             $table->decimal('bearing', 5, 2)->nullable();
             $table->timestamp('last_located_at')->nullable();
 
             $table->timestamps();
 
             $table->index('is_online', 'idx_driver_online');
-            $table->index(['current_lat', 'current_lng'], 'idx_driver_coordinates');
+            $table->index(['current_latitude', 'current_longitude'], 'idx_driver_coordinates');
         });
     }
 

@@ -91,8 +91,46 @@ Route::middleware(['auth:sanctum', 'ability:role:admin'])->prefix('admin')->grou
 
     // System Settings Configuration
     Route::get('/settings', [AdminSystemSettingsController::class, 'index']);
+    Route::get('/settings/{key}', [AdminSystemSettingsController::class, 'show']);
     Route::put('/settings', [AdminSystemSettingsController::class, 'update']);
+    Route::delete('/settings/{key}', [AdminSystemSettingsController::class, 'destroy']);
     Route::post('/settings/cache-refresh', [AdminSystemSettingsController::class, 'refreshCache']);
+
+    // Cancellation Reasons Management
+    Route::get('/cancellation-reasons', [\App\Http\Controllers\Admin\AdminCancellationReasonController::class, 'index']);
+    Route::post('/cancellation-reasons', [\App\Http\Controllers\Admin\AdminCancellationReasonController::class, 'store']);
+    Route::get('/cancellation-reasons/{id}', [\App\Http\Controllers\Admin\AdminCancellationReasonController::class, 'show']);
+    Route::put('/cancellation-reasons/{id}', [\App\Http\Controllers\Admin\AdminCancellationReasonController::class, 'update']);
+    Route::patch('/cancellation-reasons/{id}/status', [\App\Http\Controllers\Admin\AdminCancellationReasonController::class, 'status']);
+    Route::delete('/cancellation-reasons/{id}', [\App\Http\Controllers\Admin\AdminCancellationReasonController::class, 'destroy']);
+
+    // FAQ Categories & FAQ Management
+    Route::get('/faq-categories', [\App\Http\Controllers\Admin\AdminFaqCategoryController::class, 'index']);
+    Route::post('/faq-categories', [\App\Http\Controllers\Admin\AdminFaqCategoryController::class, 'store']);
+    Route::get('/faq-categories/{id}', [\App\Http\Controllers\Admin\AdminFaqCategoryController::class, 'show']);
+    Route::put('/faq-categories/{id}', [\App\Http\Controllers\Admin\AdminFaqCategoryController::class, 'update']);
+    Route::delete('/faq-categories/{id}', [\App\Http\Controllers\Admin\AdminFaqCategoryController::class, 'destroy']);
+
+    Route::get('/faqs', [\App\Http\Controllers\Admin\AdminFaqController::class, 'index']);
+    Route::post('/faqs', [\App\Http\Controllers\Admin\AdminFaqController::class, 'store']);
+    Route::get('/faqs/{id}', [\App\Http\Controllers\Admin\AdminFaqController::class, 'show']);
+    Route::put('/faqs/{id}', [\App\Http\Controllers\Admin\AdminFaqController::class, 'update']);
+    Route::patch('/faqs/{id}/status', [\App\Http\Controllers\Admin\AdminFaqController::class, 'status']);
+    Route::delete('/faqs/{id}', [\App\Http\Controllers\Admin\AdminFaqController::class, 'destroy']);
+
+    // Contact Submissions Management
+    Route::get('/contact-submissions', [\App\Http\Controllers\Admin\AdminContactSubmissionController::class, 'index']);
+    Route::get('/contact-submissions/{id}', [\App\Http\Controllers\Admin\AdminContactSubmissionController::class, 'show']);
+    Route::put('/contact-submissions/{id}', [\App\Http\Controllers\Admin\AdminContactSubmissionController::class, 'update']);
+    Route::delete('/contact-submissions/{id}', [\App\Http\Controllers\Admin\AdminContactSubmissionController::class, 'destroy']);
+
+    // Legal Pages Management
+    Route::get('/legal-pages', [\App\Http\Controllers\Admin\AdminLegalPageController::class, 'index']);
+    Route::post('/legal-pages', [\App\Http\Controllers\Admin\AdminLegalPageController::class, 'store']);
+    Route::get('/legal-pages/{id}', [\App\Http\Controllers\Admin\AdminLegalPageController::class, 'show']);
+    Route::put('/legal-pages/{id}', [\App\Http\Controllers\Admin\AdminLegalPageController::class, 'update']);
+    Route::patch('/legal-pages/{id}/status', [\App\Http\Controllers\Admin\AdminLegalPageController::class, 'status']);
+    Route::delete('/legal-pages/{id}', [\App\Http\Controllers\Admin\AdminLegalPageController::class, 'destroy']);
 
     // Audit Logs
     Route::get('/audit-logs', [AdminAuditLogController::class, 'index']);
@@ -118,4 +156,26 @@ Route::middleware(['auth:sanctum', 'ability:role:admin'])->prefix('admin')->grou
     Route::get('/driver-subscriptions', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'driverSubscriptions']);
     Route::get('/driver-subscriptions/{id}', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'showDriverSubscription']);
     Route::get('/driver-credit-transactions', [\App\Http\Controllers\Admin\AdminSubscriptionPlanController::class, 'creditTransactions']);
+
+    // Admin Vehicle Management & Approval Flow
+    Route::get('/vehicles/pending', [\App\Http\Controllers\Admin\AdminVehicleController::class, 'pending']);
+    Route::get('/vehicles', [\App\Http\Controllers\Admin\AdminVehicleController::class, 'index']);
+    Route::get('/vehicles/{id}', [\App\Http\Controllers\Admin\AdminVehicleController::class, 'show']);
+    Route::post('/vehicles/{id}/approve', [\App\Http\Controllers\Admin\AdminVehicleController::class, 'approve']);
+    Route::post('/vehicles/{id}/reject', [\App\Http\Controllers\Admin\AdminVehicleController::class, 'reject']);
+    Route::patch('/vehicles/{id}/status', [\App\Http\Controllers\Admin\AdminVehicleController::class, 'status']);
+
+    // Phase 17 — Reports & Export System
+    Route::get('/reports/revenue/daily', [\App\Http\Controllers\Admin\AdminReportController::class, 'dailyRevenue']);
+    Route::get('/reports/revenue/weekly', [\App\Http\Controllers\Admin\AdminReportController::class, 'weeklyRevenue']);
+    Route::get('/reports/revenue/monthly', [\App\Http\Controllers\Admin\AdminReportController::class, 'monthlyRevenue']);
+    Route::get('/reports/revenue/custom', [\App\Http\Controllers\Admin\AdminReportController::class, 'customRevenue']);
+    Route::get('/reports/platform-commission', [\App\Http\Controllers\Admin\AdminReportController::class, 'platformCommission']);
+    Route::get('/reports/driver-earnings', [\App\Http\Controllers\Admin\AdminReportController::class, 'driverEarnings']);
+    Route::get('/reports/promo-discounts', [\App\Http\Controllers\Admin\AdminReportController::class, 'promoDiscounts']);
+    Route::get('/reports/referral-rewards', [\App\Http\Controllers\Admin\AdminReportController::class, 'referralRewards']);
+    Route::get('/reports/wallet-statement', [\App\Http\Controllers\Admin\AdminReportController::class, 'walletStatement']);
+    Route::get('/reports/wallet-credit-debit', [\App\Http\Controllers\Admin\AdminReportController::class, 'creditDebitHistory']);
+    Route::get('/reports/cashouts', [\App\Http\Controllers\Admin\AdminReportController::class, 'cashoutReport']);
+    Route::get('/reports/ledger', [\App\Http\Controllers\Admin\AdminReportController::class, 'ledgerReport']);
 });

@@ -39,7 +39,7 @@ class TwilioOtpTest extends TestCase
         $this->assertDatabaseHas('otp_verifications', [
             'phone' => '+447911999888',
             'type' => 'register',
-            'code' => 'TWILIO_VERIFY',
+            'code' => null,
         ]);
     }
 
@@ -122,5 +122,26 @@ class TwilioOtpTest extends TestCase
                 'success' => false,
                 'message' => 'Invalid or expired OTP code.',
             ]);
+    }
+
+    public function test_twilio_verify_placeholder_is_never_persisted_in_database(): void
+    {
+        Http::fake([
+            'verify.twilio.com/*' => Http::response(['sid' => 'VE123', 'status' => 'pending'], 200),
+        ]);
+
+        $this->postJson('/api/v1/otp/send', [
+            'phone' => '+918460935831',
+            'type' => 'register',
+        ])->assertStatus(200);
+
+        // Assert TWILIO_VERIFY is NEVER stored in database
+        $this->assertDatabaseMissing('otp_verifications', [
+            'code' => 'TWILIO_VERIFY',
+        ]);
+
+        $record = OtpVerification::where('phone', '+918460935831')->first();
+        $this->assertNotNull($record);
+        $this->assertTrue(is_null($record->code) || strlen((string) $record->code) <= 6);
     }
 }

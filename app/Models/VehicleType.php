@@ -32,6 +32,7 @@ class VehicleType extends Model
         'commission_percentage',
         'icon_url',
         'active',
+        'is_active',
     ];
 
     /**
@@ -58,5 +59,15 @@ class VehicleType extends Model
     public function vehicles(): HasMany
     {
         return $this->hasMany(Vehicle::class, 'vehicle_type_id');
+    }
+
+    public function setIsActiveAttribute($value): void
+    {
+        $this->attributes['active'] = (bool) $value;
+    }
+
+    public function getIsActiveAttribute(): bool
+    {
+        return (bool) ($this->attributes['active'] ?? true);
     }
 }

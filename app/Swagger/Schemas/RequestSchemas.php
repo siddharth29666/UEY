@@ -364,4 +364,118 @@ use OpenApi\Attributes as OA;
         new OA\Property(property: 'active', type: 'boolean', example: false),
     ]
 )]
+
+#[OA\Schema(
+    schema: 'StoreCancellationReasonRequest',
+    required: ['reason', 'type'],
+    properties: [
+        new OA\Property(property: 'reason', type: 'string', example: 'Driver taking too long'),
+        new OA\Property(property: 'type', type: 'string', enum: ['rider', 'driver', 'both'], example: 'rider'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 1),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'UpdateCancellationReasonRequest',
+    properties: [
+        new OA\Property(property: 'reason', type: 'string', example: 'Rider requested cancellation'),
+        new OA\Property(property: 'type', type: 'string', enum: ['rider', 'driver', 'both'], example: 'both'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 2),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'StoreFaqCategoryRequest',
+    required: ['name', 'audience'],
+    properties: [
+        new OA\Property(property: 'name', type: 'string', example: 'Payments & Fare'),
+        new OA\Property(property: 'slug', type: 'string', example: 'payments-and-fare'),
+        new OA\Property(property: 'icon', type: 'string', example: 'credit-card'),
+        new OA\Property(property: 'audience', type: 'string', enum: ['rider', 'driver', 'both'], example: 'both'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 1),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'UpdateFaqCategoryRequest',
+    properties: [
+        new OA\Property(property: 'name', type: 'string', example: 'Payments & Pricing'),
+        new OA\Property(property: 'slug', type: 'string', example: 'payments-and-pricing'),
+        new OA\Property(property: 'icon', type: 'string', example: 'dollar-sign'),
+        new OA\Property(property: 'audience', type: 'string', enum: ['rider', 'driver', 'both'], example: 'both'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 1),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'StoreFaqRequest',
+    required: ['faq_category_id', 'question', 'answer', 'audience'],
+    properties: [
+        new OA\Property(property: 'faq_category_id', type: 'integer', example: 1),
+        new OA\Property(property: 'question', type: 'string', example: 'How do I request a ride?'),
+        new OA\Property(property: 'answer', type: 'string', example: 'Open the app, enter location and request.'),
+        new OA\Property(property: 'audience', type: 'string', enum: ['rider', 'driver', 'both'], example: 'rider'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 1),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'UpdateFaqRequest',
+    properties: [
+        new OA\Property(property: 'faq_category_id', type: 'integer', example: 1),
+        new OA\Property(property: 'question', type: 'string', example: 'How do I cancel a ride?'),
+        new OA\Property(property: 'answer', type: 'string', example: 'Tap cancel on the active ride screen.'),
+        new OA\Property(property: 'audience', type: 'string', enum: ['rider', 'driver', 'both'], example: 'rider'),
+        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+        new OA\Property(property: 'sort_order', type: 'integer', example: 2),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'SubmitContactFormRequest',
+    required: ['name', 'email', 'subject', 'message'],
+    properties: [
+        new OA\Property(property: 'name', type: 'string', example: 'John Rider'),
+        new OA\Property(property: 'email', type: 'string', example: 'john@example.com'),
+        new OA\Property(property: 'phone', type: 'string', example: '+1234567890'),
+        new OA\Property(property: 'subject', type: 'string', example: 'App Billing Question'),
+        new OA\Property(property: 'message', type: 'string', example: 'Question regarding trip charge.'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'UpdateContactSubmissionRequest',
+    properties: [
+        new OA\Property(property: 'status', type: 'string', enum: ['new', 'read', 'in_progress', 'resolved', 'archived'], example: 'resolved'),
+        new OA\Property(property: 'admin_notes', type: 'string', example: 'Resolved via phone call.'),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'StoreLegalPageRequest',
+    required: ['title', 'content'],
+    properties: [
+        new OA\Property(property: 'slug', type: 'string', example: 'privacy-policy'),
+        new OA\Property(property: 'title', type: 'string', example: 'Privacy Policy'),
+        new OA\Property(property: 'content', type: 'string', example: '# Privacy Policy...'),
+        new OA\Property(property: 'version', type: 'string', example: '1.0'),
+        new OA\Property(property: 'is_published', type: 'boolean', example: true),
+    ]
+)]
+
+#[OA\Schema(
+    schema: 'UpdateLegalPageRequest',
+    properties: [
+        new OA\Property(property: 'slug', type: 'string', example: 'terms-and-conditions'),
+        new OA\Property(property: 'title', type: 'string', example: 'Terms & Conditions'),
+        new OA\Property(property: 'content', type: 'string', example: '# Terms & Conditions...'),
+        new OA\Property(property: 'version', type: 'string', example: '1.1'),
+        new OA\Property(property: 'is_published', type: 'boolean', example: true),
+    ]
+)]
 class RequestSchemas {}

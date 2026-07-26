@@ -37,6 +37,12 @@ class RegisterRiderRequest extends FormRequest
                 'size:8',
                 Rule::exists('users', 'referral_code')->where('status', \App\Enums\UserStatus::ACTIVE->value ?: 'active'),
             ],
+            'fcm_token' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'device_token' => ['sometimes', 'nullable', 'string', 'max:500'],
+            'device_type' => ['sometimes', 'nullable', 'string', 'in:android,ios,web'],
+            'device_name' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'platform' => ['sometimes', 'nullable', 'string', 'max:50'],
+            'device_id' => ['sometimes', 'nullable', 'string', 'max:255'],
         ];
     }
 
