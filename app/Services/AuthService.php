@@ -262,8 +262,33 @@ class AuthService
     /**
      * Update user profile settings.
      */
-    public function updateProfile(User $user, array $data): User
+    public function updateProfile(User $user, array $data, $request = null): User
     {
+        // 0. Handle profile image file upload if present
+        $file = null;
+        if ($request && $request->hasFile('avatar')) {
+            $file = $request->file('avatar');
+        } elseif ($request && $request->hasFile('profile_image')) {
+            $file = $request->file('profile_image');
+        } elseif ($request && $request->hasFile('profile_picture')) {
+            $file = $request->file('profile_picture');
+        } elseif ($request && $request->hasFile('image')) {
+            $file = $request->file('image');
+        }
+
+        if ($file && $file->isValid()) {
+            // Delete old avatar from public disk if managed locally
+            if ($user->avatar_url) {
+                $oldPath = \Illuminate\Support\Str::after($user->avatar_url, '/storage/');
+                if ($oldPath && $oldPath !== $user->avatar_url && \Illuminate\Support\Facades\Storage::disk('public')->exists($oldPath)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($oldPath);
+                }
+            }
+
+            $path = $file->store('avatars', 'public');
+            $data['avatar_url'] = \Illuminate\Support\Facades\Storage::disk('public')->url($path);
+        }
+
         // 1. Update core fields
         $user->update(array_intersect_key($data, array_flip([
             'name',

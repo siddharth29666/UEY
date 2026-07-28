@@ -468,4 +468,120 @@ class AuthFlowTest extends TestCase
                 'message' => 'Unauthenticated.',
             ]);
     }
+
+    public function test_profile_image_file_upload_succeeds_for_rider_and_driver()
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $user = User::create([
+            'name' => 'Image Test User',
+            'email' => 'imageuser@example.com',
+            'phone' => '+447911999111',
+            'password' => bcrypt('password123'),
+            'role' => \App\Enums\UserRole::RIDER,
+            'status' => \App\Enums\UserStatus::ACTIVE,
+        ]);
+
+        Sanctum::actingAs($user, ['role:rider']);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->image('avatar.jpg', 200, 200);
+
+        $response = $this->postJson('/api/v1/profile', [
+            'name' => 'Image Test Updated',
+            'profile_image' => $file,
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true);
+
+        $avatarUrl = $response->json('user.avatar_url');
+        $this->assertNotNull($avatarUrl);
+        $this->assertStringContainsString('/storage/avatars/', $avatarUrl);
+
+        $path = \Illuminate\Support\Str::after($avatarUrl, '/storage/');
+        \Illuminate\Support\Facades\Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_profile_image_upload_invalid_file_type_fails()
+    {
+        \Illuminate\Support\Facades\Storage::fake('public');
+
+        $user = User::create([
+            'name' => 'Invalid File User',
+            'email' => 'invalidfile@example.com',
+            'phone' => '+447911999222',
+            'password' => bcrypt('password123'),
+            'role' => \App\Enums\UserRole::RIDER,
+            'status' => \App\Enums\UserStatus::ACTIVE,
+        ]);
+
+        Sanctum::actingAs($user, ['role:rider']);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->create('document.pdf', 500, 'application/pdf');
+
+        $response = $this->postJson('/api/v1/profile', [
+            'profile_image' => $file,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['profile_image']);
+    }
+
+    public function test_soft_deleted_user_can_re_register_with_same_phone_number()
+    {
+        // 1. Create and soft-delete User A
+        $userA = User::create([
+            'name' => 'User A Original',
+            'email' => 'usera@example.com',
+            'phone' => '+447911777888',
+            'password' => bcrypt('password123'),
+            'role' => \App\Enums\UserRole::RIDER,
+            'status' => \App\Enums\UserStatus::ACTIVE,
+        ]);
+
+        $userA->delete();
+
+        $this->assertSoftDeleted('users', ['id' => $userA->id]);
+
+        // 2. Register User B with the exact same phone number
+        $response = $this->postJson('/api/v1/register/rider', [
+            'name' => 'User B ReRegistered',
+            'email' => 'userb@example.com',
+            'phone' => '+447911777888',
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(201)
+            ->assertJsonPath('success', true);
+
+        // Assert User B active in database with exact phone number
+        $this->assertDatabaseHas('users', [
+            'phone' => '+447911777888',
+            'deleted_at' => null,
+            'name' => 'User B ReRegistered',
+        ]);
+    }
+
+    public function test_active_user_duplicate_phone_registration_fails_validation()
+    {
+        User::create([
+            'name' => 'User Active',
+            'email' => 'activeuser@example.com',
+            'phone' => '+447911777999',
+            'password' => bcrypt('password123'),
+            'role' => \App\Enums\UserRole::RIDER,
+            'status' => \App\Enums\UserStatus::ACTIVE,
+        ]);
+
+        // Attempting to register another active user with same phone fails 422
+        $response = $this->postJson('/api/v1/register/rider', [
+            'name' => 'User Duplicate',
+            'email' => 'duplicateuser@example.com',
+            'phone' => '+447911777999',
+            'password' => 'password123',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['phone']);
+    }
 }

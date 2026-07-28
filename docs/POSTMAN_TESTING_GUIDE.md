@@ -2690,6 +2690,62 @@ Follow this sequence to test the entire lifecycle:
    ```
 2. Confirm 200 OK and verify the logged-out device is removed while other user devices remain active.
 
+---
+
+## 22. Section 22 — Profile Image Upload, Promo Discount & Re-Registration Testing Guide
+
+### Step 1 — Test Profile Avatar Image File Upload
+1. **Endpoint**: `POST {{base_url}}/profile` (or `PUT {{base_url}}/profile`)
+2. **Headers**:
+   - `Accept: application/json`
+   - `Authorization: Bearer {{auth_token}}`
+3. **Body (multipart/form-data)**:
+   - `profile_image`: Select binary image file (`.jpg`, `.png`, `.webp`)
+   - `name`: `Jane Updated`
+4. **Expected Response (200 OK)**:
+   ```json
+   {
+     "success": true,
+     "message": "Profile updated successfully.",
+     "user": {
+       "id": 1,
+       "name": "Jane Updated",
+       "avatar_url": "http://uey.test/storage/avatars/abc123xyz.jpg"
+     }
+   }
+   ```
+5. **Verify Avatar File Access**: Open `user.avatar_url` in browser. Confirm HTTP 200 OK image rendering.
+
+### Step 2 — Test Promo Code Flat Amount Discount Calculation
+1. **Create Flat Promo Code**: `POST {{base_url}}/admin/promo-codes` with `Authorization: Bearer {{admin_token}}`:
+   ```json
+   {
+     "code": "FLAT10OFF",
+     "discount_type": "flat",
+     "discount_value": 10.00,
+     "expires_at": "2028-12-31 23:59:59"
+   }
+   ```
+2. **Validate Promo Code on $200 Fare**: `GET {{base_url}}/promos/validate?code=FLAT10OFF&vehicle_type_id=1&fare=200.00` with `Authorization: Bearer {{rider_token}}`.
+3. **Expected Response (200 OK)**:
+   ```json
+   {
+     "success": true,
+     "data": {
+       "discount_amount": 10.00,
+       "final_fare": 190.00
+     }
+   }
+   ```
+   *Verify discount_amount is exact $10.00 flat discount (NOT $20.00 / 10%).*
+
+### Step 3 — Test Soft-Deleted User Phone Re-Registration
+1. **Register User A**: `POST {{base_url}}/register/rider` with `phone = "+447911000111"`. Confirm 201 Created.
+2. **Delete User A Account**: `DELETE {{base_url}}/profile/delete-account` with `Authorization: Bearer {{user_a_token}}` and `{"password": "password123"}`. Confirm 200 OK.
+3. **Re-Register User B with Same Phone**: `POST {{base_url}}/register/rider` with `phone = "+447911000111"`.
+4. **Expected Response (201 Created)**: Confirm 201 Created success. Soft-deleted user's phone is freed and new active user account is created.
+
+
 
 
 

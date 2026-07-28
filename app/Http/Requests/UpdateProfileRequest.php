@@ -20,6 +20,10 @@ class UpdateProfileRequest extends FormRequest
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'email' => ['sometimes', 'nullable', 'email', 'max:255', 'unique:users,email,'.$userId],
             'avatar_url' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'avatar' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'profile_image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'profile_picture' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
+            'image' => ['sometimes', 'nullable', 'image', 'mimes:jpeg,png,jpg,webp', 'max:5120'],
 
             // Notifications
             'email_notifications' => ['sometimes', 'boolean'],

@@ -130,7 +130,12 @@ class AdminPromoCodeController extends Controller
     )]
     public function store(PromoCodeRequest $request): JsonResponse
     {
-        $promo = PromoCode::create($request->validated());
+        $data = $request->validated();
+        if (isset($data['discount_type']) && in_array(strtolower($data['discount_type']), ['fixed', 'amount'])) {
+            $data['discount_type'] = 'flat';
+        }
+
+        $promo = PromoCode::create($data);
 
         $this->auditService->log(
             $request->user(),
@@ -173,7 +178,12 @@ class AdminPromoCodeController extends Controller
         $promo = PromoCode::withTrashed()->findOrFail($id);
         $oldValues = $promo->toArray();
 
-        $promo->update($request->validated());
+        $data = $request->validated();
+        if (isset($data['discount_type']) && in_array(strtolower($data['discount_type']), ['fixed', 'amount'])) {
+            $data['discount_type'] = 'flat';
+        }
+
+        $promo->update($data);
 
         $this->auditService->log(
             $request->user(),

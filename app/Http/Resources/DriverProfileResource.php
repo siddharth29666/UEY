@@ -11,6 +11,7 @@ class DriverProfileResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'user' => new UserResource($this->whenLoaded('user')),
             'license_number' => $this->license_number,
             'license_expiry' => $this->license_expiry?->toDateString(),
             'is_online' => $this->is_online,

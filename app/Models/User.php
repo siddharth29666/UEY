@@ -25,6 +25,19 @@ class User extends Authenticatable
                 $user->referral_code = static::generateUniqueReferralCode();
             }
         });
+
+        static::deleting(function (User $user) {
+            if (! $user->isForceDeleting()) {
+                $suffix = '_deleted_' . time() . '_' . Str::random(4);
+                if ($user->phone && ! str_contains($user->phone, '_deleted_')) {
+                    $user->phone = substr($user->phone, 0, 180) . $suffix;
+                }
+                if ($user->email && ! str_contains($user->email, '_deleted_')) {
+                    $user->email = substr($user->email, 0, 180) . $suffix;
+                }
+                $user->saveQuietly();
+            }
+        });
     }
 
     public static function generateUniqueReferralCode(): string

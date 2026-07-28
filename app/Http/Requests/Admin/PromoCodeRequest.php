@@ -18,7 +18,7 @@ class PromoCodeRequest extends FormRequest
 
         return [
             'code' => $promoCodeId ? ['sometimes', 'required', 'string', 'max:50', 'unique:promo_codes,code,'.$promoCodeId] : ['required', 'string', 'max:50', 'unique:promo_codes,code'],
-            'discount_type' => ['required', 'string', 'in:percentage,flat'],
+            'discount_type' => ['required', 'string', 'in:percentage,flat,fixed,amount'],
             'discount_value' => ['required', 'numeric', 'min:0.01'],
             'expires_at' => ['required', 'date', 'after:today'],
             'usage_limit' => ['nullable', 'integer', 'min:1'],

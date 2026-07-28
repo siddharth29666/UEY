@@ -662,21 +662,22 @@ Returned when input fields fail to meet specified validation rules.
 
 ---
 
-### 9. Update Profile Settings
+### 9. Update Profile Settings & Image Upload
 *   **API Name:** Update Profile
-*   **Purpose:** Updates the user's personal details and notification preferences.
+*   **Purpose:** Updates the user's personal details, notification preferences, and uploads/replaces profile avatar image.
 *   **Endpoint URL:** `/profile`
-*   **HTTP Method:** `PUT`
+*   **HTTP Method:** `PUT` or `POST` (Support both standard JSON and `multipart/form-data` file uploads)
 *   **Authentication Required:** Yes
 *   **Headers:**
     *   `Accept: application/json`
-    *   `Content-Type: application/json`
+    *   `Content-Type: application/json` OR `multipart/form-data`
     *   `Authorization: Bearer {{auth_token}}`
-*   **Request Payload:**
+*   **Request Payload (JSON or Multipart Form Data):**
     ```json
     {
       "name": "Jane Updated",
       "email": "jane.updated@example.com",
+      "profile_image": "<BINARY_FILE_UPLOAD>",
       "avatar_url": "https://example.com/avatar.png",
       "email_notifications": true,
       "sms_notifications": false,
@@ -698,7 +699,7 @@ Returned when input fields fail to meet specified validation rules.
         "phone": "+447911123456",
         "role": "driver",
         "status": "active",
-        "avatar_url": "https://example.com/avatar.png",
+        "avatar_url": "http://uey.test/storage/avatars/abc123xyz.jpg",
         "notification_preferences": {
           "email": true,
           "sms": false,
@@ -732,8 +733,8 @@ Returned when input fields fail to meet specified validation rules.
       "success": false,
       "message": "The given data was invalid.",
       "errors": {
-        "vehicle_type_id": [
-          "The selected vehicle type id is invalid."
+        "profile_image": [
+          "The profile image field must be an image of type: jpeg, png, jpg, webp."
         ]
       }
     }
@@ -741,7 +742,8 @@ Returned when input fields fail to meet specified validation rules.
 *   **Validation Rules:**
     *   `name`: Optional/Sometimes, String, Max 255.
     *   `email`: Optional/Sometimes, Email format, Max 255, must be unique in `users` (except current user).
-    *   `avatar_url`: Optional/Sometimes, URL, Max 2048.
+    *   `profile_image` / `profile_picture` / `avatar` / `image`: Optional, Image file (`jpeg, png, jpg, webp`), Max 5MB (5120KB). Stores file in public storage and generates accessible URL. Automatically deletes previous local avatar file.
+    *   `avatar_url`: Optional/Sometimes, URL string, Max 2048.
     *   `email_notifications`, `sms_notifications`, `push_notifications`: Optional, Boolean.
     *   `default_navigation`: Optional (Only evaluated for Drivers), Enum (`google_maps`, `waze`, `apple_maps`).
     *   `auto_accept`: Optional (Only evaluated for Drivers), Boolean.

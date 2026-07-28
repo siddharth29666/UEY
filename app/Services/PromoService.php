@@ -96,7 +96,9 @@ class PromoService
      */
     public function calculateDiscount(PromoCode $promo, float $fare): float
     {
-        if ($promo->discount_type === 'flat') {
+        $discountType = strtolower(trim($promo->discount_type));
+
+        if (in_array($discountType, ['flat', 'fixed', 'amount'], true)) {
             $discount = (float) $promo->discount_value;
         } else {
             $discount = ($promo->discount_value / 100) * $fare;

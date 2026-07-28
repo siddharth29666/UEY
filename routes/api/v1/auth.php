@@ -32,6 +32,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', LogoutController::class);
     Route::post('/token/refresh', RefreshTokenController::class);
     Route::get('/profile', [ProfileController::class, 'show']);
-    Route::put('/profile', [ProfileController::class, 'update']);
+    Route::match(['put', 'post'], '/profile', [ProfileController::class, 'update']);
     Route::delete('/profile/delete-account', [ProfileController::class, 'deleteAccount']);
 });

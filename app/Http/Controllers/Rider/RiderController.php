@@ -212,7 +212,7 @@ class RiderController extends Controller
     )]
     public function showRide(Ride $ride): JsonResponse
     {
-        $ride->load(['rider', 'driverProfile.user']);
+        $ride->load(['rider', 'driverProfile.user', 'driverProfile.vehicles.vehicleType']);
 
         return response()->json([
             'success' => true,
@@ -297,7 +297,7 @@ class RiderController extends Controller
     {
         $ride = Ride::where('rider_id', $request->user()->id)
             ->whereNotIn('status', [RideStatus::COMPLETED, RideStatus::CANCELLED])
-            ->with(['rider', 'driverProfile.user'])
+            ->with(['rider', 'driverProfile.user', 'driverProfile.vehicles.vehicleType'])
             ->latest()
             ->first();
 

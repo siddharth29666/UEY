@@ -648,4 +648,60 @@ class PromoFlowTest extends TestCase
         $this->assertEquals(5, $response->json('data.0.ride_id'));
         $this->assertEquals('HISTORYCODE', $response->json('data.0.promo_code'));
     }
+
+    public function test_flat_discount_calculation_is_not_treated_as_percentage()
+    {
+        $promoService = app(\App\Services\PromoService::class);
+        $promo = $this->createPromo([
+            'code' => 'FLAT10',
+            'discount_type' => 'flat',
+            'discount_value' => 10.00,
+        ]);
+
+        $discount = $promoService->calculateDiscount($promo, 200.00);
+
+        // Assert $10.00 flat discount on $200 fare (NOT $20.00 / 10%)
+        $this->assertEquals(10.00, $discount);
+
+        // Also test alias 'fixed'
+        $promoFixed = $this->createPromo([
+            'code' => 'FIXED10',
+            'discount_type' => 'fixed',
+            'discount_value' => 10.00,
+        ]);
+
+        $discountFixed = $promoService->calculateDiscount($promoFixed, 200.00);
+        $this->assertEquals(10.00, $discountFixed);
+    }
+
+    public function test_flat_discount_larger_than_fare()
+    {
+        $promoService = app(\App\Services\PromoService::class);
+        $promo = $this->createPromo([
+            'code' => 'FLAT100',
+            'discount_type' => 'flat',
+            'discount_value' => 100.00,
+        ]);
+
+        $discount = $promoService->calculateDiscount($promo, 50.00);
+
+        // Assert discount is capped at fare ($50.00)
+        $this->assertEquals(50.00, $discount);
+    }
+
+    public function test_percentage_discount_with_max_discount()
+    {
+        $promoService = app(\App\Services\PromoService::class);
+        $promo = $this->createPromo([
+            'code' => 'PERCENT20',
+            'discount_type' => 'percentage',
+            'discount_value' => 20.00,
+            'max_discount' => 50.00,
+        ]);
+
+        $discount = $promoService->calculateDiscount($promo, 500.00);
+
+        // 20% of $500 is $100, but max_discount is $50
+        $this->assertEquals(50.00, $discount);
+    }
 }
