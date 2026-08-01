@@ -59,11 +59,11 @@ class DriverController extends Controller
             content: new OA\MediaType(
                 mediaType: 'multipart/form-data',
                 schema: new OA\Schema(
-                    required: ['document_type', 'document'],
+                    required: ['document_type', 'document', 'expires_at'],
                     properties: [
                         new OA\Property(property: 'document_type', type: 'string', enum: ['driving_license', 'vehicle_registration', 'insurance'], example: 'driving_license', description: 'Type of the document.'),
                         new OA\Property(property: 'document', type: 'string', format: 'binary', description: 'The file to upload.'),
-                        new OA\Property(property: 'expires_at', type: 'string', format: 'date', example: '2028-12-31', description: 'Optional expiration date.'),
+                        new OA\Property(property: 'expires_at', type: 'string', format: 'date', example: '2028-12-31', description: 'Required expiration date (must be a future date).'),
                     ]
                 )
             )

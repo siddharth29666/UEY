@@ -406,4 +406,69 @@ class AdminReportsTest extends TestCase
 
         $response->assertStatus(401);
     }
+
+    public function test_wallet_statement_csv_export_has_sequential_row_numbers(): void
+    {
+        // Create wallet transaction data
+        $wallet = \App\Models\Wallet::create([
+            'user_id' => $this->rider->id,
+            'balance' => 500.00,
+            'currency' => 'USD',
+        ]);
+
+        \App\Models\WalletTransaction::create([
+            'wallet_id' => $wallet->id,
+            'type' => 'credit',
+            'transaction_type' => 'topup',
+            'amount' => 100.00,
+            'balance_before' => 0.00,
+            'balance_after' => 100.00,
+            'status' => 'completed',
+            'reference' => 'TXN999888',
+        ]);
+
+        \App\Models\WalletTransaction::create([
+            'wallet_id' => $wallet->id,
+            'type' => 'debit',
+            'transaction_type' => 'ride_payment',
+            'amount' => 20.00,
+            'balance_before' => 100.00,
+            'balance_after' => 80.00,
+            'status' => 'completed',
+            'reference' => 'TXN999889',
+        ]);
+
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/v1/admin/reports/wallet-statement?export=csv');
+
+        $response->assertStatus(200);
+
+        $csvContent = $response->streamedContent();
+        $lines = explode("\n", trim($csvContent));
+
+        // Header line must start with No
+        $this->assertStringStartsWith('"No",', $lines[0]);
+
+        // First row must start with "1", second row with "2"
+        $this->assertStringStartsWith('"1",', $lines[1]);
+        $this->assertStringStartsWith('"2",', $lines[2]);
+    }
+
+    public function test_driver_earnings_csv_export_has_sequential_row_numbers(): void
+    {
+        $response = $this->actingAs($this->admin, 'sanctum')
+            ->getJson('/api/v1/admin/reports/driver-earnings?export=csv');
+
+        $response->assertStatus(200);
+
+        $csvContent = $response->streamedContent();
+        $lines = explode("\n", trim($csvContent));
+
+        // Header line must start with No
+        $this->assertStringStartsWith('"No",', $lines[0]);
+
+        if (count($lines) > 1 && !empty($lines[1])) {
+            $this->assertStringStartsWith('"1",', $lines[1]);
+        }
+    }
 }

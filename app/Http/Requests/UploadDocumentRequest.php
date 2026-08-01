@@ -24,7 +24,7 @@ class UploadDocumentRequest extends FormRequest
         return [
             'document_type' => ['required', new Enum(DriverDocumentType::class)],
             'document' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'], // Max 5MB file upload
-            'expires_at' => ['nullable', 'date', 'after:today'],
+            'expires_at' => ['required', 'date', 'after:today'],
         ];
     }
 }

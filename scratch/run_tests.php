@@ -3,17 +3,16 @@
 require __DIR__ . '/../vendor/autoload.php';
 
 $app = require_once __DIR__ . '/../bootstrap/app.php';
-
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel->bootstrap();
 
-// Run phpunit command and capture output
-$outputFile = __DIR__ . '/test_output.txt';
+use Illuminate\Support\Facades\Artisan;
 
-putenv('APP_ENV=testing');
-putenv('DB_CONNECTION=sqlite');
-putenv('DB_DATABASE=:memory:');
+ob_start();
+$status = Artisan::call('test', [
+    '--filter' => 'AdminReportsTest|DriverVerificationTest|AdminCmsAndSettingsTest',
+]);
+$output = Artisan::output();
+ob_end_clean();
 
-exec('..\vendor\bin\phpunit --colors=never > ' . escapeshellarg($outputFile) . ' 2>&1', $output, $returnCode);
-
-echo "Exit Code: " . $returnCode . "\n";
-echo "Output saved to " . $outputFile . "\n";
+file_put_contents(__DIR__ . '/test_results.log', $output . "\nSTATUS: " . $status);

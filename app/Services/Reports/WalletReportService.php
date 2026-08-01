@@ -226,10 +226,12 @@ class WalletReportService
      */
     public function exportStatementCsv(array $reportData): StreamedResponse
     {
-        $headers = ['Transaction ID', 'Wallet ID', 'User ID', 'User Name', 'Type', 'Category', 'Amount', 'Balance Before', 'Balance After', 'Status', 'Reference', 'Date'];
+        $headers = ['No', 'Transaction ID', 'Wallet ID', 'User ID', 'User Name', 'Type', 'Category', 'Amount', 'Balance Before', 'Balance After', 'Status', 'Reference', 'Date'];
         $rows = function () use ($reportData) {
+            $index = 1;
             foreach ($reportData['transactions'] as $row) {
                 yield [
+                    $index++,
                     $row['id'],
                     $row['wallet_id'],
                     $row['user_id'],
@@ -250,10 +252,12 @@ class WalletReportService
 
     public function exportHistoryCsv(array $reportData): StreamedResponse
     {
-        $headers = ['Transaction ID', 'Wallet ID', 'User ID', 'User Name', 'Type', 'Category', 'Amount', 'Balance Before', 'Balance After', 'Status', 'Reference', 'Remarks', 'Date'];
+        $headers = ['No', 'Transaction ID', 'Wallet ID', 'User ID', 'User Name', 'Type', 'Category', 'Amount', 'Balance Before', 'Balance After', 'Status', 'Reference', 'Remarks', 'Date'];
         $rows = function () use ($reportData) {
+            $index = 1;
             foreach ($reportData['records'] as $row) {
                 yield [
+                    $index++,
                     $row['transaction_id'],
                     $row['wallet_id'],
                     $row['user_id'],
@@ -275,10 +279,12 @@ class WalletReportService
 
     public function exportCashoutCsv(array $reportData): StreamedResponse
     {
-        $headers = ['Withdrawal ID', 'Driver ID', 'Driver Name', 'Wallet ID', 'Amount', 'Status', 'Admin Note', 'Requested Date', 'Processed Date'];
+        $headers = ['No', 'Withdrawal ID', 'Driver ID', 'Driver Name', 'Wallet ID', 'Amount', 'Status', 'Admin Note', 'Requested Date', 'Processed Date'];
         $rows = function () use ($reportData) {
+            $index = 1;
             foreach ($reportData['records'] as $row) {
                 yield [
+                    $index++,
                     $row['withdrawal_id'],
                     $row['driver_id'],
                     $row['driver_name'],
@@ -296,10 +302,12 @@ class WalletReportService
 
     public function exportLedgerCsv(array $reportData): StreamedResponse
     {
-        $headers = ['Ledger ID', 'User ID', 'User Name', 'Wallet ID', 'Reference', 'Transaction Type', 'Direction', 'Amount', 'Currency', 'Remarks', 'Date'];
+        $headers = ['No', 'Ledger ID', 'User ID', 'User Name', 'Wallet ID', 'Reference', 'Transaction Type', 'Direction', 'Amount', 'Currency', 'Remarks', 'Date'];
         $rows = function () use ($reportData) {
+            $index = 1;
             foreach ($reportData['records'] as $row) {
                 yield [
+                    $index++,
                     $row['ledger_id'],
                     $row['user_id'],
                     $row['user_name'],
@@ -319,10 +327,12 @@ class WalletReportService
 
     public function exportStatementExcel(array $reportData): StreamedResponse
     {
-        $headers = ['Transaction ID', 'Wallet ID', 'User ID', 'User Name', 'Type', 'Category', 'Amount', 'Balance Before', 'Balance After', 'Status', 'Reference', 'Date'];
+        $headers = ['No', 'Transaction ID', 'Wallet ID', 'User ID', 'User Name', 'Type', 'Category', 'Amount', 'Balance Before', 'Balance After', 'Status', 'Reference', 'Date'];
         $dataRows = [];
+        $index = 1;
         foreach ($reportData['transactions'] as $row) {
             $dataRows[] = [
+                $index++,
                 $row['id'],
                 $row['wallet_id'],
                 $row['user_id'],
@@ -342,10 +352,12 @@ class WalletReportService
 
     public function exportHistoryExcel(array $reportData): StreamedResponse
     {
-        $headers = ['Transaction ID', 'Wallet ID', 'User ID', 'User Name', 'Type', 'Category', 'Amount', 'Balance Before', 'Balance After', 'Status', 'Reference', 'Remarks', 'Date'];
+        $headers = ['No', 'Transaction ID', 'Wallet ID', 'User ID', 'User Name', 'Type', 'Category', 'Amount', 'Balance Before', 'Balance After', 'Status', 'Reference', 'Remarks', 'Date'];
         $dataRows = [];
+        $index = 1;
         foreach ($reportData['records'] as $row) {
             $dataRows[] = [
+                $index++,
                 $row['transaction_id'],
                 $row['wallet_id'],
                 $row['user_id'],
@@ -366,10 +378,12 @@ class WalletReportService
 
     public function exportCashoutExcel(array $reportData): StreamedResponse
     {
-        $headers = ['Withdrawal ID', 'Driver ID', 'Driver Name', 'Wallet ID', 'Amount', 'Status', 'Admin Note', 'Requested Date', 'Processed Date'];
+        $headers = ['No', 'Withdrawal ID', 'Driver ID', 'Driver Name', 'Wallet ID', 'Amount', 'Status', 'Admin Note', 'Requested Date', 'Processed Date'];
         $dataRows = [];
+        $index = 1;
         foreach ($reportData['records'] as $row) {
             $dataRows[] = [
+                $index++,
                 $row['withdrawal_id'],
                 $row['driver_id'],
                 $row['driver_name'],
@@ -386,10 +400,12 @@ class WalletReportService
 
     public function exportLedgerExcel(array $reportData): StreamedResponse
     {
-        $headers = ['Ledger ID', 'User ID', 'User Name', 'Wallet ID', 'Reference', 'Transaction Type', 'Direction', 'Amount', 'Currency', 'Remarks', 'Date'];
+        $headers = ['No', 'Ledger ID', 'User ID', 'User Name', 'Wallet ID', 'Reference', 'Transaction Type', 'Direction', 'Amount', 'Currency', 'Remarks', 'Date'];
         $dataRows = [];
+        $index = 1;
         foreach ($reportData['records'] as $row) {
             $dataRows[] = [
+                $index++,
                 $row['ledger_id'],
                 $row['user_id'],
                 $row['user_name'],

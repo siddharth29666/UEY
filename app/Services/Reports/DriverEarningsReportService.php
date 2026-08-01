@@ -93,6 +93,7 @@ class DriverEarningsReportService
     public function exportCsv(array $data): StreamedResponse
     {
         $headers = [
+            'No',
             'Driver ID',
             'Driver Name',
             'Driver Email',
@@ -104,8 +105,10 @@ class DriverEarningsReportService
         ];
 
         $rows = function () use ($data) {
+            $index = 1;
             foreach ($data as $row) {
                 yield [
+                    $index++,
                     $row['driver_id'],
                     $row['driver_name'],
                     $row['driver_email'],
@@ -129,6 +132,7 @@ class DriverEarningsReportService
     public function exportExcel(array $data): StreamedResponse
     {
         $headers = [
+            'No',
             'Driver ID',
             'Driver Name',
             'Driver Email',
@@ -140,8 +144,10 @@ class DriverEarningsReportService
         ];
 
         $dataRows = [];
+        $index = 1;
         foreach ($data as $row) {
             $dataRows[] = [
+                $index++,
                 $row['driver_id'],
                 $row['driver_name'],
                 $row['driver_email'],

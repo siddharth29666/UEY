@@ -139,6 +139,99 @@ class DriverVerificationTest extends TestCase
             ->assertJsonValidationErrors(['expires_at']);
     }
 
+    public function test_upload_fails_without_expires_at()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        $file = UploadedFile::fake()->create('license.pdf', 500);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer '.$token,
+        ])->postJson('/api/v1/driver/onboarding/documents', [
+            'document_type' => 'driving_license',
+            'document' => $file,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['expires_at']);
+    }
+
+    public function test_upload_fails_with_null_expires_at()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        $file = UploadedFile::fake()->create('license.pdf', 500);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer '.$token,
+        ])->postJson('/api/v1/driver/onboarding/documents', [
+            'document_type' => 'driving_license',
+            'document' => $file,
+            'expires_at' => null,
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['expires_at']);
+    }
+
+    public function test_upload_fails_with_invalid_expires_at_format()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        $file = UploadedFile::fake()->create('license.pdf', 500);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer '.$token,
+        ])->postJson('/api/v1/driver/onboarding/documents', [
+            'document_type' => 'driving_license',
+            'document' => $file,
+            'expires_at' => 'not-a-date',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['expires_at']);
+    }
+
+    public function test_upload_fails_with_today_expires_at()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        $file = UploadedFile::fake()->create('license.pdf', 500);
+
+        $response = $this->withHeaders([
+            'Authorization' => 'Bearer '.$token,
+        ])->postJson('/api/v1/driver/onboarding/documents', [
+            'document_type' => 'driving_license',
+            'document' => $file,
+            'expires_at' => Carbon::today()->toDateString(),
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['expires_at']);
+    }
+
+    public function test_upload_succeeds_for_all_document_types_with_future_expiry()
+    {
+        $token = $this->driverUser->createToken('test-token', ['role:driver'])->plainTextToken;
+
+        $types = ['driving_license', 'vehicle_registration', 'insurance', 'police_clearance'];
+
+        foreach ($types as $docType) {
+            $file = UploadedFile::fake()->create("{$docType}.pdf", 500);
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer '.$token,
+            ])->postJson('/api/v1/driver/onboarding/documents', [
+                'document_type' => $docType,
+                'document' => $file,
+                'expires_at' => Carbon::now()->addMonths(6)->toDateString(),
+            ]);
+
+            $response->assertStatus(201)
+                ->assertJson(['success' => true]);
+        }
+    }
+
     /**
      * Test drivers can re-upload a rejected document.
      */
