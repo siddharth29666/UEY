@@ -13,9 +13,9 @@ class SubscriptionPlanResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
-            'price_eur' => (float) $this->price_eur,
-            'price' => (float) $this->price_eur, // Alias for backward compatibility
-            'currency' => 'EUR',
+            'price_gbp' => (float) $this->price_gbp,
+            'price' => (float) $this->price_gbp, // Alias for backward compatibility
+            'currency' => 'GBP',
             'ride_credits' => (int) $this->ride_credits,
             'duration_days' => (int) $this->duration_days,
             'status' => (bool) $this->status,

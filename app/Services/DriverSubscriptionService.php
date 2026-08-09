@@ -34,7 +34,7 @@ class DriverSubscriptionService
     }
 
     /**
-     * Purchase a subscription plan using driver's internal wallet balance (EUR).
+     * Purchase a subscription plan using driver's internal wallet balance (GBP).
      * Atomic, double-spending protected via lockForUpdate() on the driver's wallet row.
      */
     public function purchasePlan(DriverProfile $driver, SubscriptionPlan $plan): array
@@ -53,13 +53,13 @@ class DriverSubscriptionService
             // Find or create driver's wallet
             $wallet = Wallet::firstOrCreate(
                 ['user_id' => $driver->user_id],
-                ['balance' => 0.00, 'currency' => 'EUR', 'status' => 'active']
+                ['balance' => 0.00, 'currency' => 'GBP', 'status' => 'active']
             );
 
             // Lock wallet row for update to prevent double-spending & race conditions
             $wallet = Wallet::where('id', $wallet->id)->lockForUpdate()->first();
 
-            $price = (float) $plan->price_eur;
+            $price = (float) $plan->price_gbp;
             $balanceBefore = (float) $wallet->balance;
 
             if ($balanceBefore < $price) {
@@ -87,7 +87,7 @@ class DriverSubscriptionService
                     'subscription_plan_name' => $plan->name,
                     'credits_allocated' => $plan->ride_credits,
                     'duration_days' => $plan->duration_days,
-                    'amount_eur' => $price,
+                    'amount_gbp' => $price,
                 ],
             ]);
 
@@ -104,8 +104,8 @@ class DriverSubscriptionService
                 'stripe_checkout_session_id' => null,
                 'stripe_payment_intent_id' => null,
                 'stripe_subscription_id' => null,
-                'amount_eur' => $plan->price_eur,
-                'currency' => 'eur',
+                'amount_gbp' => $plan->price_gbp,
+                'currency' => 'gbp',
                 'credits_allocated' => $plan->ride_credits,
                 'credits_used' => 0,
                 'credits_remaining' => $plan->ride_credits,
@@ -128,7 +128,7 @@ class DriverSubscriptionService
                     'plan_name' => $plan->name,
                     'payment_source' => 'wallet',
                     'wallet_transaction_id' => $walletTx->id,
-                    'amount_eur' => $price,
+                    'amount_gbp' => $price,
                 ],
             ]);
 

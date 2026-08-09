@@ -51,8 +51,10 @@ Schedule::command('app:referral-bonus')
     ->onOneServer()
     ->runInBackground();
 
-Schedule::command('app:expire-subscriptions')
-    ->dailyAt('00:00')
-    ->withoutOverlapping()
-    ->onOneServer()
-    ->runInBackground();
+if (config('app.driver_subscription_enabled', false)) {
+    Schedule::command('app:expire-subscriptions')
+        ->dailyAt('00:00')
+        ->withoutOverlapping()
+        ->onOneServer()
+        ->runInBackground();
+}

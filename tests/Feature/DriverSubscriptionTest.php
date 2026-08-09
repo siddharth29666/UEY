@@ -36,6 +36,7 @@ class DriverSubscriptionTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        config(['app.driver_subscription_enabled' => true]);
 
         // Admin User
         $this->adminUser = User::create([
@@ -80,7 +81,7 @@ class DriverSubscriptionTest extends TestCase
         $this->driverWallet = Wallet::create([
             'user_id' => $this->driverUser->id,
             'balance' => 0.00,
-            'currency' => 'EUR',
+            'currency' => 'GBP',
             'status' => 'active',
         ]);
 
@@ -94,11 +95,11 @@ class DriverSubscriptionTest extends TestCase
             'status' => UserStatus::ACTIVE,
         ]);
 
-        // Subscription Plans (EUR)
+        // Subscription Plans (GBP)
         $this->planA = SubscriptionPlan::create([
             'name' => 'Plan A',
             'description' => 'Starter 20 Ride Credits',
-            'price_eur' => 10.00,
+            'price_gbp' => 10.00,
             'ride_credits' => 20,
             'duration_days' => 30,
             'status' => true,
@@ -108,7 +109,7 @@ class DriverSubscriptionTest extends TestCase
         $this->planB = SubscriptionPlan::create([
             'name' => 'Plan B',
             'description' => 'Pro 50 Ride Credits',
-            'price_eur' => 20.00,
+            'price_gbp' => 20.00,
             'ride_credits' => 50,
             'duration_days' => 30,
             'status' => true,
@@ -127,7 +128,7 @@ class DriverSubscriptionTest extends TestCase
         $response = $this->postJson('/api/v1/admin/subscription-plans', [
             'name' => 'Plan C',
             'description' => 'Ultimate 100 Ride Credits',
-            'price_eur' => 35.00,
+            'price_gbp' => 35.00,
             'ride_credits' => 100,
             'duration_days' => 30,
             'status' => true,
@@ -139,8 +140,8 @@ class DriverSubscriptionTest extends TestCase
                 'success' => true,
                 'data' => [
                     'name' => 'Plan C',
-                    'price_eur' => 35.00,
-                    'currency' => 'EUR',
+                    'price_gbp' => 35.00,
+                    'currency' => 'GBP',
                     'ride_credits' => 100,
                 ],
             ]);
@@ -149,10 +150,10 @@ class DriverSubscriptionTest extends TestCase
 
         // Update Plan
         $updateResponse = $this->putJson("/api/v1/admin/subscription-plans/{$planId}", [
-            'price_eur' => 30.00,
+            'price_gbp' => 30.00,
         ]);
         $updateResponse->assertStatus(200)
-            ->assertJson(['data' => ['price_eur' => 30.00]]);
+            ->assertJson(['data' => ['price_gbp' => 30.00]]);
 
         // Toggle Status
         $statusResponse = $this->patchJson("/api/v1/admin/subscription-plans/{$planId}/status", [
@@ -216,7 +217,7 @@ class DriverSubscriptionTest extends TestCase
         $this->assertDatabaseHas('driver_subscriptions', [
             'driver_profile_id' => $this->driverProfile->id,
             'subscription_plan_id' => $this->planA->id,
-            'amount_eur' => 10.00,
+            'amount_gbp' => 10.00,
             'status' => 'active',
             'payment_source' => 'wallet',
             'credits_allocated' => 20,
@@ -377,8 +378,8 @@ class DriverSubscriptionTest extends TestCase
         $subscription = DriverSubscription::create([
             'driver_profile_id' => $this->driverProfile->id,
             'subscription_plan_id' => $this->planA->id,
-            'amount_eur' => 10.00,
-            'currency' => 'eur',
+            'amount_gbp' => 10.00,
+            'currency' => 'gbp',
             'credits_allocated' => 10,
             'credits_used' => 0,
             'credits_remaining' => 10,
@@ -435,8 +436,8 @@ class DriverSubscriptionTest extends TestCase
         $subscription = DriverSubscription::create([
             'driver_profile_id' => $this->driverProfile->id,
             'subscription_plan_id' => $this->planA->id,
-            'amount_eur' => 10.00,
-            'currency' => 'eur',
+            'amount_gbp' => 10.00,
+            'currency' => 'gbp',
             'credits_allocated' => 10,
             'credits_used' => 0,
             'credits_remaining' => 10,
@@ -491,8 +492,8 @@ class DriverSubscriptionTest extends TestCase
         $subscription = DriverSubscription::create([
             'driver_profile_id' => $this->driverProfile->id,
             'subscription_plan_id' => $this->planA->id,
-            'amount_eur' => 10.00,
-            'currency' => 'eur',
+            'amount_gbp' => 10.00,
+            'currency' => 'gbp',
             'credits_allocated' => 10,
             'credits_used' => 0,
             'credits_remaining' => 10,

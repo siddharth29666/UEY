@@ -16,7 +16,7 @@ class StoreSubscriptionPlanRequest extends FormRequest
         return [
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'price_eur' => 'required|numeric|min:0.01',
+            'price_gbp' => 'required|numeric|min:0.01',
             'ride_credits' => 'required|integer|min:1',
             'duration_days' => 'required|integer|min:1',
             'status' => 'nullable|boolean',

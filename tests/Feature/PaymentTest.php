@@ -56,7 +56,7 @@ class PaymentTest extends TestCase
         ]);
 
         // Configure platform commission
-        config(['services.payments.commission_rate' => 15.0]);
+        config(['services.payments.commission_rate' => 10.0]);
     }
 
     protected function createDriver(string $name, string $phone): array

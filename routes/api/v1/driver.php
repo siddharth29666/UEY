@@ -26,10 +26,13 @@ Route::middleware(['auth:sanctum', 'ability:role:driver'])->prefix('driver')->gr
     Route::get('/earnings/summary', [DriverController::class, 'earningsSummary']);
     Route::get('/notifications', [DriverController::class, 'notifications']);
 
-    // Driver Subscription & Credit System
-    Route::get('/subscription/plans', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'plans']);
-    Route::get('/subscription/current', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'current']);
-    Route::get('/subscription/history', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'history']);
-    Route::get('/subscription/credits', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'credits']);
-    Route::post('/subscription/purchase', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'purchase']);
+    // DRIVER SUBSCRIPTION FEATURE TEMPORARILY DISABLED
+    // Re-enable this route group by setting DRIVER_SUBSCRIPTION_ENABLED=true in .env / config.
+    if (config('app.driver_subscription_enabled', false)) {
+        Route::get('/subscription/plans', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'plans']);
+        Route::get('/subscription/current', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'current']);
+        Route::get('/subscription/history', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'history']);
+        Route::get('/subscription/credits', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'credits']);
+        Route::post('/subscription/purchase', [\App\Http\Controllers\Driver\DriverSubscriptionController::class, 'purchase']);
+    }
 });

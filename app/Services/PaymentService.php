@@ -44,7 +44,7 @@ class PaymentService
         $discount = (float) $ride->actual_discount_amount;
         $total = (float) $ride->final_actual_fare;
 
-        $commissionRate = (float) config('services.payments.commission_rate', 15.0);
+        $commissionRate = (float) app(\App\Services\SettingService::class)->get('platform_commission', config('services.payments.commission_rate', 10.0));
         $commission = round($total * ($commissionRate / 100), 2);
         $driverEarning = round($total - $commission, 2);
 

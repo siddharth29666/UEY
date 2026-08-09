@@ -16,7 +16,7 @@ class UpdateSubscriptionPlanRequest extends FormRequest
         return [
             'name' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string',
-            'price_eur' => 'sometimes|required|numeric|min:0.01',
+            'price_gbp' => 'sometimes|required|numeric|min:0.01',
             'ride_credits' => 'sometimes|required|integer|min:1',
             'duration_days' => 'sometimes|required|integer|min:1',
             'status' => 'nullable|boolean',

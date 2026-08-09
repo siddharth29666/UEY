@@ -123,4 +123,15 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Driver Subscription Feature Flag
+    |--------------------------------------------------------------------------
+    |
+    | Controls whether the Driver Subscription and Ride Credit system is active.
+    | Set DRIVER_SUBSCRIPTION_ENABLED=true in .env to reactivate the feature.
+    |
+    */
+    'driver_subscription_enabled' => env('DRIVER_SUBSCRIPTION_ENABLED', false),
+
 ];

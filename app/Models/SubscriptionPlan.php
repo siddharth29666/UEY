@@ -15,7 +15,7 @@ class SubscriptionPlan extends Model
     protected $fillable = [
         'name',
         'description',
-        'price_eur',
+        'price_gbp',
         'ride_credits',
         'duration_days',
         'stripe_product_id',
@@ -25,7 +25,7 @@ class SubscriptionPlan extends Model
     ];
 
     protected $casts = [
-        'price_eur' => 'decimal:2',
+        'price_gbp' => 'decimal:2',
         'ride_credits' => 'integer',
         'duration_days' => 'integer',
         'status' => 'boolean',

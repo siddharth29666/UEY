@@ -2389,7 +2389,7 @@ Follow this sequence to test the entire lifecycle:
     {
       "name": "Starter Plan",
       "description": "20 Ride Credits",
-      "price_eur": 10.00,
+      "price_gbp": 10.00,
       "ride_credits": 20,
       "duration_days": 30,
       "status": true
@@ -2403,7 +2403,7 @@ Follow this sequence to test the entire lifecycle:
     ```json
     {
       "name": "Updated Starter Plan",
-      "price_eur": 12.50,
+      "price_gbp": 12.50,
       "ride_credits": 25
     }
     ```
@@ -2554,7 +2554,7 @@ Follow this sequence to test the entire lifecycle:
    ```json
    {
      "app_name": "UEY Mobility",
-     "currency": "EUR",
+     "currency": "GBP",
      "night_charge_enabled": true,
      "night_charge_type": "percentage",
      "night_charge_value": 15,

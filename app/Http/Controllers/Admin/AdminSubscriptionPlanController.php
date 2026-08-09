@@ -62,22 +62,22 @@ class AdminSubscriptionPlanController extends Controller
     }
 
     /**
-     * Admin — Create a subscription plan and sync with Stripe (EUR).
+     * Admin — Create a subscription plan and sync with Stripe (GBP).
      */
     #[OA\Post(
         path: '/admin/subscription-plans',
         summary: 'Admin — Create Subscription Plan',
-        description: 'Creates a new subscription plan in EUR and syncs with Stripe. Admin only.',
+        description: 'Creates a new subscription plan in GBP and syncs with Stripe. Admin only.',
         security: [['bearerAuth' => []]],
         tags: ['Admin Subscription Plans'],
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['name', 'price_eur', 'ride_credits', 'duration_days'],
+                required: ['name', 'price_gbp', 'ride_credits', 'duration_days'],
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'Starter Plan'),
                     new OA\Property(property: 'description', type: 'string', example: '20 Ride Credits'),
-                    new OA\Property(property: 'price_eur', type: 'number', format: 'float', example: 10.00),
+                    new OA\Property(property: 'price_gbp', type: 'number', format: 'float', example: 10.00),
                     new OA\Property(property: 'ride_credits', type: 'integer', example: 20),
                     new OA\Property(property: 'duration_days', type: 'integer', example: 30),
                     new OA\Property(property: 'status', type: 'boolean', example: true),
@@ -107,7 +107,7 @@ class AdminSubscriptionPlanController extends Controller
         // Sync with Stripe
         try {
             $stripeProduct = $this->stripeService->createProduct($validated['name'], $validated['description'] ?? null);
-            $stripePrice = $this->stripeService->createPrice($stripeProduct->id, (float) $validated['price_eur']);
+            $stripePrice = $this->stripeService->createPrice($stripeProduct->id, (float) $validated['price_gbp']);
 
             $validated['stripe_product_id'] = $stripeProduct->id;
             $validated['stripe_price_id'] = $stripePrice->id;
@@ -178,7 +178,7 @@ class AdminSubscriptionPlanController extends Controller
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'Updated Starter Plan'),
                     new OA\Property(property: 'description', type: 'string', example: 'Updated Description'),
-                    new OA\Property(property: 'price_eur', type: 'number', format: 'float', example: 12.50),
+                    new OA\Property(property: 'price_gbp', type: 'number', format: 'float', example: 12.50),
                     new OA\Property(property: 'ride_credits', type: 'integer', example: 25),
                     new OA\Property(property: 'duration_days', type: 'integer', example: 30),
                     new OA\Property(property: 'status', type: 'boolean', example: true),

@@ -47,7 +47,7 @@ class AdminCmsAndSettingsTest extends TestCase
             ->putJson('/api/v1/admin/settings', [
                 'app_name' => 'UEY Mobility Premium',
                 'contact_email' => 'support@uey.com',
-                'currency' => 'EUR',
+                'currency' => 'GBP',
                 'night_charge_enabled' => true,
                 'night_charge_type' => 'percentage',
                 'night_charge_value' => 15,

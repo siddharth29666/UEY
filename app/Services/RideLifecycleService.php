@@ -201,7 +201,7 @@ class RideLifecycleService
                 $calculatedFare = $baseFare + $distanceFare + $durationFare;
                 $subtotal = round(max($calculatedFare, $minimumFare), 2);
 
-                $commissionRate = (float) config('services.payments.commission_rate', 15.0);
+                $commissionRate = (float) app(SettingService::class)->get('platform_commission', config('services.payments.commission_rate', 10.0));
                 $commission = round($subtotal * ($commissionRate / 100), 2);
                 $driverEarning = round($subtotal - $commission, 2);
 

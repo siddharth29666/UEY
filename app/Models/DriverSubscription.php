@@ -16,7 +16,7 @@ class DriverSubscription extends Model
         'stripe_checkout_session_id',
         'stripe_payment_intent_id',
         'stripe_subscription_id',
-        'amount_eur',
+        'amount_gbp',
         'currency',
         'credits_allocated',
         'credits_used',
@@ -28,7 +28,7 @@ class DriverSubscription extends Model
     ];
 
     protected $casts = [
-        'amount_eur' => 'decimal:2',
+        'amount_gbp' => 'decimal:2',
         'credits_allocated' => 'integer',
         'credits_used' => 'integer',
         'credits_remaining' => 'integer',

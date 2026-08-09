@@ -33,7 +33,7 @@ class StripeService
     /**
      * Create a Stripe Checkout Session for Subscription Purchase.
      */
-    public function createCheckoutSession(float $amount, string $currency = 'eur', array $metadata = [], ?string $successUrl = null, ?string $cancelUrl = null): CheckoutSession
+    public function createCheckoutSession(float $amount, string $currency = 'gbp', array $metadata = [], ?string $successUrl = null, ?string $cancelUrl = null): CheckoutSession
     {
         $successUrl = $successUrl ?? config('app.url').'/driver/subscription/success?session_id={CHECKOUT_SESSION_ID}';
         $cancelUrl = $cancelUrl ?? config('app.url').'/driver/subscription/cancel';
@@ -71,12 +71,12 @@ class StripeService
     /**
      * Create a Price in Stripe.
      */
-    public function createPrice(string $productId, float $amountEur): Price
+    public function createPrice(string $productId, float $amountGbp): Price
     {
         return Price::create([
             'product' => $productId,
-            'unit_amount' => (int) round($amountEur * 100),
-            'currency' => 'eur',
+            'unit_amount' => (int) round($amountGbp * 100),
+            'currency' => 'gbp',
         ]);
     }
 

@@ -4535,11 +4535,11 @@ This module provides APIs for listing active promos, viewing usage history, vali
 ## Module: Driver Subscription & Ride Credit Plan System (Option B)
 
 ### Overview & Business Rule (Option B)
-*   **Payment Mechanism:** Subscription plans are purchased strictly using the Driver's internal **Wallet** balance in **EUR (€)**. Stripe is used ONLY for Wallet Top-Ups and Cashouts.
+*   **Payment Mechanism:** Subscription plans are purchased strictly using the Driver's internal **Wallet** balance in **GBP (£)**. Stripe is used ONLY for Wallet Top-Ups and Cashouts.
 *   **Ride Credit Consumption:** Driver must possess an active subscription plan with available ride credits to accept ride requests.
 *   **Immediate Atomic Deduction:** When a Driver accepts a ride request, **1 credit is deducted immediately**.
 *   **Non-Refundable Rule (Option B):** Credits are **NOT refunded** if the Rider cancels the ride or if the Driver cancels the ride after acceptance. Completed rides do not alter credits further.
-*   **Currency:** All subscription plans are priced in **EUR (€)**.
+*   **Currency:** All subscription plans are priced in **GBP (£)**.
 
 ---
 
@@ -4555,8 +4555,8 @@ This module provides APIs for listing active promos, viewing usage history, vali
           "id": 1,
           "name": "Plan A",
           "description": "Starter 20 Ride Credits",
-          "price_eur": 10.00,
-          "currency": "EUR",
+          "price_gbp": 10.00,
+          "currency": "GBP",
           "ride_credits": 20,
           "duration_days": 30,
           "status": true
@@ -4584,8 +4584,8 @@ This module provides APIs for listing active promos, viewing usage history, vali
       "data": {
         "subscription": {
           "id": 5,
-          "amount_eur": 10.00,
-          "currency": "EUR",
+          "amount_gbp": 10.00,
+          "currency": "GBP",
           "credits_allocated": 20,
           "credits_remaining": 20,
           "status": "active",
@@ -4647,8 +4647,8 @@ This module provides APIs for listing active promos, viewing usage history, vali
           "id": 1,
           "name": "Starter Plan",
           "description": "20 Ride Credits",
-          "price_eur": 10.00,
-          "currency": "EUR",
+          "price_gbp": 10.00,
+          "currency": "GBP",
           "ride_credits": 20,
           "duration_days": 30,
           "status": true,
@@ -4667,7 +4667,7 @@ This module provides APIs for listing active promos, viewing usage history, vali
     {
       "name": "Pro Driver Plan",
       "description": "50 Ride Credits for active drivers",
-      "price_eur": 20.00,
+      "price_gbp": 20.00,
       "ride_credits": 50,
       "duration_days": 30,
       "status": true,
@@ -4682,8 +4682,8 @@ This module provides APIs for listing active promos, viewing usage history, vali
       "data": {
         "id": 2,
         "name": "Pro Driver Plan",
-        "price_eur": 20.00,
-        "currency": "EUR",
+        "price_gbp": 20.00,
+        "currency": "GBP",
         "ride_credits": 50,
         "duration_days": 30,
         "status": true
@@ -4701,8 +4701,8 @@ This module provides APIs for listing active promos, viewing usage history, vali
       "data": {
         "id": 1,
         "name": "Starter Plan",
-        "price_eur": 10.00,
-        "currency": "EUR",
+        "price_gbp": 10.00,
+        "currency": "GBP",
         "ride_credits": 20,
         "duration_days": 30,
         "status": true
@@ -4717,7 +4717,7 @@ This module provides APIs for listing active promos, viewing usage history, vali
     ```json
     {
       "name": "Updated Starter Plan",
-      "price_eur": 12.50,
+      "price_gbp": 12.50,
       "ride_credits": 25
     }
     ```
@@ -4729,7 +4729,7 @@ This module provides APIs for listing active promos, viewing usage history, vali
       "data": {
         "id": 1,
         "name": "Updated Starter Plan",
-        "price_eur": 12.50,
+        "price_gbp": 12.50,
         "ride_credits": 25
       }
     }
@@ -4783,7 +4783,7 @@ This module provides APIs for listing active promos, viewing usage history, vali
           "id": 1,
           "driver_profile_id": 2,
           "subscription_plan_id": 1,
-          "amount_eur": 10.00,
+          "amount_gbp": 10.00,
           "credits_allocated": 20,
           "credits_used": 2,
           "credits_remaining": 18,

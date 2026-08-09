@@ -3949,7 +3949,7 @@
                     "Admin Subscription Plans"
                 ],
                 "summary": "Admin — Create Subscription Plan",
-                "description": "Creates a new subscription plan in EUR and syncs with Stripe. Admin only.",
+                "description": "Creates a new subscription plan in GBP and syncs with Stripe. Admin only.",
                 "operationId": "d9b25831165cfec71dc8427534ad358f",
                 "requestBody": {
                     "required": true,
@@ -3958,7 +3958,7 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "price_eur",
+                                    "price_gbp",
                                     "ride_credits",
                                     "duration_days"
                                 ],
@@ -3971,7 +3971,7 @@
                                         "type": "string",
                                         "example": "20 Ride Credits"
                                     },
-                                    "price_eur": {
+                                    "price_gbp": {
                                         "type": "number",
                                         "format": "float",
                                         "example": 10
@@ -4112,7 +4112,7 @@
                                         "type": "string",
                                         "example": "Updated Description"
                                     },
-                                    "price_eur": {
+                                    "price_gbp": {
                                         "type": "number",
                                         "format": "float",
                                         "example": 12.5
@@ -7724,7 +7724,8 @@
                             "schema": {
                                 "required": [
                                     "document_type",
-                                    "document"
+                                    "document",
+                                    "expires_at"
                                 ],
                                 "properties": {
                                     "document_type": {
@@ -7743,7 +7744,7 @@
                                         "format": "binary"
                                     },
                                     "expires_at": {
-                                        "description": "Optional expiration date.",
+                                        "description": "Required expiration date (must be a future date).",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2028-12-31"
@@ -9346,7 +9347,7 @@
                     "Driver Subscription"
                 ],
                 "summary": "Get Subscription Plans",
-                "description": "Retrieves all active, non-deleted subscription plans in EUR currency.",
+                "description": "Retrieves all active, non-deleted subscription plans in GBP currency.",
                 "operationId": "198096fb2949c8d46614f24458f3c263",
                 "responses": {
                     "200": {
@@ -9534,7 +9535,7 @@
                     "Driver Subscription"
                 ],
                 "summary": "Purchase Subscription Plan via Driver Wallet",
-                "description": "Deducts subscription plan price in EUR from driver internal wallet balance and activates subscription immediately.",
+                "description": "Deducts subscription plan price in GBP from driver internal wallet balance and activates subscription immediately.",
                 "operationId": "84efcd2b8cf07b6640cc03197a318e63",
                 "requestBody": {
                     "required": true,
@@ -15523,7 +15524,7 @@
                         "example": "20 Ride Credits",
                         "nullable": true
                     },
-                    "price_eur": {
+                    "price_gbp": {
                         "type": "number",
                         "format": "float",
                         "example": 10
@@ -15535,7 +15536,7 @@
                     },
                     "currency": {
                         "type": "string",
-                        "example": "EUR"
+                        "example": "GBP"
                     },
                     "ride_credits": {
                         "type": "integer",
@@ -15586,14 +15587,14 @@
                         ],
                         "nullable": true
                     },
-                    "amount_eur": {
+                    "amount_gbp": {
                         "type": "number",
                         "format": "float",
                         "example": 10
                     },
                     "currency": {
                         "type": "string",
-                        "example": "EUR"
+                        "example": "GBP"
                     },
                     "credits_allocated": {
                         "type": "integer",

@@ -125,7 +125,7 @@ class GoogleAuthService
                 // Create user wallet
                 Wallet::firstOrCreate(
                     ['user_id' => $user->id],
-                    ['balance' => 0.00, 'currency' => 'EUR', 'status' => 'active']
+                    ['balance' => 0.00, 'currency' => 'GBP', 'status' => 'active']
                 );
 
                 // Create driver profile if driver role

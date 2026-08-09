@@ -24,7 +24,7 @@ class DriverSubscriptionController extends Controller
     #[OA\Get(
         path: '/driver/subscription/plans',
         summary: 'Get Subscription Plans',
-        description: 'Retrieves all active, non-deleted subscription plans in EUR currency.',
+        description: 'Retrieves all active, non-deleted subscription plans in GBP currency.',
         security: [['bearerAuth' => []]],
         tags: ['Driver Subscription'],
         responses: [
@@ -191,12 +191,12 @@ class DriverSubscriptionController extends Controller
     }
 
     /**
-     * Purchase subscription plan using internal driver wallet balance (EUR).
+     * Purchase subscription plan using internal driver wallet balance (GBP).
      */
     #[OA\Post(
         path: '/driver/subscription/purchase',
         summary: 'Purchase Subscription Plan via Driver Wallet',
-        description: 'Deducts subscription plan price in EUR from driver internal wallet balance and activates subscription immediately.',
+        description: 'Deducts subscription plan price in GBP from driver internal wallet balance and activates subscription immediately.',
         security: [['bearerAuth' => []]],
         tags: ['Driver Subscription'],
         requestBody: new OA\RequestBody(

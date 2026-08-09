@@ -77,7 +77,9 @@ class DriverDashboardService
             $ontimeRate = round(($onTimeCount / $completedRides->count()) * 100, 2);
         }
 
-        $subscriptionCredits = app(DriverSubscriptionService::class)->getAvailableCredits($driver);
+        $subscriptionCredits = config('app.driver_subscription_enabled', false)
+            ? app(DriverSubscriptionService::class)->getAvailableCredits($driver)
+            : null;
 
         return [
             'completed_rides_count' => $completedRidesCount,

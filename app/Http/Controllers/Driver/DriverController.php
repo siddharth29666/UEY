@@ -1124,8 +1124,12 @@ class DriverController extends Controller
                     throw new \Exception('Ride request is no longer available.');
                 }
 
-                // OPTION B: Atomically consume 1 ride credit for accepting this ride
-                $creditInfo = $this->subscriptionService->consumeRideCredit($driverProfile, $ride->id, $request->id);
+                // DRIVER SUBSCRIPTION FEATURE TEMPORARILY DISABLED
+                // Keep existing subscription credit consumption logic intact.
+                // Re-enable by setting DRIVER_SUBSCRIPTION_ENABLED=true in .env / config.
+                if (config('app.driver_subscription_enabled', false)) {
+                    $creditInfo = $this->subscriptionService->consumeRideCredit($driverProfile, $ride->id, $request->id);
+                }
 
                 // Accept this request
                 $request->update(['status' => RideRequestStatus::ACCEPTED]);
